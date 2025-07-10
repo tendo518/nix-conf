@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "nix"
+    directory: "/"
+    schedule:
+      interval: "cron"
+      cronjob: "0 18 * * *"  # 18:00 UTC = 02:00 CST (Asia/Shanghai, UTC+8) every day incl. weekends
+      
+    cooldown:
+      default-days: 0  # GitHub 从 2026 年 7 月 14 日开始，给所有 Dependabot 普通版本更新默认启用了 3 天 cooldown
+    groups:
+      nix-updates:
+        patterns:
+          - "*" # 匹配所有的 Nix flake inputs

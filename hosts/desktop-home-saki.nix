@@ -1,0 +1,33 @@
+{
+  hosts.nixos.desktop-home-saki = {
+    modules = [
+      "core"
+      "system"
+      "development"
+      "agents"
+      "apps"
+      "network"
+      "desktop"
+      "hosts/desktop-home-saki"
+      "hardware"
+      "network/mihomo"
+    ];
+    excludeModules = [
+      "desktop/niri"
+      "hardware/lenovo-x13s"
+    ];
+    user = {
+      name = "tendo";
+      email = "pengwyuan@gmail.com";
+      trusted = true;
+      sshPubKey = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKLqKE9nQVet+MSWdtO0mlECDSwJz8md4ZIZgv9y09KR"
+      ];
+      shell = "fish";
+      homeStateVersion = "26.05";
+      passwordSecret = "tendo-password.age";
+    };
+    hostPlatform = "x86_64-linux";
+    stateVersion = "25.05";
+  };
+}

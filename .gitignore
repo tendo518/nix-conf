@@ -1,0 +1,6 @@
+.direnv/
+result
+result/
+.antigravitycli/
+.codegraph
+*.orig

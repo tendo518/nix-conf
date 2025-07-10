@@ -1,0 +1,126 @@
+# Mihomo runtime config template. mihomo-ctl init replaces $URL at runtime.
+# Never put a real subscription URL in this file.
+
+mixed-port: 7890
+
+mode: rule
+log-level: info
+allow-lan: false
+ipv6: true
+
+external-controller: 127.0.0.1:9090
+
+profile:
+  store-selected: true
+
+tun:
+  enable: true
+  stack: system
+  device: mihomo
+  auto-route: false
+  auto-redirect: false
+  auto-detect-interface: false
+  dns-hijack: []
+
+dns:
+  enable: false
+
+sniffer:
+  enable: true
+  sniff:
+    HTTP:
+      ports:
+        - 80
+        - 8080-8880
+      override-destination: true
+    TLS:
+      ports:
+        - 443
+        - 8443
+    QUIC:
+      ports:
+        - 443
+        - 8443
+
+proxy-providers:
+  subscription:
+    type: http
+    url: $URL
+    path: ./providers/subscription.yaml
+    interval: 21600
+    health-check:
+      enable: true
+      url: https://www.gstatic.com/generate_204
+      interval: 300
+      timeout: 5000
+      lazy: true
+
+proxy-groups:
+  # Used when Mihomo mode is set to global.
+  - name: GLOBAL
+    type: select
+    proxies:
+      - AUTO
+      - DIRECT
+    use:
+      - subscription
+
+  - name: PROXY
+    type: select
+    proxies:
+      - AUTO
+      - DIRECT
+    use:
+      - subscription
+
+  - name: AUTO
+    type: url-test
+    use:
+      - subscription
+    url: https://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+
+rules:
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - RULE-SET,private_domain,DIRECT
+  - RULE-SET,private_ip,DIRECT,no-resolve
+  - RULE-SET,cn_domain,DIRECT
+  - RULE-SET,cn_ip,DIRECT,no-resolve
+  - MATCH,PROXY
+
+rule-providers:
+  private_domain:
+    type: http
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./providers/rules/private_domain.mrs
+    url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs"
+
+  cn_domain:
+    type: http
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./providers/rules/cn_domain.mrs
+    url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cn.mrs"
+
+  private_ip:
+    type: http
+    behavior: ipcidr
+    format: mrs
+    interval: 86400
+    path: ./providers/rules/private_ip.mrs
+    url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/private.mrs"
+
+  cn_ip:
+    type: http
+    behavior: ipcidr
+    format: mrs
+    interval: 86400
+    path: ./providers/rules/cn_ip.mrs
+    url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/cn.mrs"
