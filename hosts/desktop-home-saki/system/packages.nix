@@ -12,6 +12,7 @@
 
     obsidian
     wechat
+    bottles
     qq
     protonplus
     obs-studio
