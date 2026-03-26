@@ -12,7 +12,7 @@
       # Helix
       programs.helix = {
         enable = true;
-        defaultEditor=true;
+        defaultEditor = true;
         settings = {
           theme = "jetbrains_dark";
 

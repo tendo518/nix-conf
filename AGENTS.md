@@ -22,7 +22,7 @@ Key features:
 - Imports modules via `imports` list
 
 **`modules/flake-parts.nix`** - flake-parts module:
-- Defines module registry options (`flake.modules.nixos/darwin/homeManager`)
+- Defines module registry options (`flake.modules.nixos/darwin/homeManager/darwinHomeManager/nixosHomeManager`)
 - Island pattern: overrides `perSystem._module.args.pkgs` with overlays + `allowUnfree`
 - Exports `flake.lib.mkHost` helper
 - Builds `flake.nixosConfigurations` and `flake.darwinConfigurations`
@@ -39,10 +39,21 @@ Modules live in `modules/` organized by function (`core`, `system`, `desktop`, e
   flake.modules.nixos."category/name" = { ... };
   flake.modules.darwin."category/name" = { ... };
   flake.modules.homeManager."category/name" = { ... };
+
+  # Platform-specific Home Manager modules (optional)
+  flake.modules.darwinHomeManager."category/name" = { ... };  # Darwin only
+  flake.modules.nixosHomeManager."category/name" = { ... };   # NixOS only
 }
 ```
 
 Module loading uses `modules/default.nix` which auto-imports all `.nix` files from `modules/` subdirectories.
+
+**Platform-specific Home Manager modules:**
+- `flake.modules.homeManager` - Shared across all platforms
+- `flake.modules.darwinHomeManager` - Loaded only for Darwin hosts
+- `flake.modules.nixosHomeManager` - Loaded only for NixOS hosts
+
+This allows conditional loading of platform-specific Home Manager configurations (e.g., `mac-app-util` for Darwin only).
 
 ### Host Definition Pattern
 
@@ -87,9 +98,13 @@ Hosts are defined in `hosts/<hostname>/default.nix`. Each host calls `mkHost`:
 
 Wires together:
 1. System modules (NixOS or Darwin)
-2. Home Manager modules for users
+2. Home Manager modules for users (with platform-specific filtering)
 3. Agenix for secrets
 4. User config from `host.users` options
+
+**Platform-specific Home Manager merging:**
+- Darwin hosts: `homeManager` + `darwinHomeManager`
+- NixOS hosts: `homeManager` + `nixosHomeManager`
 
 Module name resolution:
 - **Exact match**: `"core/nix"` → loads that specific module
@@ -99,11 +114,12 @@ Module name resolution:
 - `platforms.nix` - Platform lookup table (darwin/nixos config prefixes, builders, modules)
 - `resolveModules.nix` - Module resolution functions (`resolveModules`, `validateModules`)
 - `mkHost.nix` - Host builders (`mkHost`, `mkSystemConfigs`)
+- `options.nix` - Host options definitions (`host.users`, `host.hostname`)
 - `default.nix` - Main entry point, re-exports all library functions
 
 ### User Configuration (`host.users`)
 
-Defined in `modules/core/options.nix`:
+Defined in `lib/options.nix`:
 
 ```nix
 host.users.tendo = {
@@ -156,7 +172,12 @@ just generations              # List NixOS generations
 
 ### Adding a New Module
 1. Create `.nix` file in appropriate `modules/` subdirectory
-2. Register with `flake.modules.nixos`, `flake.modules.darwin`, and/or `flake.modules.homeManager`
+2. Register with the appropriate flake.modules namespace:
+   - `flake.modules.nixos` - NixOS system modules
+   - `flake.modules.darwin` - Darwin system modules
+   - `flake.modules.homeManager` - Shared Home Manager modules (all platforms)
+   - `flake.modules.darwinHomeManager` - Darwin-only Home Manager modules
+   - `flake.modules.nixosHomeManager` - NixOS-only Home Manager modules
 3. Reference in host configs by key or prefix
 
 ### Editing Secrets

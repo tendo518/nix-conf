@@ -1,6 +1,24 @@
 # Configuration Modules
 
-This directory contains reusable Nix modules organized by target system and configuration scope. Modules are automatically discovered using the `helpers.scanPaths` function, which imports all `.nix` files in a directory.
+This directory contains reusable Nix modules organized by target system and configuration scope. Modules are automatically discovered using `helpers.scanPaths` function, which imports all `.nix` files in a directory.
+
+## Module Registry
+
+Modules register themselves in the flake module system using these namespaces:
+
+| Namespace | Purpose |
+|-----------|---------|
+| `flake.modules.nixos` | NixOS system modules |
+| `flake.modules.darwin` | Darwin (macOS) system modules |
+| `flake.modules.homeManager` | Shared Home Manager modules (all platforms) |
+| `flake.modules.darwinHomeManager` | Darwin-only Home Manager modules |
+| `flake.modules.nixosHomeManager` | NixOS-only Home Manager modules |
+
+**Platform-specific Home Manager loading:**
+- Darwin hosts automatically merge `homeManager` + `darwinHomeManager`
+- NixOS hosts automatically merge `homeManager` + `nixosHomeManager`
+
+This allows conditional loading of platform-specific configurations (e.g., `mac-app-util` for Darwin only).
 
 ## Directory Structure
 

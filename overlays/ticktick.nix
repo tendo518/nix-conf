@@ -17,10 +17,18 @@ final: prev: {
         };
       in
       prev.stdenv.mkDerivation {
-        inherit pname version src appname;
+        inherit
+          pname
+          version
+          src
+          appname
+          ;
 
         sourceRoot = "${appname}/${appname}.app";
-        nativeBuildInputs = [ prev.makeWrapper prev._7zz ];
+        nativeBuildInputs = [
+          prev.makeWrapper
+          prev._7zz
+        ];
 
         installPhase = ''
           runHook preInstall

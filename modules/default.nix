@@ -2,13 +2,16 @@
 # Excludes default.nix files which are entry points
 let
   # Check if string ends with suffix
-  hasSuffix = suffix: str:
+  hasSuffix =
+    suffix: str:
     let
       suffixLen = builtins.stringLength suffix;
       strLen = builtins.stringLength str;
     in
-    if strLen < suffixLen then false
-    else builtins.substring (strLen - suffixLen) suffixLen str == suffix;
+    if strLen < suffixLen then
+      false
+    else
+      builtins.substring (strLen - suffixLen) suffixLen str == suffix;
 
   # Collect .nix files from a directory (non-default.nix files only)
   collectNixFiles =
@@ -16,7 +19,8 @@ let
     let
       entries = builtins.readDir dir;
       isNixFile = name: hasSuffix ".nix" name && name != "default.nix";
-      isDir = name:
+      isDir =
+        name:
         let
           path = dir + "/${name}";
         in

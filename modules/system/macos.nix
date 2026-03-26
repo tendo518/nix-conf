@@ -4,6 +4,7 @@
       pkgs,
       config,
       lib,
+      inputs,
       ...
     }:
     # ###################################################################################
@@ -12,6 +13,13 @@
     #
     # ###################################################################################
     {
+      imports = [
+        inputs.mac-app-util.darwinModules.default
+      ];
+
+      # Enable mac-app-util for resolving .app indexing issues
+      # Allows launching .app programs from Spotlight and pinning to Dock
+      services.mac-app-util.enable = true;
       system = {
         primaryUser = config.host.user.name;
 
@@ -145,5 +153,18 @@
       launchd.agents.disable-caplock-delay.script = ''
         hidutil property --set '{"CapsLockDelayOverride":0}'
       '';
+    };
+
+  # Darwin-only Home Manager module for mac-app-util
+  flake.modules.darwinHomeManager."system/macos" =
+    { inputs, ... }:
+    {
+      imports = [
+        inputs.mac-app-util.homeManagerModules.default
+      ];
+
+      # Enable mac-app-util for resolving .app indexing issues
+      # Allows launching .app programs from Spotlight and pinning to Dock
+      targets.darwin.mac-app-util.enable = true;
     };
 }

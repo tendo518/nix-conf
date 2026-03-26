@@ -1,5 +1,12 @@
 # mkHost helper and system configuration builders
-{ inputs, lib, platforms, resolveModules, validateModules }:
+{
+  inputs,
+  lib,
+  platforms,
+  resolveModules,
+  validateModules,
+  hostOptions,
+}:
 let
   # Build a single system configuration
   mkSystemConfig =
@@ -57,17 +64,27 @@ in
       p = platforms.${systemType};
       sysRegistry = config.flake.modules.${systemType};
       hmRegistry = config.flake.modules.homeManager;
+      # Platform-specific home-manager registry
+      darwinHmRegistry = config.flake.modules.darwinHomeManager or { };
+      nixosHmRegistry = config.flake.modules.nixosHomeManager or { };
+      # Merge platform-specific registry based on system type
+      platformHmRegistry =
+        if systemType == "darwin" then hmRegistry // darwinHmRegistry else hmRegistry // nixosHmRegistry;
       username = user.name;
-      validated = validateModules systemType sysRegistry hmRegistry modules;
+      validated = validateModules systemType sysRegistry platformHmRegistry modules;
       resolvedSys = builtins.concatMap (resolveModules sysRegistry) validated;
-      resolvedHm = builtins.concatMap (resolveModules hmRegistry) validated;
+      resolvedHm = builtins.concatMap (resolveModules platformHmRegistry) validated;
     in
     assert builtins.isAttrs config;
     assert builtins.isList modules;
     assert builtins.isAttrs user;
     assert username != null;
     {
-      imports = resolvedSys ++ [
+      imports = [
+        hostOptions
+      ]
+      ++ resolvedSys
+      ++ [
         {
           host.user = user;
           system.stateVersion = stateVersion;

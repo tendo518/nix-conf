@@ -1,6 +1,11 @@
 {
   flake.modules.homeManager."apps/firefox-home" =
-    { pkgs, lib, config, ... }:
+    {
+      pkgs,
+      lib,
+      config,
+      ...
+    }:
     let
       firefox-ui-fix-src = pkgs.fetchFromGitHub {
         owner = "black7375";
@@ -19,9 +24,11 @@
       '';
 
       # Firefox profile path differs between Linux and macOS
-      firefoxProfilePath = if pkgs.stdenv.isDarwin
-        then "Library/Application Support/Firefox/Profiles/default"
-        else ".mozilla/firefox/default";
+      firefoxProfilePath =
+        if pkgs.stdenv.isDarwin then
+          "Library/Application Support/Firefox/Profiles/default"
+        else
+          ".mozilla/firefox/default";
     in
     {
       programs.firefox = {
@@ -281,8 +288,10 @@
       };
 
       home.file = {
-        "${firefoxProfilePath}/chrome/userChrome.css".source = "${firefox-ui-fix-chrome}/chrome/userChrome.css";
-        "${firefoxProfilePath}/chrome/userContent.css".source = "${firefox-ui-fix-chrome}/chrome/userContent.css";
+        "${firefoxProfilePath}/chrome/userChrome.css".source =
+          "${firefox-ui-fix-chrome}/chrome/userChrome.css";
+        "${firefoxProfilePath}/chrome/userContent.css".source =
+          "${firefox-ui-fix-chrome}/chrome/userContent.css";
         "${firefoxProfilePath}/chrome/css".source = "${firefox-ui-fix-chrome}/chrome/css";
         "${firefoxProfilePath}/chrome/icons".source = "${firefox-ui-fix-chrome}/chrome/icons";
         "${firefoxProfilePath}/chrome/theme".source = "${firefox-ui-fix-chrome}/chrome/theme";

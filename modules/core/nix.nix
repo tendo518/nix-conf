@@ -25,8 +25,9 @@
         experimental-features = [
           "nix-command"
           "flakes"
+          "auto-allocate-uids"
         ]; # ++ lib.optional pkgs.stdenv.isLinux "auto-allocate-uids" (moved to nixos module)
-
+        auto-allocate-uids = true;
         # --- Network & Fetching ---
         connect-timeout = lib.mkDefault 5;
         fallback = true;

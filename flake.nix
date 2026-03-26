@@ -55,6 +55,10 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    mac-app-util = {
+      url = "github:hraban/mac-app-util";
+    };
   };
 
   outputs =
@@ -77,7 +81,9 @@
         let
           pkgs' = import inputs.nixpkgs {
             inherit system;
-            config = { allowUnfree = true; };
+            config = {
+              allowUnfree = true;
+            };
             overlays = builtins.attrValues inputs.self.overlays;
           };
         in

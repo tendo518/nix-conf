@@ -1,6 +1,11 @@
 # Main flake-parts configuration module
 # Defines options and config for the flake
-{ inputs, lib, config, ... }:
+{
+  inputs,
+  lib,
+  config,
+  ...
+}:
 let
   # Import library functions from top-level lib directory
   flakeLib = import ../lib { inherit inputs; };
@@ -21,7 +26,17 @@ in
     homeManager = lib.mkOption {
       type = lib.types.lazyAttrsOf lib.types.unspecified;
       default = { };
-      description = "Home Manager modules";
+      description = "Home Manager modules (shared across all platforms)";
+    };
+    darwinHomeManager = lib.mkOption {
+      type = lib.types.lazyAttrsOf lib.types.unspecified;
+      default = { };
+      description = "Home Manager modules (Darwin only)";
+    };
+    nixosHomeManager = lib.mkOption {
+      type = lib.types.lazyAttrsOf lib.types.unspecified;
+      default = { };
+      description = "Home Manager modules (NixOS only)";
     };
   };
 
