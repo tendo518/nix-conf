@@ -6,7 +6,7 @@
 }:
 {
   imports = [
-    ./file-associations.nix
+    #./file-associations.nix
   ];
 
   home.file."Library/Rime" = {
