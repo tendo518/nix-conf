@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-Personal NixOS and macOS configuration repository using Nix Flakes with `flake-parts` for modularity and `home-manager` for user-level configurations. A custom `mkHost` function handles both NixOS and Darwin systems.
+Personal NixOS and macOS configuration repository using Nix Flakes with `flake-parts` for modularity and `home-manager` for user-level configurations. Uses `import-tree` for automatic module discovery.
 
 Key features:
 - **Secrets management** via `agenix` (encrypted secrets for passwords, API keys)
@@ -18,20 +18,17 @@ Key features:
 
 **`flake.nix`** - Main flake file:
 - Defines all inputs (nixpkgs, flake-parts, home-manager, nix-darwin, etc.)
-- Configures `perSystem.devShells.default` with development tools
-- Imports modules via `imports` list
+- Uses `import-tree` to auto-load all modules from `./modules`
 
-**`modules/flake-parts.nix`** - flake-parts module:
-- Defines module registry options (`flake.modules.nixos/darwin/homeManager/darwinHomeManager/nixosHomeManager`)
-- Island pattern: overrides `perSystem._module.args.pkgs` with overlays + `allowUnfree`
-- Exports `flake.lib.mkHost` helper
-- Builds `flake.nixosConfigurations` and `flake.darwinConfigurations`
-
-**`modules/default.nix`** - Auto-imports all `.nix` files from `modules/` subdirectories
+**`modules/`** - All modules loaded via `import-tree`:
+- `modules/flake/` - flake-parts configuration and library functions
+- `modules/fleet/` - Fleet options and system builders
+- `modules/hosts/` - Host-specific configurations
+- `modules/core/`, `modules/system/`, etc. - Shared modules by function
 
 ### Module System
 
-Modules live in `modules/` organized by function (`core`, `system`, `desktop`, etc.). Each module registers itself in `flake.modules`:
+Modules live in `modules/` organized by function. Each module registers itself in `flake.modules`:
 
 ```nix
 { ... }:
@@ -39,99 +36,69 @@ Modules live in `modules/` organized by function (`core`, `system`, `desktop`, e
   flake.modules.nixos."category/name" = { ... };
   flake.modules.darwin."category/name" = { ... };
   flake.modules.homeManager."category/name" = { ... };
-
-  # Platform-specific Home Manager modules (optional)
-  flake.modules.darwinHomeManager."category/name" = { ... };  # Darwin only
-  flake.modules.nixosHomeManager."category/name" = { ... };   # NixOS only
 }
 ```
 
-Module loading uses `modules/default.nix` which auto-imports all `.nix` files from `modules/` subdirectories.
+Module loading uses `import-tree` which auto-imports all `.nix` files from `modules/` subdirectories.
 
-**Platform-specific Home Manager modules:**
-- `flake.modules.homeManager` - Shared across all platforms
-- `flake.modules.darwinHomeManager` - Loaded only for Darwin hosts
-- `flake.modules.nixosHomeManager` - Loaded only for NixOS hosts
+### Fleet Host Definitions
 
-This allows conditional loading of platform-specific Home Manager configurations (e.g., `mac-app-util` for Darwin only).
-
-### Host Definition Pattern
-
-Hosts are defined in `hosts/<hostname>/default.nix`. Each host calls `mkHost`:
+Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `fleet` namespace:
 
 ```nix
-{ config, ... }:
+{ inputs, ... }:
 {
-  flake.modules.nixos."my-host-system" = ./system/default.nix;
-  flake.modules.homeManager."my-host-home" = ./home/tendo.nix;
-
-  flake.modules.nixos."nixosConfigurations/my-host" =
-    config.flake.lib.mkHost {
-      systemType = "nixos";
-      users.tendo = {
-        email = "user@example.com";
-        trusted = true;
-        sshPubKey = [ "ssh-ed25519 ..." ];
-        shell = "fish";
-        homeStateVersion = "25.11";
-        extraGroups = [ "networkmanager" ];
-        passwordSecret = "tendo-password.age";
-      };
-      stateVersion = "25.05";
-      modules = [
-        "my-host-system"
-        "my-host-home"
-        "core"      # Prefix: loads all core/* modules
-        "system"    # Prefix: loads all system/* modules
-        "networking"
-        "apps"
-        "development"
-        "desktop"
-        "desktop-environments/plasma"
-      ];
-      inherit config;
+  # Fleet host definition
+  fleet.nixos.my-host = {
+    modules = [
+      "core"
+      "system"
+      "development"
+      "apps"
+      "networking"
+      "desktop"
+      "hosts/my-host"
+      "desktop-environments/plasma"
+    ];
+    user = {
+      name = "username";
+      email = "user@example.com";
+      trusted = true;
+      sshPubKey = [ "ssh-ed25519 ..." ];
+      shell = "fish";
+      homeStateVersion = "25.11";
+      extraGroups = [ "networkmanager" ];
+      passwordSecret = "username-password.age";
     };
-}
+    stateVersion = "25.05";
+  };
+
+  # NixOS modules for this host
+  flake.modules.nixos."hosts/my-host" = { pkgs, lib, config, ... }: {
+    # hardware config, packages, services, etc.
+  };
+
+  flake.modules.homeManager."hosts/my-host" = { ... }: {
+    # home manager config
+  };
+};
 ```
 
-### mkHost Function (`lib/mkHost.nix`)
+### Fleet Builders (`modules/fleet/`)
 
-Wires together:
-1. System modules (NixOS or Darwin)
-2. Home Manager modules for users (with platform-specific filtering)
-3. Agenix for secrets
-4. User config from `host.users` options
-
-**Platform-specific Home Manager merging:**
-- Darwin hosts: `homeManager` + `darwinHomeManager`
-- NixOS hosts: `homeManager` + `nixosHomeManager`
+- `default.nix` - Defines `fleet.nixos` and `fleet.darwin` options
+- `nixos-configurations.nix` - Builds `flake.nixosConfigurations` from `fleet.nixos`
+- `darwin-configurations.nix` - Builds `flake.darwinConfigurations` from `fleet.darwin`
 
 Module name resolution:
 - **Exact match**: `"core/nix"` → loads that specific module
 - **Prefix match**: `"core"` → loads all modules under `core/`
 
-**Library structure** (`lib/`):
-- `platforms.nix` - Platform lookup table (darwin/nixos config prefixes, builders, modules)
-- `resolveModules.nix` - Module resolution functions (`resolveModules`, `validateModules`)
-- `mkHost.nix` - Host builders (`mkHost`, `mkSystemConfigs`)
-- `options.nix` - Host options definitions (`host.users`, `host.hostname`)
-- `default.nix` - Main entry point, re-exports all library functions
+### Host Options
 
-### User Configuration (`host.users`)
-
-Defined in `lib/options.nix`:
-
-```nix
-host.users.tendo = {
-  email = "user@example.com";        # Required
-  trusted = true;                     # Adds to wheel/admin group
-  sshPubKey = [ "ssh-ed25519 ..." ];  # SSH authorized keys
-  shell = "fish";                     # Default: "bash"
-  homeStateVersion = "25.11";         # Required for Home Manager
-  extraGroups = [ "networkmanager" ];
-  passwordSecret = "tendo-password.age"; # Agenix secret for hashed password
-};
-```
+Inside each NixOS/Darwin system, these options are available:
+- `host.user` - User configuration from fleet definition
+- `host.hostname` - Hostname (defaults to fleet key name)
 
 ## Common Commands (Justfile)
 
@@ -155,29 +122,67 @@ just generations              # List NixOS generations
 ## Key Conventions
 
 1. **Functional Organization**: Modules grouped by function, not platform
-2. **Cross-Platform Design**: Use separate `nixosModule` and `darwinModule` when options differ
-3. **Unified Loading**: `mkHost` handles NixOS/Darwin logic plus Home Manager setup
-4. **User Config**: Drives user creation, shell enabling, trusted-user settings
-5. **Secrets**: Store in `secrets/`, reference via `passwordSecret`, edit with `just edit-password`
-6. **Module Prefix Expansion**: Use short prefixes (`"core"`) instead of listing submodules
+2. **Host Colocation**: Fleet definition and modules in same `modules/hosts/<hostname>/` directory
+3. **Prefix Expansion**: Use short prefixes (`"core"`) instead of listing submodules
+4. **Secrets**: Store in `secrets/`, reference via `passwordSecret`, edit with `just edit-password`
+
+## Directory Structure
+
+```
+modules/
+├── flake/              # flake-parts config
+│   ├── default.nix     # Library functions (resolveModules)
+│   ├── top-level.nix   # flake-parts entry point
+│   └── dev-shell.nix   # Development shell
+├── fleet/              # Fleet options and builders
+│   ├── default.nix     # fleet.nixos/darwin options
+│   ├── nixos-configurations.nix
+│   └── darwin-configurations.nix
+├── hosts/              # Host-specific configurations
+│   ├── desktop-home-saki/
+│   │   ├── default.nix     # fleet.nixos + modules
+│   │   ├── hardware.nix
+│   │   ├── filesystem.nix
+│   │   ├── lanzaboote.nix
+│   │   ├── nfs.nix
+│   │   ├── packages.nix
+│   │   └── home.nix
+│   ├── laptop-solar-chiyoko/
+│   │   └── default.nix
+│   └── laptop-solar-modoka/
+│       └── default.nix
+├── overlays/           # Custom package overlays
+├── core/               # Core system modules
+├── system/             # System configuration
+├── desktop/            # Desktop environment
+├── apps/               # Applications
+├── networking/         # Network configuration
+├── development/        # Development tools
+└── hardware/           # Hardware-specific config
+
+packages/               # Custom package definitions
+└── iosevka-lnxw/       # Custom font package
+```
 
 ## Development Workflow
 
 ### Adding a New Host
-1. Create `hosts/<hostname>/default.nix` with `mkHost` call
-2. Create `hosts/<hostname>/system/default.nix` for hardware/system config
-3. Create `hosts/<hostname>/home/<username>.nix` for Home Manager overrides
-4. Add secrets to `secrets/` and register in `secrets/secrets.nix`
-5. Test with `just build-nixos <hostname>`
+
+1. Create `modules/hosts/<hostname>/default.nix`:
+   - Add `fleet.nixos.<hostname>` or `fleet.darwin.<hostname>` definition
+   - Add `flake.modules.nixos."hosts/<hostname>"` for system config
+   - Add `flake.modules.homeManager."hosts/<hostname>"` for home config
+2. For complex hosts, split into multiple files (hardware.nix, packages.nix, etc.)
+3. Add secrets to `secrets/` and register in `secrets/secrets.nix`
+4. Test with `just build-nixos <hostname>`
 
 ### Adding a New Module
+
 1. Create `.nix` file in appropriate `modules/` subdirectory
-2. Register with the appropriate flake.modules namespace:
+2. Register with the appropriate `flake.modules` namespace:
    - `flake.modules.nixos` - NixOS system modules
    - `flake.modules.darwin` - Darwin system modules
-   - `flake.modules.homeManager` - Shared Home Manager modules (all platforms)
-   - `flake.modules.darwinHomeManager` - Darwin-only Home Manager modules
-   - `flake.modules.nixosHomeManager` - NixOS-only Home Manager modules
+   - `flake.modules.homeManager` - Home Manager modules
 3. Reference in host configs by key or prefix
 
 ### Editing Secrets

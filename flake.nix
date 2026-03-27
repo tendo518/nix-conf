@@ -55,56 +55,33 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
+    import-tree = {
+      url = "github:vic/import-tree";
+    };
     mac-app-util = {
       url = "github:hraban/mac-app-util";
     };
   };
 
-  outputs =
-    inputs@{ self, ... }:
-    inputs.flake-parts.lib.mkFlake { inherit inputs self; } {
-      imports = [
-        ./modules/flake-parts.nix
-        ./modules
-        ./overlays/default.nix
-        ./hosts/default.nix
-      ];
-      systems = [
-        "x86_64-linux"
-        "aarch64-darwin"
-      ];
+  outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
+  # inputs@{ self, ... }:
+  # inputs.flake-parts.lib.mkFlake { inherit inputs self; } {
+  #   imports = [
+  #     ./modules/flake-parts.nix
+  #     ./modules
+  #     ./overlays/default.nix
+  #     ./hosts/default.nix
+  #   ];
+  #   systems = [
+  #     "x86_64-linux"
+  #     "aarch64-darwin"
+  #   ];
 
-      # perSystem module for pkgs override and devShell
-      perSystem =
-        { system, pkgs, ... }:
-        let
-          pkgs' = import inputs.nixpkgs {
-            inherit system;
-            config = {
-              allowUnfree = true;
-            };
-            overlays = builtins.attrValues inputs.self.overlays;
-          };
-        in
-        {
-          _module.args.pkgs = pkgs';
-
-          devShells.default = pkgs'.mkShell {
-            packages = with pkgs'; [
-              just
-              nixos-anywhere
-              git
-              nh
-              nixfmt-tree
-              direnv
-              nix-direnv
-              age
-              inputs.agenix.packages.${system}.default
-            ];
-          };
-
-          formatter = pkgs'.nixfmt-tree;
-        };
-    };
+  #   # perSystem module for pkgs override and devShell
+  #   perSystem =
+  #     { system, pkgs, ... }:
+  #     {
+  #       formatter = pkgs.nixfmt-tree;
+  #     };
+  # };
 }
