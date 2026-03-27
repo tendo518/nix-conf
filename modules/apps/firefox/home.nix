@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."apps/firefox-home" =
+  flake.modules.homeManager."apps/firefox/home" =
     {
       pkgs,
       lib,

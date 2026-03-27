@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos."desktop-environments/plasma" =
+  flake.modules.nixos."desktop/plasma" =
     {
       pkgs,
       ...
@@ -48,7 +48,7 @@
         };
       };
     };
-  flake.modules.homeManager."desktop-environments/plasma" =
+  flake.modules.homeManager."desktop/plasma" =
     {
       config,
       pkgs,

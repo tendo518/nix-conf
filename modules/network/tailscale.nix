@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos."networking/tailscale" =
+  flake.modules.nixos."network/tailscale" =
     { pkgs, ... }:
     {
       environment.systemPackages = [ pkgs.tailscale ];
@@ -11,7 +11,7 @@
         extraUpFlags = "--accept-routes";
       };
     };
-  flake.modules.darwin."networking/tailscale" =
+  flake.modules.darwin."network/tailscale" =
     { pkgs, ... }:
     {
       environment.systemPackages = [ pkgs.tailscale ];

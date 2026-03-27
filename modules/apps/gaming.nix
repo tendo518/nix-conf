@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos."desktop/gaming" =
+  flake.modules.nixos."apps/gaming" =
     { pkgs, ... }:
     {
       # https://wiki.archlinux.org/title/steam
@@ -42,6 +42,10 @@
         mangohud
         # a GUI game launcher for Steam/GoG/Epic
         # lutris
+
+        # Wine for running Windows games
+        wineWow64Packages.wayland
+        winetricks
       ];
 
       # Optimise Linux system performance on demand

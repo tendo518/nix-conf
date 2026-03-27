@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."desktop/fcitx5" =
+  flake.modules.homeManager."apps/fcitx5" =
     { pkgs, inputs, ... }:
     {
       i18n.inputMethod = {

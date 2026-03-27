@@ -8,14 +8,14 @@
       "core"
       "system"
       "development"
-      "networking"
+      "network"
       "hosts/laptop-solar-modoka"
       "desktop/fonts"
-      "apps/firefox-home"
+      "apps/firefox/home"
       "apps/kitty"
       "apps/mpv"
       "apps/vscode"
-      "networking/tailscale"
+      "network/tailscale"
     ];
     user = {
       name = "tendo";

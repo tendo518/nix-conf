@@ -1,4 +1,4 @@
-# Build NixOS configurations from fleet.nixos options
+# Build Darwin configurations from fleet.darwin options
 {
   config,
   inputs,
@@ -6,36 +6,26 @@
   ...
 }:
 let
-  cfg = config.fleet.nixos;
+  cfg = config.fleet.darwin;
+  resolveModules = config.flake.lib.resolveModules;
 
   # Platform configuration
   platform = {
-    builder = inputs.nixpkgs.lib.nixosSystem;
-    agenixModule = inputs.agenix.nixosModules.default;
-    hmModule = inputs.home-manager.nixosModules.home-manager;
-    homeBase = "/home";
+    builder = inputs.nix-darwin.lib.darwinSystem;
+    agenixModule = inputs.agenix.darwinModules.default;
+    hmModule = inputs.home-manager.darwinModules.home-manager;
+    homeBase = "/Users";
   };
-
-  # Resolve module names (exact match or prefix match)
-  resolveModules =
-    registry: name:
-    if registry ? ${name} then
-      [ registry.${name} ]
-    else
-      let
-        keys = builtins.filter (k: lib.hasPrefix "${name}/" k) (builtins.attrNames registry);
-      in
-      builtins.map (k: registry.${k}) keys;
 in
 {
-  config.flake.nixosConfigurations = builtins.mapAttrs (
+  config.flake.darwinConfigurations = builtins.mapAttrs (
     name: hostCfg:
     platform.builder {
       modules =
         [
-          # Import NixOS modules
+          # Import Darwin modules
           {
-            imports = builtins.concatMap (resolveModules config.flake.modules.nixos) hostCfg.modules;
+            imports = builtins.concatMap (resolveModules config.flake.modules.darwin) hostCfg.modules;
           }
           # Set up host.user option
           {

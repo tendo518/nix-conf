@@ -1,4 +1,4 @@
-# Flake module - library functions
+# Flake library functions
 {
   lib,
   ...

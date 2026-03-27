@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos."apps/firefox-nixos" = {
+  flake.modules.nixos."apps/firefox" = {
 
     programs.firefox = {
       enable = true;

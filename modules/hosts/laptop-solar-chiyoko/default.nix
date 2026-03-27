@@ -9,10 +9,10 @@
       "system"
       "development"
       "apps"
-      "networking"
+      "network"
       "desktop"
       "hosts/laptop-solar-chiyoko"
-      "desktop-environments/plasma"
+      "desktop/plasma"
       "hardware/smartd"
       "hardware/disable-sleep"
     ];

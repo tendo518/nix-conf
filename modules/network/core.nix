@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos."networking/core" =
+  flake.modules.nixos."network/core" =
     { config, ... }:
     {
       networking.hostName = config.host.hostname;
