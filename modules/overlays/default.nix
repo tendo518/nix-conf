@@ -131,9 +131,9 @@ let
 in
 {
   flake.overlays = {
-    # Custom iosevka font overlay
-    iosevka-lnxw = final: _prev: {
-      iosevka-lnxw = final.callPackage ../../packages/iosevka-lnxw { };
+    # Custom font overlay
+    retedo-mono = final: _prev: {
+      retedo-mono = final.callPackage ../../packages/retedo-mono { };
     };
 
     # goldendict-ng overlay with Darwin support

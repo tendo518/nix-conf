@@ -15,7 +15,7 @@
             # Editor
             "editor.fontFamily" =
               if pkgs.stdenv.isDarwin then
-                "\"Iosevka Lnxw\", monospace, \"Symbols Nerd Font\", \"等距更纱黑体 SC\", \"Noto Color Emoji\""
+                "\"Retedo Mono\", monospace, \"Symbols Nerd Font\", \"等距更纱黑体 SC\", \"Noto Color Emoji\""
               else
                 "monospace, \"Symbols Nerd Font\", \"等距更纱黑体 SC\", \"Noto Color Emoji\"";
             "editor.fontLigatures" = true;

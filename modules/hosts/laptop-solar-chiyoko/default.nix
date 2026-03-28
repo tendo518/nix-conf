@@ -61,7 +61,7 @@
         antigravity
         deskflow
         ghostty
-        iosevka-lnxw
+        retedo-mono
       ];
 
       boot = {

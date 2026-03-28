@@ -4,26 +4,10 @@
       pkgs,
       lib,
       config,
+      inputs,
       ...
     }:
     let
-      firefox-ui-fix-src = pkgs.fetchFromGitHub {
-        owner = "black7375";
-        repo = "Firefox-UI-Fix";
-        rev = "v8.7.5";
-        hash = "sha256-IfR5pI+tpP5RfoTqO6Vgnbc5nADqSA4gg+9csz/+pO0=";
-      };
-
-      firefox-ui-fix-chrome = pkgs.runCommand "firefox-ui-fix-chrome" { } ''
-        mkdir -p $out/chrome
-        cp ${firefox-ui-fix-src}/userChrome.css $out/chrome/userChrome.css
-        cp ${firefox-ui-fix-src}/userContent.css $out/chrome/userContent.css
-        cp -r ${firefox-ui-fix-src}/css $out/chrome/
-        cp -r ${firefox-ui-fix-src}/icons $out/chrome/icons 2>/dev/null || true
-        cp -r ${firefox-ui-fix-src}/theme $out/chrome/theme 2>/dev/null || true
-      '';
-
-      # Firefox profile path differs between Linux and macOS
       firefoxProfilePath =
         if pkgs.stdenv.isDarwin then
           "Library/Application Support/Firefox/Profiles/default"
@@ -34,82 +18,6 @@
       programs.firefox = {
         enable = true;
         package = pkgs.firefox;
-
-        policies = {
-          DisplayBookmarksToolbar = false;
-          OfferToSaveLogins = false;
-          PasswordManagerEnable = false;
-          DisableAppUpdate = true;
-          DisableFeedbackCommands = true;
-          DisableFirefoxStudies = true;
-          DisablePocket = true;
-          DisableTelemetry = true;
-          DontCheckDefaultBrowser = true;
-
-          Cookies = {
-            Behavior = "limit-foreign";
-            BehaviorPrivateBrowsing = "limit-foreign";
-          };
-
-          EnableTrackingProtection = {
-            Value = true;
-            Cryptomining = true;
-            Fingerprinting = true;
-            EmailTracking = true;
-          };
-
-          FirefoxHome = {
-            Locked = true;
-            TopSites = false;
-            SponsoredTopSites = false;
-            Highlights = false;
-            Pocket = false;
-            SponsoredPocket = false;
-            Snippets = false;
-            Stories = false;
-            SponsoredStories = false;
-          };
-
-          FirefoxSuggest = {
-            WebSuggestions = false;
-            SponsoredSuggestions = false;
-            ImproveSuggest = false;
-            Locked = true;
-          };
-
-          Homepage.StartPage = "previous-session";
-          HttpsOnlyMode = "enabled";
-          NetworkPrediction = false;
-          NewTabPage = false;
-          NoDefaultBookmarks = true;
-          PopupBlocking.Default = true;
-          Proxy.UseProxyForDNS = false;
-
-          Permissions = {
-            Camera.BlockNewRequests = true;
-            Microphone.BlockNewRequests = true;
-            Location.BlockNewRequests = true;
-          };
-
-          SanitizeOnShutdown = {
-            Cache = true;
-          };
-
-          SearchSuggestEnabled = false;
-          TranslateEnabled = false;
-
-          UserMessaging = {
-            ExtensionRecommendations = false;
-            FeatureRecommendations = false;
-            UrlbarInterventions = false;
-            SkipOnboarding = true;
-            MoreFromMozilla = false;
-            FirefoxLabs = false;
-          };
-          GenerativeAI = {
-            Enabled = false;
-          };
-        };
 
         profiles.default = {
           id = 0;
@@ -285,16 +193,6 @@
             @import url("chrome/userContent.css");
           '';
         };
-      };
-
-      home.file = {
-        "${firefoxProfilePath}/chrome/userChrome.css".source =
-          "${firefox-ui-fix-chrome}/chrome/userChrome.css";
-        "${firefoxProfilePath}/chrome/userContent.css".source =
-          "${firefox-ui-fix-chrome}/chrome/userContent.css";
-        "${firefoxProfilePath}/chrome/css".source = "${firefox-ui-fix-chrome}/chrome/css";
-        "${firefoxProfilePath}/chrome/icons".source = "${firefox-ui-fix-chrome}/chrome/icons";
-        "${firefoxProfilePath}/chrome/theme".source = "${firefox-ui-fix-chrome}/chrome/theme";
       };
     };
 }

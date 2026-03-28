@@ -10,7 +10,7 @@ Key features:
 - **Secrets management** via `agenix` (encrypted secrets for passwords, API keys)
 - **Disk management** via `disko` (declarative partitioning)
 - **Secure boot** via `lanzaboote` (NixOS only)
-- **Custom overlays** (e.g., `iosevka-lnxw` font)
+- **Custom overlays** (e.g., `retedo-mono` font)
 
 ## Core Architecture
 
@@ -161,7 +161,7 @@ modules/
 └── hardware/           # Hardware-specific config
 
 packages/               # Custom package definitions
-└── iosevka-lnxw/       # Custom font package
+└── retedo-mono/        # Custom monospace font (based on Iosevka)
 ```
 
 ## Development Workflow

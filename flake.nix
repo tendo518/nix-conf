@@ -61,6 +61,10 @@
     mac-app-util = {
       url = "github:hraban/mac-app-util";
     };
+    firefox-ui-fix = {
+      url = "github:black7375/Firefox-UI-Fix";
+      flake = false;
+    };
   };
 
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
