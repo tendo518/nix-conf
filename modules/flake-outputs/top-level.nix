@@ -11,4 +11,10 @@
     "aarch64-linux"
     "aarch64-darwin"
   ];
+
+  perSystem =
+    { pkgs, ... }:
+    {
+      packages.retedo-mono = pkgs.callPackage ../../packages/retedo-mono { };
+    };
 }

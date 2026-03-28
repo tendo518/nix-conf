@@ -27,7 +27,7 @@
       shell = "fish";
       homeStateVersion = "25.05";
     };
-    stateVersion = "6";
+    stateVersion = 6;
   };
 
   # Darwin system configuration

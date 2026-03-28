@@ -22,7 +22,7 @@ let
         description = "User configuration";
       };
       stateVersion = mkOption {
-        type = types.str;
+        type = lib.types.either lib.types.str lib.types.int;
         description = "System state version";
       };
     };
