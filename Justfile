@@ -145,9 +145,18 @@ eval path:
 # Edit an agenix secret file.
 [group('Utility')]
 edit-secret secret_path:
-    pushd {{ justfile_directory() }}/secrets >/dev/null && {{ nix }} run github:ryantm/agenix -- -e "{{ justfile_directory() }}/{{ secret_path }}" && popd
+    @bash -c 'cd "{{ justfile_directory() }}/secrets" && export RULES="{{ justfile_directory() }}/secrets/secrets.nix" && {{ nix }} run github:ryantm/agenix -- -e "$(basename {{ secret_path }})"'
 
-# Safely edit an agenix secret for a password (strips trailing newlines).
+# Safely create an agenix secret for a password (hashes with sha-512).
 [group('Utility')]
 edit-password secret_path:
-    mkpasswd -m sha-512 | tr -d '\n' | pushd {{ justfile_directory() }}/secrets >/dev/null && {{ nix }} run github:ryantm/agenix -- -e "{{ justfile_directory() }}/{{ secret_path }}" && popd
+    @bash -c ' \
+        cd "{{ justfile_directory() }}/secrets" && \
+        export RULES="{{ justfile_directory() }}/secrets/secrets.nix" && \
+        FILENAME="$(basename {{ secret_path }})" && \
+        echo "Enter password:" && \
+        read -s PW && \
+        HASH=$(echo "$PW" | nix-shell -p mkpasswd --run "mkpasswd -m sha-512 -s") && \
+        echo -n "$HASH" > "$FILENAME.tmp" && \
+        EDITOR="cp $FILENAME.tmp" {{ nix }} run github:ryantm/agenix -- -e "$FILENAME" && \
+        rm -f "$FILENAME.tmp"'
