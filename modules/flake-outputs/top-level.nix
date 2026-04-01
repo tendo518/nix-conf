@@ -15,6 +15,8 @@
   perSystem =
     { pkgs, ... }:
     {
+      formatter = pkgs.nixfmt;
+
       packages.retedo-mono = pkgs.callPackage ../../packages/retedo-mono { };
     };
 }

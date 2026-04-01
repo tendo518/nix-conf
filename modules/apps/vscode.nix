@@ -153,8 +153,8 @@
             # Theme
             "workbench.iconTheme" = "material-icon-theme";
             "window.autoDetectColorScheme" = true;
-            "workbench.preferredLightColorTheme" = "Maple Dark";
-            "workbench.preferredDarkColorTheme" = "Maple Dark";
+            "workbench.preferredLightColorTheme" = "VS Code Light";
+            "workbench.preferredDarkColorTheme" = "VS Code Dark";
             "editor.semanticTokenColorCustomizations".rules = {
               interface.italic = true;
               selfParameter.italic = true;

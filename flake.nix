@@ -68,24 +68,4 @@
   };
 
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
-  # inputs@{ self, ... }:
-  # inputs.flake-parts.lib.mkFlake { inherit inputs self; } {
-  #   imports = [
-  #     ./modules/flake-parts.nix
-  #     ./modules
-  #     ./overlays/default.nix
-  #     ./hosts/default.nix
-  #   ];
-  #   systems = [
-  #     "x86_64-linux"
-  #     "aarch64-darwin"
-  #   ];
-
-  #   # perSystem module for pkgs override and devShell
-  #   perSystem =
-  #     { system, pkgs, ... }:
-  #     {
-  #       formatter = pkgs.nixfmt-tree;
-  #     };
-  # };
 }

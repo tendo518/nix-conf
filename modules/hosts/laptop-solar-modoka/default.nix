@@ -11,8 +11,8 @@
       "network"
       "hosts/laptop-solar-modoka"
       "desktop/fonts"
-      "apps/firefox/home"
-      "apps/kitty"
+      "apps/firefox"
+      # "apps/kitty"
       "apps/mpv"
       "apps/vscode"
       "network/tailscale"
@@ -104,9 +104,23 @@
     };
 
   flake.modules.homeManager."hosts/laptop-solar-modoka" =
-    { inputs, config, ... }:
+    { inputs, config, pkgs, ... }:
     {
       imports = [ ];
+
+      # Texlive for Chinese/English writing with IEEE templates
+      home.packages = [
+        (pkgs.texlive.combine {
+          inherit (pkgs.texlive)
+            scheme-medium
+            collection-langchinese
+            latexmk
+            ieeetran
+            biblatex
+            biber
+          ;
+        })
+      ];
 
       home.file."Library/Rime" = {
         source = inputs.rime-ice;

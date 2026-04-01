@@ -7,18 +7,86 @@
       inputs,
       ...
     }:
-    let
-      firefoxProfilePath =
-        if pkgs.stdenv.isDarwin then
-          "Library/Application Support/Firefox/Profiles/default"
-        else
-          ".mozilla/firefox/default";
-    in
     {
       programs.firefox = {
         enable = true;
         package = pkgs.firefox;
 
+        policies = {
+          DisplayBookmarksToolbar = false;
+          OfferToSaveLogins = false;
+          PasswordManagerEnable = false;
+          DisableAppUpdate = true;
+          DisableFeedbackCommands = true;
+          DisableFirefoxStudies = true;
+          DisablePocket = true;
+          DisableTelemetry = true;
+          DontCheckDefaultBrowser = true;
+
+          Cookies = {
+            Behavior = "limit-foreign";
+            BehaviorPrivateBrowsing = "limit-foreign";
+          };
+
+          EnableTrackingProtection = {
+            Value = true;
+            Cryptomining = true;
+            Fingerprinting = true;
+            EmailTracking = true;
+          };
+
+          FirefoxHome = {
+            Locked = true;
+            TopSites = false;
+            SponsoredTopSites = false;
+            Highlights = false;
+            Pocket = false;
+            SponsoredPocket = false;
+            Snippets = false;
+            Stories = false;
+            SponsoredStories = false;
+          };
+
+          FirefoxSuggest = {
+            WebSuggestions = false;
+            SponsoredSuggestions = false;
+            ImproveSuggest = false;
+            Locked = true;
+          };
+
+          Homepage.StartPage = "previous-session";
+          HttpsOnlyMode = "enabled";
+          NetworkPrediction = false;
+          NewTabPage = false;
+          NoDefaultBookmarks = true;
+          PopupBlocking.Default = true;
+          Proxy.UseProxyForDNS = false;
+
+          Permissions = {
+            Camera.BlockNewRequests = true;
+            Microphone.BlockNewRequests = true;
+            Location.BlockNewRequests = true;
+          };
+
+          SanitizeOnShutdown = {
+            Cache = true;
+          };
+
+          SearchSuggestEnabled = false;
+          TranslateEnabled = false;
+
+          UserMessaging = {
+            ExtensionRecommendations = false;
+            FeatureRecommendations = false;
+            UrlbarInterventions = false;
+            SkipOnboarding = true;
+            MoreFromMozilla = false;
+            FirefoxLabs = false;
+          };
+          GenerativeAI = {
+            Enabled = false;
+          };
+        };
         profiles.default = {
           id = 0;
           name = "default";
@@ -110,80 +178,6 @@
             "toolkit.telemetry.enabled" = false;
             "toolkit.coverage.opt-out" = true;
             "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-
-            # Firefox-UI-Fix settings
-            "svg.context-properties.content.enabled" = true;
-            "browser.compactmode.show" = true;
-            "browser.newtabpage.activity-stream.improvesearch.handoffToAwesomebar" = false;
-            "layout.css.has-selector.enabled" = true;
-            "browser.tabs.hoverPreview.enabled" = true;
-            "browser.urlbar.clipboard.featureGate" = true;
-            "browser.urlbar.suggest.calculator" = true;
-            "userChrome.compatibility.theme" = true;
-            "userChrome.compatibility.os" = true;
-            "userChrome.theme.built_in_contrast" = true;
-            "userChrome.theme.system_default" = true;
-            "userChrome.theme.proton_color" = true;
-            "userChrome.theme.proton_chrome" = true;
-            "userChrome.theme.fully_color" = true;
-            "userChrome.theme.fully_dark" = true;
-            "userChrome.decoration.cursor" = true;
-            "userChrome.decoration.field_border" = true;
-            "userChrome.decoration.download_panel" = true;
-            "userChrome.decoration.animate" = true;
-            "userChrome.padding.tabbar_width" = true;
-            "userChrome.padding.tabbar_height" = true;
-            "userChrome.padding.toolbar_button" = true;
-            "userChrome.padding.navbar_width" = true;
-            "userChrome.padding.urlbar" = true;
-            "userChrome.padding.bookmarkbar" = true;
-            "userChrome.padding.infobar" = true;
-            "userChrome.padding.menu" = true;
-            "userChrome.padding.bookmark_menu" = true;
-            "userChrome.padding.global_menubar" = true;
-            "userChrome.padding.panel" = true;
-            "userChrome.padding.popup_panel" = true;
-            "userChrome.tab.multi_selected" = true;
-            "userChrome.tab.unloaded" = true;
-            "userChrome.tab.letters_cleary" = true;
-            "userChrome.tab.close_button_at_hover" = true;
-            "userChrome.tab.sound_hide_label" = true;
-            "userChrome.tab.sound_with_favicons" = true;
-            "userChrome.tab.pip" = true;
-            "userChrome.tab.container" = true;
-            "userChrome.tab.crashed" = true;
-            "userChrome.tab.connect_to_window" = true;
-            "userChrome.tab.color_like_toolbar" = true;
-            "userChrome.tab.lepton_like_padding" = true;
-            "userChrome.tab.dynamic_separator" = true;
-            "userChrome.tab.newtab_button_like_tab" = true;
-            "userChrome.tab.box_shadow" = true;
-            "userChrome.tab.bottom_rounded_corner" = true;
-            "userChrome.icon.panel_full" = true;
-            "userChrome.icon.library" = true;
-            "userChrome.icon.panel" = true;
-            "userChrome.icon.menu" = true;
-            "userChrome.icon.context_menu" = true;
-            "userChrome.icon.global_menu" = true;
-            "userChrome.icon.global_menubar" = true;
-            "userChrome.icon.1-25px_stroke" = true;
-            "userChrome.fullscreen.overlap" = true;
-            "userChrome.fullscreen.show_bookmarkbar" = true;
-            "userContent.player.ui" = true;
-            "userContent.player.icon" = true;
-            "userContent.player.noaudio" = true;
-            "userContent.player.size" = true;
-            "userContent.player.click_to_play" = true;
-            "userContent.player.animate" = true;
-            "userContent.newTab.full_icon" = true;
-            "userContent.newTab.animate" = true;
-            "userContent.newTab.pocket_to_last" = true;
-            "userContent.newTab.searchbar" = true;
-            "userContent.page.field_border" = true;
-            "userContent.page.illustration" = true;
-            "userContent.page.proton_color" = true;
-            "userContent.page.dark_mode" = true;
-            "userContent.page.proton" = true;
           };
 
           userChrome = ''
