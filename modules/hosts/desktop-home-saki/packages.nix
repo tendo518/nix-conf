@@ -18,8 +18,6 @@
       };
     in
     {
-      services.v2raya.enable = true;
-
       environment.systemPackages = with pkgs; [
         luksCryptenroller
         sbctl
@@ -29,10 +27,9 @@
         spotify
         spotify-qt
         obsidian
-        wechat
+        # wechat # whothefuck use webarchives as curl target
         bottles
         qq
-        protonplus
         obs-studio
         libreoffice
         calibre
@@ -64,6 +61,13 @@
         ++ (with pkgs; [
           stdenv.cc.cc
         ]);
+
+      # network
+      programs.clash-verge = {
+        enable = true;
+        tunMode = true;
+        serviceMode = true;
+      };
 
       services.sunshine = {
         enable = true;

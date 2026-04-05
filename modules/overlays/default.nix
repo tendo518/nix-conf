@@ -1,6 +1,13 @@
 # Custom overlays for the flake
 { inputs, ... }:
 let
+  # PR: https://github.com/NixOS/nixpkgs/pull/506537
+  # claude-code: 2.1.81 -> 2.1.92
+  claude-code-overlay = final: prev: {
+    claude-code = final.callPackage ../../packages/claude-code/source.nix { };
+    claude-code-bin = final.callPackage ../../packages/claude-code/bin.nix { };
+  };
+
   goldendict-ng-overlay = final: prev: {
     goldendict-ng = prev.goldendict-ng.overrideAttrs (oldAttrs: {
       # Override platform support to include Darwin
@@ -131,6 +138,9 @@ let
 in
 {
   flake.overlays = {
+    # claude-code update (PR #506537)
+    claude-code = claude-code-overlay;
+
     # Custom font overlay
     retedo-mono = final: _prev: {
       retedo-mono = final.callPackage ../../packages/retedo-mono { };

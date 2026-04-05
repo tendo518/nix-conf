@@ -41,7 +41,9 @@
         # a simple overlay program for monitoring FPS, temperature, CPU and GPU load, and more.
         mangohud
         # a GUI game launcher for Steam/GoG/Epic
-        # lutris
+        lutris
+        protonup-rs
+        protonplus
 
         # Wine for running Windows games
         wineWow64Packages.wayland

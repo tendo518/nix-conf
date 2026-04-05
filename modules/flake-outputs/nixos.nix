@@ -52,7 +52,7 @@ in
                 home-manager = {
                   useUserPackages = true;
                   useGlobalPkgs = true;
-                  backupFileExtension = "home-manager.backup";
+                  backupFileExtension = "hm-backup";
                   extraSpecialArgs = { inherit inputs; };
                 };
 

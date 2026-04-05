@@ -48,6 +48,6 @@
         # package = config.boot.kernelPackages.nvidiaPackages.stable;
       };
 
-      hardware.nvidia-container-toolkit.enable = true;
+      # hardware.nvidia-container-toolkit.enable = true;  # when nvidia driver update, version mismatch error when restart, lead to switch failure
     };
 }

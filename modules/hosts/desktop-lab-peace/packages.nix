@@ -19,9 +19,6 @@
       };
     in
     {
-      # TODO: Enable if needed
-      # services.v2raya.enable = true;
-
       environment.systemPackages = with pkgs; [
         luksCryptenroller
         sbctl
@@ -34,7 +31,6 @@
         wechat
         bottles
         qq
-        protonplus
         obs-studio
         libreoffice
         calibre
