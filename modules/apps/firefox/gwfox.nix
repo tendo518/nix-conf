@@ -45,11 +45,14 @@
           "widget.macos.native-context-menus" = if stdenv.isDarwin then false else true;
 
           # Optional gwfox customizations
-          "gwfox.plus" = true; # Bundled layout (macOS UI + Compact mode)
+          "gwfox.plus" = false; # Bundled layout (macOS UI + Compact mode)
+          "gwfox.plus_sc" = true;
           "gwfox.icons" = true; # Enable menu icons
           "gwfox.noborder" = false; # Borderless window mode
           "gwfox.ac" = false; # Accent color
+          "gwfox.tp" = false; # Enable New Tab transparency Requires allow_transparent_browser
           "gwfox.db" = false; # Disable blur on panels/menus
+          # "gwfox.sidebar" = Set sidebar width 1, 2, 3
         };
       };
     };
