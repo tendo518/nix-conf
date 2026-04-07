@@ -76,6 +76,7 @@ in
           {
             imports = [ platform.agenixModule ];
             networking.hostName = lib.mkDefault name;
+            nixpkgs.hostPlatform = hostCfg.hostPlatform;
             system.stateVersion = hostCfg.stateVersion;
             programs.${hostCfg.user.shell}.enable = true;
           }

@@ -27,6 +27,7 @@
       shell = "fish";
       homeStateVersion = "25.05";
     };
+    hostPlatform = "aarch64-darwin";
     stateVersion = 6;
   };
 
@@ -37,8 +38,6 @@
       networking.hostName = "laptop-solar-modoka";
       networking.computerName = "laptop-solar-modoka";
       system.defaults.smb.NetBIOSName = "laptop-solar-modoka";
-
-      nixpkgs.hostPlatform = "aarch64-darwin";
 
       environment.systemPackages = with pkgs; [
         google-chrome

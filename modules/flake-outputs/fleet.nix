@@ -25,6 +25,10 @@ let
         type = lib.types.either lib.types.str lib.types.int;
         description = "System state version";
       };
+      hostPlatform = mkOption {
+        type = types.str;
+        description = "Platform for nixpkgs (e.g., x86_64-linux, aarch64-darwin)";
+      };
     };
   };
 in

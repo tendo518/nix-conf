@@ -29,6 +29,7 @@
       extraGroups = [ "networkmanager" ];
       passwordSecret = "pengwy-password.age";
     };
+    hostPlatform = "x86_64-linux";
     stateVersion = "25.05";
   };
 
