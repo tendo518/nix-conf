@@ -61,8 +61,8 @@
     mac-app-util = {
       url = "github:hraban/mac-app-util";
     };
-    firefox-ui-fix = {
-      url = "github:black7375/Firefox-UI-Fix";
+    gwfox = {
+      url = "github:akkva/gwfox";
       flake = false;
     };
   };
