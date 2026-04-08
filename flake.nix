@@ -1,18 +1,6 @@
 {
   description = "Nix flake for NixOS/macOS configuration";
 
-  nixConfig = {
-    substituters = [
-      "https://mirrors.ustc.edu.cn/nix-channels/store"
-      "https://cache.nixos.org"
-      "https://nix-community.cachix.org"
-    ];
-    extra-trusted-public-keys = [
-      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-    ];
-    use-xdg-base-directories = true;
-  };
-
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
@@ -57,9 +45,6 @@
     };
     import-tree = {
       url = "github:vic/import-tree";
-    };
-    mac-app-util = {
-      url = "github:hraban/mac-app-util";
     };
     gwfox = {
       url = "github:akkva/gwfox";
