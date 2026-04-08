@@ -126,7 +126,9 @@
       };
     };
 
-  flake.modules.homeManager."hosts/laptop-solar-chiyoko" = { ... }: {
-    imports = [ ];
-  };
+  flake.modules.homeManager."hosts/laptop-solar-chiyoko" =
+    { ... }:
+    {
+      imports = [ ];
+    };
 }

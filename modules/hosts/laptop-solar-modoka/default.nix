@@ -103,7 +103,12 @@
     };
 
   flake.modules.homeManager."hosts/laptop-solar-modoka" =
-    { inputs, config, pkgs, ... }:
+    {
+      inputs,
+      config,
+      pkgs,
+      ...
+    }:
     {
       imports = [ ];
 
@@ -117,7 +122,7 @@
             ieeetran
             biblatex
             biber
-          ;
+            ;
         })
       ];
 

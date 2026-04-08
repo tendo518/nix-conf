@@ -76,19 +76,19 @@
           cudaSupport = true;
         };
       };
-       users.mutableUsers = false;
+      users.mutableUsers = false;
 
-  system = {
-    etc.overlay = {
-      enable = true;
-      mutable = true;
-    };
-    nixos-init.enable = true;
-    tools = {
-      nixos-option.enable = true;
-      nixos-version.enable = false;
-      nixos-generate-config.enable = false;
-    };
-  };
+      system = {
+        etc.overlay = {
+          enable = true;
+          mutable = true;
+        };
+        nixos-init.enable = true;
+        tools = {
+          nixos-option.enable = true;
+          nixos-version.enable = false;
+          nixos-generate-config.enable = false;
+        };
+      };
     };
 }

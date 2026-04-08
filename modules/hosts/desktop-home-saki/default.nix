@@ -14,6 +14,7 @@
       "hosts/desktop-home-saki"
       "desktop/plasma"
       "hardware/nvidia"
+      "hardware/fwupd"
       "hardware/smartd"
       "hardware/disable-sleep"
     ];

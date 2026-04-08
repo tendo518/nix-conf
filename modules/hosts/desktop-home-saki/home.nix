@@ -1,7 +1,9 @@
 # Home Manager configuration
 { ... }:
 {
-  flake.modules.homeManager."hosts/desktop-home-saki" = { ... }: {
-    imports = [ ];
-  };
+  flake.modules.homeManager."hosts/desktop-home-saki" =
+    { ... }:
+    {
+      imports = [ ];
+    };
 }

@@ -35,59 +35,63 @@ let
   };
 in
 {
-  flake.modules.nixos."core/nix" = { config, lib, ... }:{
-    imports = [ commonModule ];
+  flake.modules.nixos."core/nix" =
+    { config, lib, ... }:
+    {
+      imports = [ commonModule ];
 
-    nix.settings = commonSettings // {
-      # --- Experimental Features ---
-      experimental-features = [
-        "nix-command"
-        "flakes"
-        "auto-allocate-uids"
-      ];
-      auto-allocate-uids = true;
-          # --- Trusted Users ---
-    trusted-users =
-      let
-        user = config.host.user;
-      in
-      lib.optional user.trusted user.name ++ [ "root" ] ++ [ "@wheel" ];
-    };
-
-    # ================================================================
-    # Systemd (Linux Only)
-    # ================================================================
-    systemd.slices."nix-daemon".sliceConfig = {
-      ManagedOOMMemoryPressure = "kill";
-      ManagedOOMMemoryPressureLimit = "80%";
-    };
-
-    systemd.services."nix-daemon" = {
-      serviceConfig = {
-        Slice = "nix-daemon.slice";
-        Delegate = "yes";
-        OOMScoreAdjust = 1000;
+      nix.settings = commonSettings // {
+        # --- Experimental Features ---
+        experimental-features = [
+          "nix-command"
+          "flakes"
+          "auto-allocate-uids"
+        ];
+        auto-allocate-uids = true;
+        # --- Trusted Users ---
+        trusted-users =
+          let
+            user = config.host.user;
+          in
+          lib.optional user.trusted user.name ++ [ "root" ] ++ [ "@wheel" ];
       };
+
+      # ================================================================
+      # Systemd (Linux Only)
+      # ================================================================
+      systemd.slices."nix-daemon".sliceConfig = {
+        ManagedOOMMemoryPressure = "kill";
+        ManagedOOMMemoryPressureLimit = "80%";
+      };
+
+      systemd.services."nix-daemon" = {
+        serviceConfig = {
+          Slice = "nix-daemon.slice";
+          Delegate = "yes";
+          OOMScoreAdjust = 1000;
+        };
+      };
+
     };
 
-  };
+  flake.modules.darwin."core/nix" =
+    { config, lib, ... }:
+    {
+      imports = [ commonModule ];
 
-  flake.modules.darwin."core/nix" =  { config, lib, ... }: {
-    imports = [ commonModule ];
+      nix.settings = commonSettings // {
+        # --- Experimental Features ---
+        experimental-features = [
+          "nix-command"
+          "flakes"
+        ];
+        # --- Trusted Users ---
+        trusted-users =
+          let
+            user = config.host.user;
+          in
+          lib.optional user.trusted user.name ++ [ "root" ] ++ [ "@admin" ];
+      };
 
-    nix.settings = commonSettings // {
-      # --- Experimental Features ---
-      experimental-features = [
-        "nix-command"
-        "flakes"
-      ];
-          # --- Trusted Users ---
-    trusted-users =
-      let
-        user = config.host.user;
-      in
-      lib.optional user.trusted user.name ++ [ "root" ] ++ [ "@admin" ];
     };
-
-  };
 }

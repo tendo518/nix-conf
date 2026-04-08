@@ -2,7 +2,12 @@
 { inputs, ... }:
 {
   flake.modules.nixos."hosts/desktop-home-saki/hardware" =
-    { lib, pkgs, config, ... }:
+    {
+      lib,
+      pkgs,
+      config,
+      ...
+    }:
     {
       imports = [
         inputs.nixpkgs.nixosModules.notDetected

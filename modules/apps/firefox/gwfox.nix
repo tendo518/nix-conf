@@ -28,10 +28,8 @@
     in
     {
       home.file = {
-        "${firefoxProfilePath}/chrome/userChrome.css".source =
-          "${gwfox-chrome}/chrome/userChrome.css";
-        "${firefoxProfilePath}/chrome/userContent.css".source =
-          "${gwfox-chrome}/chrome/userContent.css";
+        "${firefoxProfilePath}/chrome/userChrome.css".source = "${gwfox-chrome}/chrome/userChrome.css";
+        "${firefoxProfilePath}/chrome/userContent.css".source = "${gwfox-chrome}/chrome/userContent.css";
       };
       programs.firefox = {
         profiles.default.settings = {
