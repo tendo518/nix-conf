@@ -29,25 +29,15 @@
         # ];
       };
 
-      # ==========================================================================
-      # Other Optimizations
-      # Usage:
-      #  Lutris - enable advanced options, go to the System options -> Command prefix, add: `mangohud`
-      #  Steam  - add this as a launch option: `mangohud %command%` / `gamemoderun %command%`
-      # ==========================================================================
-
       environment.systemPackages = with pkgs; [
         # https://github.com/flightlessmango/MangoHud
         # a simple overlay program for monitoring FPS, temperature, CPU and GPU load, and more.
         mangohud
         # a GUI game launcher for Steam/GoG/Epic
-        lutris
         protonup-rs
-        protonplus
 
-        # Wine for running Windows games
-        wineWow64Packages.wayland
-        winetricks
+        # wineWow64Packages.wayland
+        # winetricks
       ];
 
       # Optimise Linux system performance on demand

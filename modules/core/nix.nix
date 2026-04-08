@@ -1,12 +1,10 @@
-{ lib, config, pkgs, ... }:
-
 let
   # Common nix settings shared between NixOS and Darwin
   commonSettings = {
     use-xdg-base-directories = true;
 
     # --- Network & Fetching ---
-    connect-timeout = lib.mkDefault 5;
+    connect-timeout = 5;
     fallback = true;
     builders-use-substitutes = true;
 
@@ -22,31 +20,22 @@ let
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
     ];
 
-    # --- Trusted Users ---
-    trusted-users =
-      let
-        user = config.host.user;
-      in
-      lib.optional user.trusted user.name
-      ++ [ "root" ]
-      ++ (if pkgs.stdenv.isDarwin then [ "@admin" ] else [ "@wheel" ]);
-
     # --- Disk Space Management ---
-    min-free = lib.mkDefault (5 * 1024 * 1024 * 1024);
-    max-free = lib.mkDefault (25 * 1024 * 1024 * 1024);
+    min-free = (5 * 1024 * 1024 * 1024);
+    max-free = (25 * 1024 * 1024 * 1024);
   };
 
   # Common module settings
   commonModule = {
     # Disable legacy channels, force Flakes
-    nix.channel.enable = lib.mkDefault false;
+    nix.channel.enable = false;
 
     # Auto optimize Store
     nix.optimise.automatic = true;
   };
 in
 {
-  flake.modules.nixos."core/nix" = {
+  flake.modules.nixos."core/nix" = { config, lib, ... }:{
     imports = [ commonModule ];
 
     nix.settings = commonSettings // {
@@ -57,6 +46,12 @@ in
         "auto-allocate-uids"
       ];
       auto-allocate-uids = true;
+          # --- Trusted Users ---
+    trusted-users =
+      let
+        user = config.host.user;
+      in
+      lib.optional user.trusted user.name ++ [ "root" ] ++ [ "@wheel" ];
     };
 
     # ================================================================
@@ -74,9 +69,10 @@ in
         OOMScoreAdjust = 1000;
       };
     };
+
   };
 
-  flake.modules.darwin."core/nix" = {
+  flake.modules.darwin."core/nix" =  { config, lib, ... }: {
     imports = [ commonModule ];
 
     nix.settings = commonSettings // {
@@ -85,6 +81,13 @@ in
         "nix-command"
         "flakes"
       ];
+          # --- Trusted Users ---
+    trusted-users =
+      let
+        user = config.host.user;
+      in
+      lib.optional user.trusted user.name ++ [ "root" ] ++ [ "@admin" ];
     };
+
   };
 }
