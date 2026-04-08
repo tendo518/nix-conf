@@ -26,9 +26,12 @@ let
   };
 
   # Common module settings
-  commonModule = {
+  commonModule = { pkgs, ... }: {
     # Disable legacy channels, force Flakes
     nix.channel.enable = false;
+
+    # Use Lix instead of Nix
+    nix.package = pkgs.lixPackageSets.stable.lix;
 
     # Auto optimize Store
     nix.optimise.automatic = true;

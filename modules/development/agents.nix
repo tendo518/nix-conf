@@ -32,20 +32,27 @@
         claude-code-router
         opencode
         bun # opencode makes use of bun
+        claude-code
 
         # Default claude wrapper using qwen
-        (mkClaudecodeWrapper "claude" claude-code "claude"
+        (mkClaudecodeWrapper "claude-qwenmax" claude-code "claude"
           "https://coding.dashscope.aliyuncs.com/apps/anthropic"
-          "qwen3.5-plus"
+          "qwen3-max-2026-01-23"
           aliyunApiKeyPath
         )
-        (mkClaudecodeWrapper "claude-qwen" claude-code "claude"
+         (mkClaudecodeWrapper "claude-qwen" claude-code "claude"
+          "https://coding.dashscope.aliyuncs.com/apps/anthropic"
+          "qwen3.6-plus"
+          aliyunApiKeyPath
+        )
+        (mkClaudecodeWrapper "claude-qwen35" claude-code "claude"
           "https://coding.dashscope.aliyuncs.com/apps/anthropic"
           "qwen3.5-plus"
           aliyunApiKeyPath
         )
         # Alternative model wrappers
-        (mkClaudecodeWrapper "claude-ds" claude-code "claude" "https://api.deepseek.com/anthropic"
+        (mkClaudecodeWrapper "claude-ds" claude-code "claude"
+          "https://api.deepseek.com/anthropic"
           "deepseek-reasoner"
           deepseekApikeyPath
         )

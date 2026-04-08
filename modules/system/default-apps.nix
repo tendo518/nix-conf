@@ -38,7 +38,7 @@
         set_default "$VSCODE" "public.json"            # .json
         set_default "$VSCODE" "public.yaml"            # .yaml, .yml
         set_default "$VSCODE" "public.xml"             # .xml
-        set_default "$VSCODE" "public.html"            # .html, .htm
+        # set_default "$VSCODE" "public.html"            # .html, .htm
         set_default "$VSCODE" "net.daringfireball.markdown"  # .md
 
         # Programming languages by extension
