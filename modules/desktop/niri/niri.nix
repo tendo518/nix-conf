@@ -1,18 +1,12 @@
 {
-  flake.modules.nixos."desktop/niri" = {
+  flake.modules.nixos."desktop/niri" = {pkgs, ...}:{
     programs = {
       niri.enable = true;
       nm-applet.enable = true;
     };
+    environment.systemPackages = [ pkgs.noctalia-shell ];
   };
-  flake.modules.homeManager."desktop/niri" =
-    { pkgs, ... }:
-    {
-      programs.noctalia-shell = {
-        enable = true;
-        package = pkgs.noctalia-shell;
-      };
-
+  flake.modules.homeManager."desktop/niri" = {
       # qt = {
       #   enable = true;
       #   platformTheme.name = "qtct";

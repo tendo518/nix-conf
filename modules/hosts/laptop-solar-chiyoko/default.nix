@@ -5,13 +5,13 @@
   # Fleet host definition
   fleet.nixos.laptop-solar-chiyoko = {
     modules = [
-    "core"
+      "core"
       "system"
       "development"
       "apps"
       "network"
       "desktop"
-      "hosts/laptop-solar-modoka"
+      "hosts/laptop-solar-chiyoko"
       "network/tailscale"
       "hardware/fwupd"
       "hardware/smartd"
