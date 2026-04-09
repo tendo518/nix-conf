@@ -141,11 +141,11 @@
     "gwfox": {
       "flake": false,
       "locked": {
-        "lastModified": 1775489567,
-        "narHash": "sha256-iDpzBTuaJcxXJnaoLSMDg3x8a9ipM45GC0yERC+my0E=",
+        "lastModified": 1775707667,
+        "narHash": "sha256-+8rdy/+mVU8HmjfptHbYy2hnl0ig4msVpV5vWIh8vsY=",
         "owner": "akkva",
         "repo": "gwfox",
-        "rev": "d563889a6aa158410305d08bc70a25e1b9182e9d",
+        "rev": "2500408a9cf17bf938bd42f3a57cb98aba407e84",
         "type": "github"
       },
       "original": {

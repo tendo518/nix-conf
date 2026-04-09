@@ -52,7 +52,7 @@
       };
 
       environment.systemPackages = with pkgs; [
-        wechat
+        #wechat
         qq
         libreoffice
         zathura
