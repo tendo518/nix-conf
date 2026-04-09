@@ -12,7 +12,6 @@
       "network"
       "desktop"
       "hosts/desktop-home-saki"
-      "desktop/plasma"
       "hardware/nvidia"
       "hardware/fwupd"
       "hardware/smartd"
