@@ -117,13 +117,23 @@
 
       services = {
         v2raya.enable = true;
-        userborn.enable = true;
         fwupd.enable = true;
       };
 
-      system.etc.overlay = {
-        enable = true;
-        mutable = false;
+      users.mutableUsers = false;
+      
+      services.userborn.enable = true;  # needed by nixos-init
+      system = {
+        etc.overlay = {
+          enable = true;
+          mutable = true;
+        };
+        nixos-init.enable = true;
+        tools = {
+          nixos-option.enable = true;
+          nixos-version.enable = false;
+          nixos-generate-config.enable = false;
+        };
       };
     };
 
