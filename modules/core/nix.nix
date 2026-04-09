@@ -30,9 +30,6 @@ let
     # Disable legacy channels, force Flakes
     nix.channel.enable = false;
 
-    # Use Lix instead of Nix
-    nix.package = pkgs.lixPackageSets.stable.lix;
-
     # Auto optimize Store
     nix.optimise.automatic = true;
   };
@@ -49,8 +46,10 @@ in
           "nix-command"
           "flakes"
           "auto-allocate-uids"
+          "cgroups"
         ];
         auto-allocate-uids = true;
+        use-cgroups = true;
         # --- Trusted Users ---
         trusted-users =
           let
