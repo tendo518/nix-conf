@@ -2,7 +2,7 @@
   description = "Nix flake for NixOS/macOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
 
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
