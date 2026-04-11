@@ -1,8 +1,10 @@
-# Dev shell configuration
-{ pkgs, ... }:
+# Development shell configuration
+#
+# Provides default dev shell with Nix tools: nixfmt, deadnix, statix,
+# nixd (LSP), just, nh, nixos-anywhere, git, direnv, age.
 {
   perSystem =
-    { config, pkgs, ... }:
+    { pkgs, ... }:
     {
       devShells.default = pkgs.mkShellNoCC {
         packages = with pkgs; [

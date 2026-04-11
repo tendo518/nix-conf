@@ -1,9 +1,9 @@
 # Desktop workstation at home
-# Fleet configuration and module registrations
+# Host configuration and module registrations
 { ... }:
 {
-  # Fleet host definition
-  fleet.nixos.desktop-home-saki = {
+  # Host definition
+  hosts.nixos.desktop-home-saki = {
     modules = [
       "core"
       "system"

@@ -1,3 +1,7 @@
+# Flake-parts entry point
+#
+# Initializes flake-parts framework, defines supported systems,
+# sets default formatter, and registers custom packages.
 { inputs, ... }:
 {
   imports = [

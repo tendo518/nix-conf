@@ -1,4 +1,7 @@
-# Build NixOS configurations from fleet.nixos options
+# Build nixosConfigurations from hosts.nixos
+#
+# For each host: resolves modules, sets up host.user/hostname options,
+# configures home-manager and agenix, sets platform and state version.
 {
   config,
   inputs,
@@ -6,7 +9,7 @@
   ...
 }:
 let
-  cfg = config.fleet.nixos;
+  cfg = config.hosts.nixos;
   resolveModules = config.flake.lib.resolveModules;
 
   # Platform configuration

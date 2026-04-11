@@ -21,8 +21,7 @@ Key features:
 - Uses `import-tree` to auto-load all modules from `./modules`
 
 **`modules/`** - All modules loaded via `import-tree`:
-- `modules/flake/` - flake-parts configuration and library functions
-- `modules/fleet/` - Fleet options and system builders
+- `modules/flake/` - flake-parts configuration, library functions, and host builders
 - `modules/hosts/` - Host-specific configurations
 - `modules/core/`, `modules/system/`, etc. - Shared modules by function
 
@@ -41,15 +40,15 @@ Modules live in `modules/` organized by function. Each module registers itself i
 
 Module loading uses `import-tree` which auto-imports all `.nix` files from `modules/` subdirectories.
 
-### Fleet Host Definitions
+### Host Definitions
 
-Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `fleet` namespace:
+Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `hosts` namespace:
 
 ```nix
 { inputs, ... }:
 {
-  # Fleet host definition
-  fleet.nixos.my-host = {
+  # Host definition
+  hosts.nixos.my-host = {
     modules = [
       "core"
       "system"
@@ -84,11 +83,11 @@ Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `fleet` na
 };
 ```
 
-### Fleet Builders (`modules/fleet/`)
+### Host Builders (`modules/flake/`)
 
-- `default.nix` - Defines `fleet.nixos` and `fleet.darwin` options
-- `nixos-configurations.nix` - Builds `flake.nixosConfigurations` from `fleet.nixos`
-- `darwin-configurations.nix` - Builds `flake.darwinConfigurations` from `fleet.darwin`
+- `hosts.nix` - Defines `hosts.nixos` and `hosts.darwin` options
+- `nixos-configurations.nix` - Builds `flake.nixosConfigurations` from `hosts.nixos`
+- `darwin-configurations.nix` - Builds `flake.darwinConfigurations` from `hosts.darwin`
 
 Module name resolution:
 - **Exact match**: `"core/nix"` → loads that specific module
@@ -97,8 +96,8 @@ Module name resolution:
 ### Host Options
 
 Inside each NixOS/Darwin system, these options are available:
-- `host.user` - User configuration from fleet definition
-- `host.hostname` - Hostname (defaults to fleet key name)
+- `host.user` - User configuration from host definition
+- `host.hostname` - Hostname (defaults to hosts key name)
 
 ## Common Commands (Justfile)
 
@@ -122,7 +121,7 @@ just generations              # List NixOS generations
 ## Key Conventions
 
 1. **Functional Organization**: Modules grouped by function, not platform
-2. **Host Colocation**: Fleet definition and modules in same `modules/hosts/<hostname>/` directory
+2. **Host Colocation**: Host definition and modules in same `modules/hosts/<hostname>/` directory
 3. **Prefix Expansion**: Use short prefixes (`"core"`) instead of listing submodules
 4. **Secrets**: Store in `secrets/`, reference via `passwordSecret`, edit with `just edit-password`
 
@@ -130,17 +129,16 @@ just generations              # List NixOS generations
 
 ```
 modules/
-├── flake/              # flake-parts config
-│   ├── default.nix     # Library functions (resolveModules)
-│   ├── top-level.nix   # flake-parts entry point
-│   └── dev-shell.nix   # Development shell
-├── fleet/              # Fleet options and builders
-│   ├── default.nix     # fleet.nixos/darwin options
+├── flake/              # flake-parts config and host builders
+│   ├── default.nix     # flake-parts entry point
+│   ├── lib.nix         # Library functions (resolveModules)
+│   ├── hosts.nix       # hosts.nixos/darwin options
 │   ├── nixos-configurations.nix
-│   └── darwin-configurations.nix
+│   ├── darwin-configurations.nix
+│   └── dev-shell.nix   # Development shell
 ├── hosts/              # Host-specific configurations
 │   ├── desktop-home-saki/
-│   │   ├── default.nix     # fleet.nixos + modules
+│   │   ├── default.nix     # hosts.nixos + modules
 │   │   ├── hardware.nix
 │   │   ├── filesystem.nix
 │   │   ├── lanzaboote.nix
@@ -169,7 +167,7 @@ packages/               # Custom package definitions
 ### Adding a New Host
 
 1. Create `modules/hosts/<hostname>/default.nix`:
-   - Add `fleet.nixos.<hostname>` or `fleet.darwin.<hostname>` definition
+   - Add `hosts.nixos.<hostname>` or `hosts.darwin.<hostname>` definition
    - Add `flake.modules.nixos."hosts/<hostname>"` for system config
    - Add `flake.modules.homeManager."hosts/<hostname>"` for home config
 2. For complex hosts, split into multiple files (hardware.nix, packages.nix, etc.)

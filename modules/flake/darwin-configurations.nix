@@ -1,4 +1,7 @@
-# Build Darwin configurations from fleet.darwin options
+# Build darwinConfigurations from hosts.darwin
+#
+# Same as nixos-configurations but for macOS (nix-darwin).
+# Uses /Users as home base, Darwin-specific agenix/home-manager modules.
 {
   config,
   inputs,
@@ -6,7 +9,7 @@
   ...
 }:
 let
-  cfg = config.fleet.darwin;
+  cfg = config.hosts.darwin;
   resolveModules = config.flake.lib.resolveModules;
 
   # Platform configuration

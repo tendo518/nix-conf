@@ -1,9 +1,9 @@
 # Laptop for travel
-# Fleet configuration and module registrations
+# Host configuration and module registrations
 { inputs, ... }:
 {
-  # Fleet host definition
-  fleet.nixos.laptop-solar-chiyoko = {
+  # Host definition
+  hosts.nixos.laptop-solar-chiyoko = {
     modules = [
       "core"
       "system"

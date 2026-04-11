@@ -1,4 +1,7 @@
 # Flake library functions
+#
+# Exports resolveModules: resolves module names from the registry.
+# Supports exact match ("core/nix") or prefix expansion ("core" loads all submodules).
 {
   lib,
   ...

@@ -1,4 +1,7 @@
-# Fleet host configuration options
+# Host configuration options
+#
+# Defines hosts.nixos and hosts.darwin option schemas.
+# Each host specifies: modules, user config, platform, state version.
 {
   lib,
   ...
@@ -6,7 +9,7 @@
 let
   inherit (lib) types mkOption;
 
-  # Fleet host configuration submodule type
+  # Host configuration submodule type
   hostConfigType = types.submodule {
     options = {
       useHomeManager = mkOption {
@@ -33,7 +36,7 @@ let
   };
 in
 {
-  options.fleet = {
+  options.hosts = {
     nixos = mkOption {
       type = types.attrsOf hostConfigType;
       default = { };

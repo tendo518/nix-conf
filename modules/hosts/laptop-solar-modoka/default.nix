@@ -1,9 +1,9 @@
 # MacBook Pro for development
-# Fleet configuration and module registrations
+# Host configuration and module registrations
 { inputs, ... }:
 {
-  # Fleet host definition
-  fleet.darwin.laptop-solar-modoka = {
+  # Host definition
+  hosts.darwin.laptop-solar-modoka = {
     modules = [
       "core"
       "system"
