@@ -60,24 +60,9 @@ in
     in
     {
       home.sessionVariables = {
-        # ── Ansible XDG ──
-        ANSIBLE_HOME = "${xdg.configHome}/ansible";
-        ANSIBLE_CONFIG = "${xdg.configHome}/ansible/ansible.cfg";
-        ANSIBLE_GALAXY_CACHE_DIR = "${xdg.cacheHome}/ansible/galaxy_cache";
-
-        # ── Node.js XDG ──
-        NPM_CONFIG_USERCONFIG = "${xdg.configHome}/npm/npmrc";
-        NODE_REPL_HISTORY = "${xdg.dataHome}/node_repl_history";
-
-        # ── Rust XDG + mirrors ──
-        RUSTUP_HOME = "${xdg.dataHome}/rustup";
-        CARGO_HOME = "${xdg.dataHome}/cargo";
+        # ── Rust mirrors ──
         RUSTUP_DIST_SERVER = "https://rsproxy.cn";
         RUSTUP_UPDATE_ROOT = "https://rsproxy.cn/rustup";
-
-        # ── Python XDG ──
-        PYTHON_HISTORY = "${xdg.stateHome}/python/history";
-        PYTHONPYCACHEPREFIX = "${xdg.cacheHome}/python";
       };
 
       home.sessionPath = [
