@@ -40,7 +40,7 @@
           "qwen3-max-2026-01-23"
           aliyunApiKeyPath
         )
-         (mkClaudecodeWrapper "claude-qwen" claude-code "claude"
+        (mkClaudecodeWrapper "claude-qwen" claude-code "claude"
           "https://coding.dashscope.aliyuncs.com/apps/anthropic"
           "qwen3.6-plus"
           aliyunApiKeyPath
@@ -51,8 +51,7 @@
           aliyunApiKeyPath
         )
         # Alternative model wrappers
-        (mkClaudecodeWrapper "claude-ds" claude-code "claude"
-          "https://api.deepseek.com/anthropic"
+        (mkClaudecodeWrapper "claude-ds" claude-code "claude" "https://api.deepseek.com/anthropic"
           "deepseek-reasoner"
           deepseekApikeyPath
         )

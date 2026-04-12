@@ -93,6 +93,7 @@
           isDefault = true;
 
           settings = {
+            "ui.key.menuAccessKeyFocuses" = false;
             "browser.aboutConfig.showWarning" = false;
 
             "accessibility.force_disabled" = true;

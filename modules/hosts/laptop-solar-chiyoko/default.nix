@@ -121,8 +121,8 @@
       };
 
       users.mutableUsers = false;
-      
-      services.userborn.enable = true;  # needed by nixos-init
+
+      services.userborn.enable = true; # needed by nixos-init
       system = {
         etc.overlay = {
           enable = true;

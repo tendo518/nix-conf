@@ -26,13 +26,15 @@ let
   };
 
   # Common module settings
-  commonModule = { pkgs, ... }: {
-    # Disable legacy channels, force Flakes
-    nix.channel.enable = false;
+  commonModule =
+    { pkgs, ... }:
+    {
+      # Disable legacy channels, force Flakes
+      nix.channel.enable = false;
 
-    # Auto optimize Store
-    nix.optimise.automatic = true;
-  };
+      # Auto optimize Store
+      nix.optimise.automatic = true;
+    };
 in
 {
   flake.modules.nixos."core/nix" =
