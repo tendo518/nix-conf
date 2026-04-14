@@ -21,8 +21,8 @@ let
     ];
 
     # --- Disk Space Management ---
-    min-free = (5 * 1024 * 1024 * 1024);
-    max-free = (25 * 1024 * 1024 * 1024);
+    min-free = (5 * 1024 * 1024 * 1024); # 5GB
+    max-free = (25 * 1024 * 1024 * 1024); # 25GB
   };
 
   # Common module settings
@@ -60,9 +60,6 @@ in
           lib.optional user.trusted user.name ++ [ "root" ] ++ [ "@wheel" ];
       };
 
-      # ================================================================
-      # Systemd (Linux Only)
-      # ================================================================
       systemd.slices."nix-daemon".sliceConfig = {
         ManagedOOMMemoryPressure = "kill";
         ManagedOOMMemoryPressureLimit = "80%";
