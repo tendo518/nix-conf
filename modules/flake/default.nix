@@ -21,6 +21,7 @@
     {
       formatter = pkgs.nixfmt-tree;
 
-      packages.retedo-mono = pkgs.callPackage ../../packages/retedo-mono { };
+      # Export all custom packages to flake outputs
+      packages = import ../../packages { inherit pkgs; };
     };
 }
