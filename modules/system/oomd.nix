@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos."system/systemd" =
+  flake.modules.nixos."system/oomd" =
     { lib, ... }:
     {
       # Enable systemd-oomd (Out-Of-Memory Daemon)

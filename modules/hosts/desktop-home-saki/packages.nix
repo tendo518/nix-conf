@@ -19,6 +19,7 @@
     in
     {
       environment.systemPackages = with pkgs; [
+        sparkle
         luksCryptenroller
         sbctl
         tpm2-tss
