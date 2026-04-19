@@ -16,7 +16,7 @@
       boot.initrd.compressor = "zstd";
 
       # LTS Kernel
-      boot.kernelPackages = lib.mkDefault pkgs.linuxPackages;
-      # boot.kernelPackages = pkgs.linuxPackages_latest;
+      # boot.kernelPackages = lib.mkDefault pkgs.linuxPackages;
+      boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
     };
 }

@@ -15,7 +15,7 @@
 
       boot = {
         tmp.cleanOnBoot = true;
-        kernelPackages = pkgs.linuxPackages;
+        # kernelPackages = pkgs.linuxPackages;
 
         initrd = {
           availableKernelModules = [

@@ -19,7 +19,6 @@
     in
     {
       environment.systemPackages = with pkgs; [
-        sparkle
         luksCryptenroller
         sbctl
         tpm2-tss
@@ -28,6 +27,7 @@
         spotify
         spotify-qt
         obsidian
+        yt-dlp
         # wechat # whothefuck use webarchives as curl target
         bottles
         qq
