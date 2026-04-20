@@ -27,12 +27,18 @@
         '';
     in
     {
-      home.packages = with pkgs; [
+      home.packages = with pkgs.llm-agents; [
         gemini-cli
         claude-code-router
         opencode
-        bun # opencode makes use of bun
         claude-code
+
+        # Additional CLI tools
+        cc-switch-cli
+        ccstatusline
+        ccusage
+        hermes-agent
+        kilocode-cli
 
         # Default claude wrapper using qwen
         (mkClaudecodeWrapper "claude-qwenmax" claude-code "claude"
@@ -72,19 +78,14 @@
         )
       ];
 
-      # programs.claude-code is provided via wrappers above
-      # programs.claude-code.enable = true;
-
-      programs.opencode = {
-        enable = true;
-      };
-
-      programs.codex = {
-        enable = true;
-      };
-
-      programs.gemini-cli = {
-        enable = true;
+      # ccstatusline configuration
+      xdg.configFile."ccstatusline/settings.json" = {
+        text = builtins.toJSON {
+          format = "compact";
+          showModel = true;
+          showCost = true;
+          showTime = true;
+        };
       };
 
       xdg.configFile."opencode/opencode.json.template" = {

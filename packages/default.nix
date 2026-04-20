@@ -13,8 +13,5 @@ in
 
   # ticktick only available on darwin
   ticktick =
-    if pkgs.stdenv.hostPlatform.isDarwin then
-      pkgs.callPackage ./ticktick { }
-    else
-      retedo-mono;  # fallback to avoid errors on non-darwin
+    if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./ticktick { } else retedo-mono; # fallback to avoid errors on non-darwin
 }

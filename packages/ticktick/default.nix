@@ -1,4 +1,10 @@
-{ stdenv, lib, fetchurl, makeWrapper, _7zz }:
+{
+  stdenv,
+  lib,
+  fetchurl,
+  makeWrapper,
+  _7zz,
+}:
 
 let
   appname = "TickTick";
