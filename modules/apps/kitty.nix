@@ -2,11 +2,6 @@
   flake.modules.homeManager."apps/kitty" =
     { pkgs, ... }:
     {
-      # Ghostty (Linux only for now, often broken on Darwin in nixpkgs)
-      # programs.ghostty = {
-      #   enable = pkgs.stdenv.isLinux;
-      # };
-
       # Kitty
       programs.kitty = {
         enable = true;

@@ -28,17 +28,19 @@
     in
     {
       home.packages = with pkgs.llm-agents; [
+        codex
         gemini-cli
-        claude-code-router
         opencode
         claude-code
+        kilocode-cli
+
+        hermes-agent
 
         # Additional CLI tools
+        # claude-code-router
         cc-switch-cli
         ccstatusline
         ccusage
-        hermes-agent
-        kilocode-cli
 
         # Default claude wrapper using qwen
         (mkClaudecodeWrapper "claude-qwenmax" claude-code "claude"
@@ -87,6 +89,51 @@
           showTime = true;
         };
       };
+
+      # # cc-switch configuration directory
+      # home.file.".cc-switch/settings.json" = {
+      #   text = builtins.toJSON {
+      #     defaultApp = "claude";
+      #     autoBackup = true;
+      #     backupCount = 10;
+      #   };
+      # };
+
+      # # Configure cc-switch provider with Bailian Coding Plan
+      # home.activation.setupCcSwitchProvider = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      #   ccSwitchDir="${config.home.homeDirectory}/.cc-switch"
+      #   ccSwitchDb="$ccSwitchDir/cc-switch.db"
+
+      #   if [ -r "${aliyunApiKeyPath}" ]; then
+      #     mkdir -p "$ccSwitchDir"
+
+      #     # Initialize database if needed and add/update Bailian provider
+      #     ${pkgs.sqlite}/bin/sqlite3 "$ccSwitchDb" "
+      #       CREATE TABLE IF NOT EXISTS providers (
+      #         id TEXT PRIMARY KEY,
+      #         name TEXT NOT NULL,
+      #         type TEXT NOT NULL,
+      #         baseUrl TEXT,
+      #         apiKey TEXT,
+      #         models TEXT,
+      #         isDefault INTEGER DEFAULT 0,
+      #         createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      #         updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+      #       );
+
+      #       INSERT OR REPLACE INTO providers (id, name, type, baseUrl, apiKey, models, isDefault)
+      #       VALUES (
+      #         'bailian-coding-plan',
+      #         'Bailian Coding Plan',
+      #         'anthropic',
+      #         'https://coding.dashscope.aliyuncs.com/apps/anthropic',
+      #         '$(cat "${aliyunApiKeyPath}")',
+      #         'qwen3-max-2026-01-23,qwen3.6-plus,qwen3.5-plus,qwen3-coder-next,qwen3-coder-plus,MiniMax-M2.5,glm-5,glm-4.7,kimi-k2.5',
+      #         1
+      #       );
+      #     "
+      #   fi
+      # '';
 
       xdg.configFile."opencode/opencode.json.template" = {
         text = builtins.toJSON {

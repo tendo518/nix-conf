@@ -13,6 +13,7 @@
       "desktop/fonts"
       "apps/firefox"
       # "apps/kitty"
+      "apps/ghostty"
       "apps/mpv"
       "apps/vscode"
       "network/tailscale"
@@ -57,7 +58,7 @@
         qq
 
         stats
-        ghostty-bin
+        # ghostty-bin
 
         moonlight-qt
 
