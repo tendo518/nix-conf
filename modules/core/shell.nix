@@ -182,4 +182,10 @@
         libqalculate
       ];
     };
+  flake.modules.nixos."core/shell" = {
+    environment.enableAllTerminfo = true;
+  };
+  flake.modules.darwin."core/shell" = {
+    environment.enableAllTerminfo = true;
+  };
 }

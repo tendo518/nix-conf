@@ -63,7 +63,10 @@
         moonlight-qt
 
         antigravity
+
         bitwarden-desktop
+
+        code-cursor
       ];
 
       # Homebrew

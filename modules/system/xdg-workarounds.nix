@@ -204,9 +204,9 @@
         # ── n (node version manager) ──
         N_PREFIX = "${xdg.dataHome}/n";
 
-        # ── ncurses ──
-        TERMINFO = "${xdg.dataHome}/terminfo";
-        TERMINFO_DIRS = "${xdg.dataHome}/terminfo:/usr/share/terminfo";
+        # # ── ncurses ── use nix set, following broke terminfo search path /etc/terminfo
+        # TERMINFO = "${xdg.dataHome}/terminfo";
+        # TERMINFO_DIRS = "${xdg.dataHome}/terminfo:/usr/share/terminfo";
 
         # ── Node.js ──
         NODE_REPL_HISTORY = "${xdg.dataHome}/node_repl_history";
