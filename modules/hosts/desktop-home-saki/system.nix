@@ -1,7 +1,7 @@
 # System packages and services
-{ ... }:
+{ inputs, lib, ... }:
 {
-  flake.modules.nixos."hosts/desktop-home-saki/packages" =
+  flake.modules.nixos."hosts/desktop-home-saki/system" =
     { pkgs, ... }:
     let
       luksCryptenroller = pkgs.writeTextFile {
@@ -25,10 +25,8 @@
 
         # Office & Productivity
         spotify
-        spotify-qt
         obsidian
         yt-dlp
-        # wechat # whothefuck use webarchives as curl target
         bottles
         qq
         obs-studio
@@ -55,31 +53,36 @@
         CUDA_PATH = pkgs.cudaPackages.cudatoolkit;
       };
 
-      programs.nix-ld.libraries =
-        (with pkgs.cudaPackages; [
-          cudatoolkit
-        ])
-        ++ (with pkgs; [
-          stdenv.cc.cc
-        ]);
+      # VSCode remote SSH workaround
+      systemd.tmpfiles.settings."10-vscode-remote-ssh-workaround" = {
+        "/usr/lib64/".d = { };
+        "/usr/lib64/libstdc++.so.6"."L+" = {
+          argument = "${lib.getLib pkgs.stdenv.cc.cc}/lib/libstdc++.so.6";
+        };
+      };
 
-      # network
+      programs.nix-ld.libraries =
+        (with pkgs.cudaPackages; [ cudatoolkit ])
+        ++ (with pkgs; [ stdenv.cc.cc ]);
+
+      # Network
       programs.clash-verge = {
         enable = true;
         tunMode = true;
         serviceMode = true;
       };
 
+      # Game streaming
       services.sunshine = {
         enable = true;
         capSysAdmin = true;
-        package = pkgs.sunshine.override {
-          cudaSupport = true;
-        };
+        package = pkgs.sunshine.override { cudaSupport = true; };
       };
-      users.mutableUsers = false;
 
-      services.userborn.enable = true; # needed by nixos-init
+      # User management
+      users.mutableUsers = false;
+      services.userborn.enable = true;
+
       system = {
         etc.overlay = {
           enable = true;
@@ -92,5 +95,37 @@
           nixos-generate-config.enable = false;
         };
       };
+
+      # NFS mounts for NAS
+      boot.supportedFilesystems = [ "nfs" ];
+      services.rpcbind.enable = true;
+
+      systemd.mounts = [
+        {
+          type = "nfs";
+          mountConfig.Options = "noatime,nfsvers=4.1";
+          what = "nas-home-coin.local:/Public";
+          where = "/mnt/NAS/Public/";
+        }
+        {
+          type = "nfs";
+          mountConfig.Options = "noatime,nfsvers=4.1";
+          what = "nas-home-coin.local:/Photography";
+          where = "/mnt/NAS/Photography/";
+        }
+      ];
+
+      systemd.automounts = [
+        {
+          wantedBy = [ "multi-user.target" ];
+          automountConfig.TimeoutIdleSec = "600";
+          where = "/mnt/NAS/Public/";
+        }
+        {
+          wantedBy = [ "multi-user.target" ];
+          automountConfig.TimeoutIdleSec = "600";
+          where = "/mnt/NAS/Photography/";
+        }
+      ];
     };
 }

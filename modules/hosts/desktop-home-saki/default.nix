@@ -33,11 +33,6 @@
     stateVersion = "25.05";
   };
 
-  # NixOS modules are defined in separate files:
-  # - hardware.nix: kernel, CPU, hardware detection
-  # - filesystem.nix: LUKS, file systems, swap
-  # - lanzaboote.nix: secure boot
-  # - nfs.nix: NAS mounts
-  # - packages.nix: system packages and services
-  # - home.nix: home manager config
+  # Home Manager configuration
+  flake.modules.homeManager."hosts/desktop-home-saki" = { ... }: { };
 }

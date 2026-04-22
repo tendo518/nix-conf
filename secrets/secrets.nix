@@ -18,6 +18,7 @@ in
   # Include: your user key (for editing) + host keys (for decryption at boot).
   "deepseek-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "aliyun-codingplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
+  "volcengine-codingplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "tendo-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "pengwy-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "root-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
