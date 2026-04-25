@@ -18,8 +18,6 @@
     # -small cause tooo many compilation in darwin
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
-
     flake-parts.url = "github:hercules-ci/flake-parts";
 
     home-manager.url = "github:nix-community/home-manager";
@@ -30,8 +28,6 @@
       url = "github:nix-darwin/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    disko.url = "github:nix-community/disko";
 
     agenix.url = "github:ryantm/agenix";
 

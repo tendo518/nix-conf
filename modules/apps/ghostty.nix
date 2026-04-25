@@ -13,7 +13,7 @@
           font-family = "Retedo Mono";
           theme = "Dark Modern";
           scrollback-limit = 20000;
-          background-opacity = 0.90;
+          background-opacity = 0.95;
 
           # notify
           notify-on-command-finish = "unfocused";

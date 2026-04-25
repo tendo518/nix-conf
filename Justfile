@@ -37,7 +37,7 @@ switch-darwin hostname=`hostname -s` *args:
 # Install NixOS on a new machine.
 [group('System Management')]
 install-nixos hostname ip_address:
-    nix-anywhere --flake .#{{ hostname }} root@{{ ip_address }}
+    nixos-anywhere --flake .#{{ hostname }} root@{{ ip_address }}
 
 ############################################################################
 #
@@ -132,15 +132,6 @@ alias format := fmt
 [group('nix')]
 gcroot:
     ls -al /nix/var/nix/gcroots/auto/
-
-# Evaluate a configuration value for the current host (detects OS).
-[group('nix')]
-eval path:
-    @if [ "$(uname)" = "Darwin" ]; then \
-        just darwin-eval {{path}}; \
-    else \
-        just nixos-eval {{path}}; \
-    fi
 
 # Edit an agenix secret file.
 [group('Utility')]

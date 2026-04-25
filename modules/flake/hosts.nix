@@ -21,7 +21,18 @@ let
         description = "List of module names to include";
       };
       user = mkOption {
-        type = types.attrs;
+        type = types.submodule {
+          options = {
+            name = mkOption { type = types.str; };
+            email = mkOption { type = types.str; };
+            trusted = mkOption { type = types.bool; default = false; };
+            sshPubKey = mkOption { type = types.listOf types.str; default = [ ]; };
+            shell = mkOption { type = types.str; default = "fish"; };
+            homeStateVersion = mkOption { type = types.str; };
+            extraGroups = mkOption { type = types.listOf types.str; default = [ ]; };
+            passwordSecret = mkOption { type = types.nullOr types.str; default = null; };
+          };
+        };
         description = "User configuration";
       };
       stateVersion = mkOption {

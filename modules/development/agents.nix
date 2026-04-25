@@ -4,6 +4,7 @@
       pkgs,
       config,
       lib,
+      inputs,
       ...
     }:
     let
@@ -55,8 +56,9 @@
         (mkVolcengineWrapper "claude-volcengine-glm" "glm-5.1")
         (mkVolcengineWrapper "claude-volcengine-minimax" "minimax-m2.7")
 
-        # Deepseek wrapper
-        (mkClaudecodeWrapper "claude-ds" "https://api.deepseek.com/anthropic" "deepseek-reasoner" deepseek-api-key.path)
+        # Deepseek wrappers
+        (mkClaudecodeWrapper "claude-ds-flash" "https://api.deepseek.com/anthropic" "deepseek-v4-flash" deepseek-api-key.path)
+        (mkClaudecodeWrapper "claude-ds-pro" "https://api.deepseek.com/anthropic" "deepseek-v4-pro" deepseek-api-key.path)
       ];
 
       xdg.configFile."ccstatusline/settings.json" = {
@@ -110,9 +112,9 @@
       '';
 
       age.secrets = {
-        deepseek-api-key.file = ../../secrets/deepseek-api-key.age;
-        aliyun-codingplan-api-key.file = ../../secrets/aliyun-codingplan-api-key.age;
-        volcengine-codingplan-api-key.file = ../../secrets/volcengine-codingplan-api-key.age;
+        deepseek-api-key.file = "${inputs.self}/secrets/deepseek-api-key.age";
+        aliyun-codingplan-api-key.file = "${inputs.self}/secrets/aliyun-codingplan-api-key.age";
+        volcengine-codingplan-api-key.file = "${inputs.self}/secrets/volcengine-codingplan-api-key.age";
       };
     };
 }

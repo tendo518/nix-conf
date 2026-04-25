@@ -88,19 +88,20 @@ Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `hosts` na
 
 ### Host Builders (`modules/flake/`)
 
-- `hosts.nix` - Defines `hosts.nixos` and `hosts.darwin` options
-- `nixos-configurations.nix` - Builds `flake.nixosConfigurations` from `hosts.nixos`
-- `darwin-configurations.nix` - Builds `flake.darwinConfigurations` from `hosts.darwin`
-- `lib.nix` - `resolveModules` function for module name resolution
+- `hosts.nix` - Defines `hosts.nixos` and `hosts.darwin` options, plus the typed `user` submodule schema
+- `nixos-configurations.nix` - Thin wrapper calling `mkHostConfigurations` with NixOS-specific params
+- `darwin-configurations.nix` - Thin wrapper calling `mkHostConfigurations` with Darwin-specific params
+- `lib.nix` - `resolveModules` for module name resolution and `mkHostConfigurations` shared builder
 
-Module name resolution:
+Module name resolution (in `resolveModules`):
 - **Exact match**: `"core/nix"` → loads that specific module
 - **Prefix match**: `"core"` → loads all modules under `core/`
+- **No match**: emits a `builtins.trace` warning and returns `[ ]`
 
 ### Host Options
 
 Inside each NixOS/Darwin system, these options are available:
-- `host.user` - User configuration from host definition
+- `host.user` - Typed submodule (name, email, trusted, sshPubKey, shell, homeStateVersion, extraGroups, passwordSecret)
 - `host.hostname` - Hostname (defaults to hosts key name)
 
 Home Manager modules receive `userVars` containing the user config from `host.user`.
