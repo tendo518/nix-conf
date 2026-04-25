@@ -4,7 +4,6 @@
       config,
       lib,
       pkgs,
-      inputs,
       ...
     }:
     let
@@ -16,7 +15,7 @@
       age.secrets =
         lib.optionalAttrs (user.passwordSecret != null) {
           "${username}-password" = {
-            file = "${inputs.self}/secrets/${user.passwordSecret}";
+            file = ../../secrets + "/${user.passwordSecret}";
             owner = "root";
             group = "root";
             mode = "0400";
@@ -24,7 +23,7 @@
         }
         // {
           root-password = {
-            file = "${inputs.self}/secrets/root-password.age";
+            file = ../../secrets/root-password.age;
             owner = "root";
             group = "root";
             mode = "0400";
@@ -56,7 +55,6 @@
       config,
       lib,
       pkgs,
-      inputs,
       ...
     }:
     {

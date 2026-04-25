@@ -4,7 +4,6 @@
       pkgs,
       config,
       lib,
-      inputs,
       ...
     }:
     let
@@ -112,9 +111,9 @@
       '';
 
       age.secrets = {
-        deepseek-api-key.file = "${inputs.self}/secrets/deepseek-api-key.age";
-        aliyun-codingplan-api-key.file = "${inputs.self}/secrets/aliyun-codingplan-api-key.age";
-        volcengine-codingplan-api-key.file = "${inputs.self}/secrets/volcengine-codingplan-api-key.age";
+        deepseek-api-key.file = ../../secrets/deepseek-api-key.age;
+        aliyun-codingplan-api-key.file = ../../secrets/aliyun-codingplan-api-key.age;
+        volcengine-codingplan-api-key.file = ../../secrets/volcengine-codingplan-api-key.age;
       };
     };
 }
