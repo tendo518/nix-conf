@@ -11,6 +11,7 @@
       programs.firefox = {
         enable = true;
         package = pkgs.firefox;
+        configPath = "${config.xdg.configHome}/mozilla/firefox";
 
         policies = {
           # Privacy & Security
@@ -109,6 +110,7 @@
         profiles.default = {
           id = 0;
           name = "default";
+          path = "default";
           isDefault = true;
 
           settings = {

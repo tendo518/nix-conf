@@ -7,7 +7,11 @@
       ...
     }:
     let
-      inherit (config.age.secrets) deepseek-api-key aliyun-codingplan-api-key volcengine-codingplan-api-key;
+      inherit (config.age.secrets)
+        deepseek-api-key
+        aliyun-codingplan-api-key
+        volcengine-codingplan-api-key
+        ;
 
       mkClaudecodeWrapper =
         name: baseUrl: model: apiKeyPath:
@@ -26,8 +30,10 @@
       aliyunBaseUrl = "https://coding.dashscope.aliyuncs.com/apps/anthropic";
       volcengineBaseUrl = "https://ark.cn-beijing.volces.com/api/coding";
 
-      mkAliyunWrapper = name: model: mkClaudecodeWrapper name aliyunBaseUrl model aliyun-codingplan-api-key.path;
-      mkVolcengineWrapper = name: model: mkClaudecodeWrapper name volcengineBaseUrl model volcengine-codingplan-api-key.path;
+      mkAliyunWrapper =
+        name: model: mkClaudecodeWrapper name aliyunBaseUrl model aliyun-codingplan-api-key.path;
+      mkVolcengineWrapper =
+        name: model: mkClaudecodeWrapper name volcengineBaseUrl model volcengine-codingplan-api-key.path;
     in
     {
       home.packages = with pkgs.llm-agents; [
@@ -56,8 +62,12 @@
         (mkVolcengineWrapper "claude-volcengine-minimax" "minimax-m2.7")
 
         # Deepseek wrappers
-        (mkClaudecodeWrapper "claude-ds-flash" "https://api.deepseek.com/anthropic" "deepseek-v4-flash" deepseek-api-key.path)
-        (mkClaudecodeWrapper "claude-ds-pro" "https://api.deepseek.com/anthropic" "deepseek-v4-pro" deepseek-api-key.path)
+        (mkClaudecodeWrapper "claude-ds-flash" "https://api.deepseek.com/anthropic" "deepseek-v4-flash"
+          deepseek-api-key.path
+        )
+        (mkClaudecodeWrapper "claude-ds-pro" "https://api.deepseek.com/anthropic" "deepseek-v4-pro"
+          deepseek-api-key.path
+        )
       ];
 
       xdg.configFile."ccstatusline/settings.json" = {
@@ -79,21 +89,42 @@
             models = {
               "qwen3.5-plus" = {
                 name = "Qwen3.5 Plus";
-                modalities.input = [ "text" "image" ];
+                modalities.input = [
+                  "text"
+                  "image"
+                ];
                 modalities.output = [ "text" ];
-                options.thinking = { type = "enabled"; budgetTokens = 8192; };
+                options.thinking = {
+                  type = "enabled";
+                  budgetTokens = 8192;
+                };
               };
               "qwen3-max-2026-01-23".name = "Qwen3 Max 2026-01-23";
               "qwen3-coder-next".name = "Qwen3 Coder Next";
               "qwen3-coder-plus".name = "Qwen3 Coder Plus";
-              "MiniMax-M2.5".options.thinking = { type = "enabled"; budgetTokens = 8192; };
-              "glm-5".options.thinking = { type = "enabled"; budgetTokens = 8192; };
-              "glm-4.7".options.thinking = { type = "enabled"; budgetTokens = 8192; };
+              "MiniMax-M2.5".options.thinking = {
+                type = "enabled";
+                budgetTokens = 8192;
+              };
+              "glm-5".options.thinking = {
+                type = "enabled";
+                budgetTokens = 8192;
+              };
+              "glm-4.7".options.thinking = {
+                type = "enabled";
+                budgetTokens = 8192;
+              };
               "kimi-k2.5" = {
                 name = "Kimi K2.5";
-                modalities.input = [ "text" "image" ];
+                modalities.input = [
+                  "text"
+                  "image"
+                ];
                 modalities.output = [ "text" ];
-                options.thinking = { type = "enabled"; budgetTokens = 8192; };
+                options.thinking = {
+                  type = "enabled";
+                  budgetTokens = 8192;
+                };
               };
             };
           };

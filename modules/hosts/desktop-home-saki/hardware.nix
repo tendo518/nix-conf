@@ -23,7 +23,10 @@
             "usb_storage"
             "sd_mod"
           ];
-          kernelModules = [ "dm-snapshot" "cryptd" ];
+          kernelModules = [
+            "dm-snapshot"
+            "cryptd"
+          ];
         };
 
         kernelModules = [ "kvm-intel" ];
@@ -43,7 +46,10 @@
       fileSystems."/boot" = {
         device = "/dev/disk/by-label/NIXBOOT";
         fsType = "vfat";
-        options = [ "fmask=0077" "dmask=0077" ];
+        options = [
+          "fmask=0077"
+          "dmask=0077"
+        ];
       };
 
       swapDevices = [ ];

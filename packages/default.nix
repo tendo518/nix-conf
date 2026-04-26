@@ -12,6 +12,5 @@ in
   retedo-mono = retedo-mono;
 
   # ticktick only available on darwin
-  ticktick =
-    if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./ticktick { } else null;
+  ticktick = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./ticktick { } else null;
 }

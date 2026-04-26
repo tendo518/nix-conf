@@ -19,10 +19,7 @@ let
       let
         keys = builtins.filter (k: lib.hasPrefix "${name}/" k) (builtins.attrNames registry);
       in
-      if keys == [ ] then
-        [ ]
-      else
-        builtins.map (k: registry.${k}) keys;
+      if keys == [ ] then [ ] else builtins.map (k: registry.${k}) keys;
 
   # Build host configurations for a given platform.
   # Parameterized by platform-specific builder, agenix/home-manager modules,
@@ -30,9 +27,14 @@ let
   # target: "nixos" or "darwin" — used to look up config.flake.modules.<target>.
   mkHostConfigurations =
     inputs:
-    { builder, agenixModule, hmModule, homeBase, backupFileExtension }:
-    cfg:
-    target:
+    {
+      builder,
+      agenixModule,
+      hmModule,
+      homeBase,
+      backupFileExtension,
+    }:
+    cfg: target:
     let
       systemModules = config.flake.modules.${target};
     in

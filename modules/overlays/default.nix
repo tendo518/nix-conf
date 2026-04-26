@@ -19,5 +19,12 @@
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
     llm-agents = inputs.llm-agents.overlays.default;
+
+    # OpenLDAP: skip tests on i686
+    openldap = _: prev: {
+      openldap = prev.openldap.overrideAttrs {
+        doCheck = !prev.stdenv.hostPlatform.isi686;
+      };
+    };
   };
 }

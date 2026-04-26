@@ -24,7 +24,7 @@
         if stdenv.isDarwin then
           "Library/Application Support/Firefox/Profiles/default"
         else
-          ".mozilla/firefox/default";
+          "${config.programs.firefox.configPath}/default";
     in
     {
       home.file = {
