@@ -14,11 +14,15 @@
         ;
 
       mkClaudecodeWrapper =
-        name: baseUrl: model: apiKeyPath:
+        name: baseUrl: model: smallModel: apiKeyPath:
         pkgs.writeShellScriptBin name ''
           export ANTHROPIC_BASE_URL="${baseUrl}"
           export ANTHROPIC_MODEL="${model}"
-          export ANTHROPIC_SMALL_FAST_MODEL="${model}"
+          export ANTHROPIC_DEFAULT_OPUS_MODEL="${model}"
+          export ANTHROPIC_DEFAULT_SONNET_MODEL="${model}"
+          export ANTHROPIC_DEFAULT_HAIKU_MODEL="${smallModel}"
+          export CLAUDE_CODE_SUBAGENT_MODEL="${smallModel}"
+          export CLAUDE_CODE_EFFORT_LEVEL="max"
           export API_TIMEOUT_MS="600000"
           export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
           if [ -r "${apiKeyPath}" ]; then
@@ -29,11 +33,19 @@
 
       aliyunBaseUrl = "https://coding.dashscope.aliyuncs.com/apps/anthropic";
       volcengineBaseUrl = "https://ark.cn-beijing.volces.com/api/coding";
+      deepseekBaseUrl = "https://api.deepseek.com/anthropic";
 
       mkAliyunWrapper =
-        name: model: mkClaudecodeWrapper name aliyunBaseUrl model aliyun-codingplan-api-key.path;
+        name: model: smallModel:
+        mkClaudecodeWrapper name aliyunBaseUrl model smallModel aliyun-codingplan-api-key.path;
+
       mkVolcengineWrapper =
-        name: model: mkClaudecodeWrapper name volcengineBaseUrl model volcengine-codingplan-api-key.path;
+        name: model: smallModel:
+        mkClaudecodeWrapper name volcengineBaseUrl model smallModel volcengine-codingplan-api-key.path;
+
+      mkDeepseekWrapper =
+        name: model: smallModel:
+        mkClaudecodeWrapper name deepseekBaseUrl model smallModel deepseek-api-key.path;
     in
     {
       home.packages = with pkgs.llm-agents; [
@@ -49,25 +61,21 @@
         ccusage
 
         # Aliyun wrappers
-        (mkAliyunWrapper "claude-qwenmax" "qwen3-max-2026-01-23")
-        (mkAliyunWrapper "claude-qwen" "qwen3.6-plus")
-        (mkAliyunWrapper "claude-qwen35" "qwen3.5-plus")
-        (mkAliyunWrapper "claude-kimi" "kimi-k2.5")
-        (mkAliyunWrapper "claude-glm" "glm-5")
-        (mkAliyunWrapper "claude-minimax" "MiniMax-M2.5")
+        (mkAliyunWrapper "claude-qwenmax" "qwen3-max-2026-01-23" "qwen3.5-plus")
+        (mkAliyunWrapper "claude-qwen" "qwen3.6-plus" "qwen3.5-plus")
+        (mkAliyunWrapper "claude-qwen35" "qwen3.5-plus" "qwen3.5-plus")
+        (mkAliyunWrapper "claude-kimi" "kimi-k2.5" "qwen3.5-plus")
+        (mkAliyunWrapper "claude-glm" "glm-5" "glm-5")
+        (mkAliyunWrapper "claude-minimax" "MiniMax-M2.5" "MiniMax-M2.5")
 
         # Volcengine wrappers
-        (mkVolcengineWrapper "claude-volcengine-kimi" "kimi-k2.6")
-        (mkVolcengineWrapper "claude-volcengine-glm" "glm-5.1")
-        (mkVolcengineWrapper "claude-volcengine-minimax" "minimax-m2.7")
+        (mkVolcengineWrapper "claude-volcengine-kimi" "kimi-k2.6" "kimi-k2.6")
+        (mkVolcengineWrapper "claude-volcengine-glm" "glm-5.1" "glm-5.1")
+        (mkVolcengineWrapper "claude-volcengine-minimax" "minimax-m2.7" "minimax-m2.7")
 
         # Deepseek wrappers
-        (mkClaudecodeWrapper "claude-ds-flash" "https://api.deepseek.com/anthropic" "deepseek-v4-flash"
-          deepseek-api-key.path
-        )
-        (mkClaudecodeWrapper "claude-ds-pro" "https://api.deepseek.com/anthropic" "deepseek-v4-pro"
-          deepseek-api-key.path
-        )
+        (mkDeepseekWrapper "claude-ds-flash" "deepseek-v4-flash" "deepseek-v4-flash")
+        (mkDeepseekWrapper "claude-ds-pro" "deepseek-v4-pro" "deepseek-v4-flash")
       ];
 
       xdg.configFile."ccstatusline/settings.json" = {
