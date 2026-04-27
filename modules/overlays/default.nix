@@ -26,5 +26,13 @@
         doCheck = !prev.stdenv.hostPlatform.isi686;
       };
     };
+
+    # TODO: remove once https://github.com/NixOS/nixpkgs/pull/513081 lands in nixpkgs-unstable.
+    # Workaround for direnv 2.37.1 testsuite hanging on aarch64-darwin (macOS Tahoe).
+    direnv = _: prev: {
+      direnv = prev.direnv.overrideAttrs {
+        doCheck = !prev.stdenv.hostPlatform.isDarwin;
+      };
+    };
   };
 }
