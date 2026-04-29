@@ -74,8 +74,8 @@
         (mkVolcengineWrapper "claude-volcengine-minimax" "minimax-m2.7" "minimax-m2.7")
 
         # Deepseek wrappers
-        (mkDeepseekWrapper "claude-ds-flash" "deepseek-v4-flash" "deepseek-v4-flash")
-        (mkDeepseekWrapper "claude-ds-pro" "deepseek-v4-pro" "deepseek-v4-flash")
+        (mkDeepseekWrapper "claude-ds-flash" "deepseek-v4-flash[1m]" "deepseek-v4-flash[1m]")
+        (mkDeepseekWrapper "claude-ds-pro" "deepseek-v4-pro[1m]" "deepseek-v4-flash[1m]")
       ];
 
       xdg.configFile."ccstatusline/settings.json" = {
