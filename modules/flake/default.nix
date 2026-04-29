@@ -2,7 +2,7 @@
 #
 # Initializes flake-parts framework, defines supported systems,
 # sets default formatter, and registers custom packages.
-{ inputs, ... }:
+{ config, inputs, ... }:
 {
   imports = [
     inputs.flake-parts.flakeModules.modules
