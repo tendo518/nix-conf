@@ -26,7 +26,7 @@
         # Office & Productivity
         spotify
         obsidian
-        yt-dlp
+        # yt-dlp  # upstream deno build fail
         bottles
         qq
         obs-studio

@@ -34,5 +34,13 @@
         doCheck = !prev.stdenv.hostPlatform.isDarwin;
       };
     };
+
+    # TODO: remove once upstream fix lands (nixpkgs#208951 / #507531).
+    # Force local rebuild of fish to avoid invalid ad-hoc signatures from binary cache on aarch64-darwin.
+    #fish-codesign-fix = _: prev: {
+    #  fish = prev.fish.overrideAttrs (_old: {
+    #   NIX_FORCE_LOCAL_REBUILD = "darwin-codesign-fix";
+    #  });
+    #};
   };
 }

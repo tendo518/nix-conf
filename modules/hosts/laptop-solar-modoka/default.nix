@@ -14,7 +14,7 @@
       "apps/firefox"
       # "apps/kitty"
       "apps/ghostty"
-      "apps/mpv"
+      # "apps/mpv"
       "apps/vscode"
       "network/tailscale"
     ];
@@ -26,7 +26,7 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKLqKE9nQVet+MSWdtO0mlECDSwJz8md4ZIZgv9y09KR"
       ];
       shell = "fish";
-      homeStateVersion = "25.05";
+      homeStateVersion = "25.11";
     };
     hostPlatform = "aarch64-darwin";
     stateVersion = 6;
@@ -54,7 +54,8 @@
         ticktick
 
         wechat
-        telegram-desktop
+        # upstream cache build faillure
+        # telegram-desktop
         qq
 
         stats

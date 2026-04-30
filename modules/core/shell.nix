@@ -159,7 +159,7 @@
         htop # Interactive process viewer
 
         # --- Media ---
-        ffmpeg-full # A complete, cross-platform solution to record, convert and stream audio and video
+        # ffmpeg-full # A complete, cross-platform solution to record, convert and stream audio and video
 
         # --- Development & Code ---
         tokei # Displays statistics about your code
