@@ -37,15 +37,71 @@
           apiKeyPath = aliyun-codingplan-api-key.path;
           smallModel = "qwen3.5-plus";
           models = [
-            { name = "qwen3-max"; model = "qwen3-max-2026-01-23"; }
-            { name = "qwen3-6-plus"; model = "qwen3.6-plus"; }
-            { name = "qwen3-5-plus"; model = "qwen3.5-plus"; modalities = { input = [ "text" "image" ]; output = [ "text" ]; }; thinking = { budgetTokens = 8192; }; }
-            { name = "qwen3-coder-next"; model = "qwen3-coder-next"; }
-            { name = "qwen3-coder-plus"; model = "qwen3-coder-plus"; }
-            { name = "kimi-k2-5"; model = "kimi-k2.5"; modalities = { input = [ "text" "image" ]; output = [ "text" ]; }; thinking = { budgetTokens = 8192; }; }
-            { name = "glm-5"; model = "glm-5"; thinking = { budgetTokens = 8192; }; }
-            { name = "glm-4-7"; model = "glm-4.7"; thinking = { budgetTokens = 8192; }; }
-            { name = "minimax-m2-5"; model = "MiniMax-M2.5"; thinking = { budgetTokens = 8192; }; }
+            {
+              name = "qwen3-max";
+              model = "qwen3-max-2026-01-23";
+            }
+            {
+              name = "qwen3-6-plus";
+              model = "qwen3.6-plus";
+            }
+            {
+              name = "qwen3-5-plus";
+              model = "qwen3.5-plus";
+              modalities = {
+                input = [
+                  "text"
+                  "image"
+                ];
+                output = [ "text" ];
+              };
+              thinking = {
+                budgetTokens = 8192;
+              };
+            }
+            {
+              name = "qwen3-coder-next";
+              model = "qwen3-coder-next";
+            }
+            {
+              name = "qwen3-coder-plus";
+              model = "qwen3-coder-plus";
+            }
+            {
+              name = "kimi-k2-5";
+              model = "kimi-k2.5";
+              modalities = {
+                input = [
+                  "text"
+                  "image"
+                ];
+                output = [ "text" ];
+              };
+              thinking = {
+                budgetTokens = 8192;
+              };
+            }
+            {
+              name = "glm-5";
+              model = "glm-5";
+              thinking = {
+                budgetTokens = 8192;
+              };
+            }
+            {
+              name = "glm-4-7";
+              model = "glm-4.7";
+              thinking = {
+                budgetTokens = 8192;
+              };
+            }
+            {
+              name = "minimax-m2-5";
+              model = "MiniMax-M2.5";
+              thinking = {
+                budgetTokens = 8192;
+              };
+            }
           ];
         };
         volcengine = {
@@ -53,9 +109,18 @@
           apiKeyPath = volcengine-codingplan-api-key.path;
           smallModel = "kimi-k2.6";
           models = [
-            { name = "kimi-k2-6"; model = "kimi-k2.6"; }
-            { name = "glm-5-1"; model = "glm-5.1"; }
-            { name = "minimax-m2-7"; model = "minimax-m2.7"; }
+            {
+              name = "kimi-k2-6";
+              model = "kimi-k2.6";
+            }
+            {
+              name = "glm-5-1";
+              model = "glm-5.1";
+            }
+            {
+              name = "minimax-m2-7";
+              model = "minimax-m2.7";
+            }
           ];
         };
         deepseek = {
@@ -63,91 +128,181 @@
           apiKeyPath = deepseek-api-key.path;
           smallModel = "deepseek-v4-flash[1m]";
           models = [
-            { name = "v4-flash"; model = "deepseek-v4-flash[1m]"; }
-            { name = "v4-pro"; model = "deepseek-v4-pro[1m]"; }
+            {
+              name = "v4-flash";
+              model = "deepseek-v4-flash[1m]";
+            }
+            {
+              name = "v4-pro";
+              model = "deepseek-v4-pro[1m]";
+            }
           ];
         };
       };
 
-      mkClaudecodeWrappers = providerName: provider:
-        map (m: mkClaudecodeWrapper provider.baseUrl m.model provider.smallModel provider.apiKeyPath "cc-${providerName}-${m.name}") provider.models;
+      mkClaudecodeWrappers =
+        providerName: provider:
+        map (
+          m:
+          mkClaudecodeWrapper provider.baseUrl m.model provider.smallModel provider.apiKeyPath
+            "cc-${providerName}-${m.name}"
+        ) provider.models;
 
-      mkOpencodeModels = provider:
-        lib.listToAttrs (map (m:
-          lib.nameValuePair m.model (
-            { name = m.name; }
-            // lib.optionalAttrs (m ? modalities) { modalities = m.modalities; }
-            // lib.optionalAttrs (m ? thinking) { options.thinking = { type = "enabled"; budgetTokens = m.thinking.budgetTokens; }; }
-          )
-        ) provider.models);
+      mkOpencodeModels =
+        provider:
+        lib.listToAttrs (
+          map (
+            m:
+            lib.nameValuePair m.model (
+              {
+                name = m.name;
+              }
+              // lib.optionalAttrs (m ? modalities) { modalities = m.modalities; }
+              // lib.optionalAttrs (m ? thinking) {
+                options.thinking = {
+                  type = "enabled";
+                  budgetTokens = m.thinking.budgetTokens;
+                };
+              }
+            )
+          ) provider.models
+        );
 
-      mkOpenCodeProviders =
-        lib.mapAttrs (name: p: {
-          npm = "@ai-sdk/anthropic";
-          name = p.opencode.name or (builtins.replaceStrings ["-"] [" "] name);
-          options.baseURL = "${p.baseUrl}/v1";
-          models = mkOpencodeModels p;
-        }) providers;
+      mkOpenCodeProviders = lib.mapAttrs (name: p: {
+        npm = "@ai-sdk/anthropic";
+        name = p.opencode.name or (builtins.replaceStrings [ "-" ] [ " " ] name);
+        options.baseURL = "${p.baseUrl}/v1";
+        models = mkOpencodeModels p;
+      }) providers;
 
-      mkOpenCodeInjectKeys = lib.concatMapStrings (name: let p = providers.${name}; in ''
-        if [ -r "${p.apiKeyPath}" ]; then
-          ${pkgs.jq}/bin/jq \
-            --arg key "$(cat "${p.apiKeyPath}")" \
-            '.provider."${name}".options.apiKey = $key' \
-            "${config.xdg.configHome}/opencode/opencode.json" > "${config.xdg.configHome}/opencode/opencode.json.tmp"
-          mv "${config.xdg.configHome}/opencode/opencode.json.tmp" "${config.xdg.configHome}/opencode/opencode.json"
-        fi
-      '') (builtins.attrNames providers);
+      mkOpenCodeInjectKeys = lib.concatMapStrings (
+        name:
+        let
+          p = providers.${name};
+        in
+        ''
+          if [ -r "${p.apiKeyPath}" ]; then
+            ${pkgs.jq}/bin/jq \
+              --arg key "$(cat "${p.apiKeyPath}")" \
+              '.provider."${name}".options.apiKey = $key' \
+              "${config.xdg.configHome}/opencode/opencode.json" > "${config.xdg.configHome}/opencode/opencode.json.tmp"
+            mv "${config.xdg.configHome}/opencode/opencode.json.tmp" "${config.xdg.configHome}/opencode/opencode.json"
+          fi
+        ''
+      ) (builtins.attrNames providers);
 
       claudecodeWrappers = lib.concatLists (lib.mapAttrsToList mkClaudecodeWrappers providers);
 
-      mkHermesAuxYaml = model: services:
-        lib.concatStrings (map (s: ''
-          ${s}:
-            provider: "anthropic"
-            model: "${model}"
-        '') services);
+      mkHermesAuxYaml =
+        model: services:
+        lib.concatStrings (
+          map (s: ''
+            ${s}:
+              provider: "anthropic"
+              model: "${model}"
+          '') services
+        );
 
       hermesDefaultModel = "glm-5";
-      hermesAuxServices = [ "compression" "title_generation" "session_search" "skills_hub" "web_extract" "mcp" ];
+      hermesAuxServices = [
+        "compression"
+        "title_generation"
+        "session_search"
+        "skills_hub"
+        "web_extract"
+        "mcp"
+      ];
     in
     {
-      home.packages = with pkgs.llm-agents; [
-        codex
-        gemini-cli
-        opencode
-        claude-code
-        kilocode-cli
-        hermes-agent
+      home.packages =
+        with pkgs.llm-agents;
+        [
+          codex
+          gemini-cli
+          opencode
+          claude-code
+          kilocode-cli
+          hermes-agent
 
-        cc-switch-cli
-        ccstatusline
-        ccusage
-      ] ++ claudecodeWrappers;
+          cc-switch-cli
+          ccstatusline
+          ccusage
+        ]
+        ++ claudecodeWrappers;
 
       xdg.configFile."ccstatusline/settings.json" = {
         text = builtins.toJSON {
           version = 3;
           lines = [
             [
-              { id = "model"; type = "model"; color = "cyan"; }
-              { id = "sep1"; type = "separator"; }
-              { id = "ctx"; type = "context-length"; color = "brightBlack"; }
-              { id = "sep2"; type = "separator"; }
-              { id = "branch"; type = "git-branch"; color = "magenta"; }
-              { id = "sep3"; type = "separator"; }
-              { id = "changes"; type = "git-changes"; color = "yellow"; }
-              { id = "sep4"; type = "separator"; }
-              { id = "think"; type = "thinking-effort"; color = "yellow"; }
-              { id = "flex"; type = "flex-separator"; }
-              { id = "cached"; type = "tokens-cached"; }
-              { id = "sep5"; type = "separator"; }
-              { id = "total"; type = "tokens-total"; }
-              { id = "sep6"; type = "separator"; }
-              { id = "speed"; type = "output-speed"; }
+              {
+                id = "model";
+                type = "model";
+                color = "cyan";
+              }
+              {
+                id = "sep1";
+                type = "separator";
+              }
+              {
+                id = "ctx";
+                type = "context-length";
+                color = "brightBlack";
+              }
+              {
+                id = "sep2";
+                type = "separator";
+              }
+              {
+                id = "branch";
+                type = "git-branch";
+                color = "magenta";
+              }
+              {
+                id = "sep3";
+                type = "separator";
+              }
+              {
+                id = "changes";
+                type = "git-changes";
+                color = "yellow";
+              }
+              {
+                id = "sep4";
+                type = "separator";
+              }
+              {
+                id = "think";
+                type = "thinking-effort";
+                color = "yellow";
+              }
+              {
+                id = "flex";
+                type = "flex-separator";
+              }
+              {
+                id = "cached";
+                type = "tokens-cached";
+              }
+              {
+                id = "sep5";
+                type = "separator";
+              }
+              {
+                id = "total";
+                type = "tokens-total";
+              }
+              {
+                id = "sep6";
+                type = "separator";
+              }
+              {
+                id = "speed";
+                type = "output-speed";
+              }
             ]
-            []
-            []
+            [ ]
+            [ ]
           ];
           flexMode = "full";
           compactThreshold = 60;
@@ -195,16 +350,20 @@
 
       home.activation.setupClaudeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         mkdir -p "$HOME/.claude"
-        cp ${pkgs.writeText "claude-settings.json" (builtins.toJSON {
-          statusLine = {
-            type = "command";
-            command = "bunx -y ccstatusline@latest";
-            padding = 0;
-          };
-          enabledPlugins."pyright-lsp@claude-plugins-official" = true;
-          skipWebFetchPreflight = true;
-          theme = "auto";
-        })} "$HOME/.claude/settings.json"
+        cp ${
+          pkgs.writeText "claude-settings.json" (
+            builtins.toJSON {
+              statusLine = {
+                type = "command";
+                command = "bunx -y ccstatusline@latest";
+                padding = 0;
+              };
+              enabledPlugins."pyright-lsp@claude-plugins-official" = true;
+              skipWebFetchPreflight = true;
+              theme = "auto";
+            }
+          )
+        } "$HOME/.claude/settings.json"
         chmod u+w "$HOME/.claude/settings.json"
       '';
 

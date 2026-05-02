@@ -30,7 +30,7 @@
           };
         };
 
-      users.mutableUsers = false;
+      # users.mutableUsers = false;
 
       users.users = lib.mkMerge [
         {

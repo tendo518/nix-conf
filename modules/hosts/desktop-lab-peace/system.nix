@@ -28,6 +28,18 @@
         antigravity
         cudaPackages.cudatoolkit
         realesrgan-ncnn-vulkan
+
+        # Texlive for Chinese/English writing with IEEE templates
+        (pkgs.texlive.combine {
+          inherit (pkgs.texlive)
+            scheme-medium
+            collection-langchinese
+            latexmk
+            ieeetran
+            biblatex
+            biber
+            ;
+        })
       ];
 
       environment.sessionVariables = {
@@ -46,7 +58,17 @@
       programs.nix-ld.libraries =
         (with pkgs.cudaPackages; [ cudatoolkit ]) ++ (with pkgs; [ stdenv.cc.cc ]);
 
+      # SDDM autologin
+      services.displayManager.autoLogin = {
+        enable = true;
+        user = "pengwy";
+      };
+
       # Network
+      boot.kernel.sysctl = {
+        "net.ipv4.ip_forward" = 1;
+        "net.ipv6.conf.all.forwarding" = 1;
+      };
       programs.clash-verge = {
         enable = true;
         tunMode = true;

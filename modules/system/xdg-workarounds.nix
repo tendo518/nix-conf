@@ -495,6 +495,7 @@
         mkdir -p "${xdg.configHome}/pg"
         mkdir -p "${xdg.configHome}/readline"
         mkdir -p "${xdg.configHome}/zsh"
+        mkdir -p "${xdg.configHome}/ripgrep/"
 
         mkdir -p "${xdg.dataHome}/cargo"
         mkdir -p "${xdg.dataHome}/go"
