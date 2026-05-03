@@ -109,7 +109,7 @@
             identityFile = "~/.ssh/id_ed25519";
           };
           "lab-desktop.tailscale" = {
-            hostname = "100.115.234.38";
+            hostname = "100.116.76.115";
             user = "pengwy";
             identityFile = "~/.ssh/id_ed25519";
           };
@@ -123,16 +123,16 @@
             user = "pengwy";
             identityFile = "~/.ssh/id_ed25519";
           };
-          "home-nas.tailscale" = {
-            hostname = "100.77.154.86";
-            user = "tendo";
-            identityFile = "~/.ssh/id_ed25519";
-          };
-          "solar-laptop.tailscale" = {
-            hostname = "100.101.177.110";
-            user = "tendo";
-            identityFile = "~/.ssh/id_ed25519";
-          };
+          # "home-nas.tailscale" = {
+          #   hostname = "100.77.154.86";
+          #   user = "tendo";
+          #   identityFile = "~/.ssh/id_ed25519";
+          # };
+          # "solar-laptop.tailscale" = {
+          #   hostname = "100.101.177.110";
+          #   user = "tendo";
+          #   identityFile = "~/.ssh/id_ed25519";
+          # };
         };
       };
     };
