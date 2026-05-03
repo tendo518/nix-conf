@@ -9,7 +9,6 @@
         spotify
         obsidian
         # yt-dlp  # upstream deno build fail
-        bottles
         qq
         obs-studio
         libreoffice
@@ -28,18 +27,20 @@
         antigravity
         cudaPackages.cudatoolkit
         realesrgan-ncnn-vulkan
+        deskflow
 
         # Texlive for Chinese/English writing with IEEE templates
-        (pkgs.texlive.combine {
-          inherit (pkgs.texlive)
-            scheme-medium
-            collection-langchinese
-            latexmk
-            ieeetran
-            biblatex
-            biber
-            ;
-        })
+        texlive.combined.scheme-full
+        # (pkgs.texlive.combine {
+        #   inherit (pkgs.texlive)
+        #     scheme-medium
+        #     collection-langchinese
+        #     latexmk
+        #     ieeetran
+        #     biblatex
+        #     biber
+        #     ;
+        # })
       ];
 
       environment.sessionVariables = {
@@ -98,36 +99,47 @@
       #   };
       # };
 
-      # # NFS mounts for NAS
-      # boot.supportedFilesystems = [ "nfs" ];
-      # services.rpcbind.enable = true;
+      # NFS mounts for NAS
+      boot.supportedFilesystems = [ "nfs" ];
+      services.rpcbind.enable = true;
 
-      # systemd.mounts = [
-      #   {
-      #     type = "nfs";
-      #     mountConfig.Options = "noatime,nfsvers=4.1";
-      #     what = "nas-home-coin.local:/Public";
-      #     where = "/mnt/NAS/Public/";
-      #   }
-      #   {
-      #     type = "nfs";
-      #     mountConfig.Options = "noatime,nfsvers=4.1";
-      #     what = "nas-home-coin.local:/Photography";
-      #     where = "/mnt/NAS/Photography/";
-      #   }
-      # ];
+      systemd.mounts = [
+        {
+          type = "nfs4";
+          mountConfig.Options = "noatime";
+          what = "172.18.36.179:/volume2/public_dataset_nas2";
+          where = "/mnt/hqlab_nas2";
+        }
+        {
+          type = "nfs4";
+          mountConfig.Options = "noatime";
+          what = "172.18.36.180:/volume1/Dataset";
+          where = "/mnt/hqlab_nas3";
+        }
+        {
+          type = "nfs4";
+          mountConfig.Options = "noatime";
+          what = "172.18.36.178:/volume1/public_dataset_nas";
+          where = "/mnt/hqlab_nas1";
+        }
+      ];
 
-      # systemd.automounts = [
-      #   {
-      #     wantedBy = [ "multi-user.target" ];
-      #     automountConfig.TimeoutIdleSec = "600";
-      #     where = "/mnt/NAS/Public/";
-      #   }
-      #   {
-      #     wantedBy = [ "multi-user.target" ];
-      #     automountConfig.TimeoutIdleSec = "600";
-      #     where = "/mnt/NAS/Photography/";
-      #   }
-      # ];
+      systemd.automounts = [
+        {
+          wantedBy = [ "multi-user.target" ];
+          automountConfig.TimeoutIdleSec = "600";
+          where = "/mnt/hqlab_nas2";
+        }
+        {
+          wantedBy = [ "multi-user.target" ];
+          automountConfig.TimeoutIdleSec = "600";
+          where = "/mnt/hqlab_nas3";
+        }
+        {
+          wantedBy = [ "multi-user.target" ];
+          automountConfig.TimeoutIdleSec = "600";
+          where = "/mnt/hqlab_nas1";
+        }
+      ];
     };
 }

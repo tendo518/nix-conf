@@ -58,6 +58,23 @@
         ];
       };
 
+      systemd.mounts = [
+        {
+          type = "btrfs";
+          mountConfig.Options = "compress=zstd";
+          what = "/dev/disk/by-uuid/de63948f-ca51-4430-9b28-1626283adeaa";
+          where = "/mnt/data";
+        }
+      ];
+
+      systemd.automounts = [
+        {
+          wantedBy = [ "multi-user.target" ];
+          automountConfig.TimeoutIdleSec = "600";
+          where = "/mnt/data";
+        }
+      ];
+
       swapDevices = [ ];
 
       nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
