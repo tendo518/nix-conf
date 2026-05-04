@@ -4,7 +4,7 @@
     {
 
       programs.wireshark = {
-        enable = true;
+        enable = false;
         package = pkgs.wireshark;
       };
 
