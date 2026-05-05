@@ -26,7 +26,7 @@
       ];
       shell = "fish";
       homeStateVersion = "26.05";
-      extraGroups = [ "networkmanager" ];
+      # extraGroups = [ "networkmanager" ];
       passwordSecret = "tendo-password.age";
     };
     hostPlatform = "x86_64-linux";

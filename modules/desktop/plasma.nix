@@ -1,6 +1,7 @@
 {
   flake.modules.nixos."desktop/plasma" =
     {
+      config,
       pkgs,
       ...
     }:
@@ -47,6 +48,15 @@
           ];
         };
       };
+
+      # nm user
+      users.users =
+        let
+          user = config.host.user.name;
+        in
+        {
+          "${user}".extraGroups = [ "networkmanager" ];
+        };
     };
   flake.modules.homeManager."desktop/plasma" =
     {
