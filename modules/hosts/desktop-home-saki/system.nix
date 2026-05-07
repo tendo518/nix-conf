@@ -32,7 +32,6 @@
         obs-studio
         libreoffice
         calibre
-        localsend
         zathura
         moonlight-qt
 
@@ -74,8 +73,15 @@
       # Game streaming
       services.sunshine = {
         enable = true;
+        openFirewall = true;
         capSysAdmin = true;
         package = pkgs.sunshine.override { cudaSupport = true; };
+      };
+
+      # Local file sharing
+      programs.localsend = {
+        enable = true;
+        openFirewall = true;
       };
 
       # User management

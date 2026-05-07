@@ -14,6 +14,7 @@
       services.openssh = {
         enable = true;
         ports = [ 22 ];
+        openFirewall = true;
         settings = {
           # default to no, but some vm may need root login
           PermitRootLogin = lib.mkDefault "no";

@@ -2,7 +2,7 @@
 { inputs, lib, ... }:
 {
   flake.modules.nixos."hosts/desktop-lab-peace/system" =
-    { pkgs, ... }:
+    { pkgs, config, ... }:
     {
       environment.systemPackages = with pkgs; [
         # Office & Productivity
@@ -13,7 +13,6 @@
         obs-studio
         libreoffice
         calibre
-        localsend
         zathura
         moonlight-qt
 
@@ -27,7 +26,6 @@
         antigravity
         cudaPackages.cudatoolkit
         realesrgan-ncnn-vulkan
-        deskflow
 
         # Texlive for Chinese/English writing with IEEE templates
         texlive.combined.scheme-full
@@ -62,11 +60,10 @@
       # SDDM autologin
       services.displayManager.autoLogin = {
         enable = true;
-        user = "pengwy";
+        user = config.host.user.name;
       };
 
       # Network
-      networking.firewall.enable = false;
       boot.kernel.sysctl = {
         "net.ipv4.ip_forward" = 1;
         "net.ipv6.conf.all.forwarding" = 1;
@@ -80,25 +77,33 @@
       # Game streaming
       services.sunshine = {
         enable = true;
+        openFirewall = true;
         capSysAdmin = true;
         package = pkgs.sunshine.override { cudaSupport = true; };
       };
 
-      # User management
-      users.mutableUsers = true;
+      # Local file sharing
+      programs.localsend = {
+        enable = true;
+        openFirewall = true;
+      };
 
-      # system = {
-      #   etc.overlay = {
-      #     enable = true;
-      #     mutable = true;
-      #   };
-      #   nixos-init.enable = true;
-      #   tools = {
-      #     nixos-option.enable = true;
-      #     nixos-version.enable = false;
-      #     nixos-generate-config.enable = false;
-      #   };
-      # };
+      # User management
+      users.mutableUsers = false;
+      services.userborn.enable = true;
+
+      system = {
+        etc.overlay = {
+          enable = true;
+          mutable = true;
+        };
+        nixos-init.enable = true;
+        tools = {
+          nixos-option.enable = true;
+          nixos-version.enable = false;
+          nixos-generate-config.enable = false;
+        };
+      };
 
       # NFS mounts for NAS
       boot.supportedFilesystems = [ "nfs" ];

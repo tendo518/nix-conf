@@ -61,7 +61,6 @@
         bitwarden-desktop
         darktable
         antigravity
-        deskflow
         ghostty
         retedo-mono
       ];
@@ -116,7 +115,10 @@
       hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
       services = {
-        v2raya.enable = true;
+        v2raya = {
+          enable = true;
+          openFirewall = true;
+        };
         fwupd.enable = true;
       };
 

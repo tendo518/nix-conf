@@ -121,7 +121,6 @@
             "browser.quitShortcut.disabled" = true;
             "general.autoScroll" = true;
             "toolkit.tabbox.switchByScrolling" = true;
-            "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
 
             # Browser Behavior
             "browser.tabs.insertAfterCurrent" = true;

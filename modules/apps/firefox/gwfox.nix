@@ -36,21 +36,23 @@
           # Required gwfox settings
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
           "svg.context-properties.content.enabled" = true;
-          "sidebar.animation.enabled" = false;
 
           # Platform-specific settings
           "widget.gtk.rounded-bottom-corners.enabled" = if stdenv.isLinux then true else false;
           "widget.macos.native-context-menus" = if stdenv.isDarwin then false else true;
 
-          # Optional gwfox customizations
-          "gwfox.plus" = false; # Bundled layout (macOS UI + Compact mode)
-          "gwfox.plus_sc" = true;
+          # gwfox customizations
           "gwfox.icons" = true; # Enable menu icons
+          "gwfox.blur" = true; # Enable UI blur effects
+          "gwfox.toolbar" = true; # Auto-hide bookmarks toolbar
+          "gwfox.bms" = if stdenv.isLinux then true else false; # Enable transparency (Linux only)
           "gwfox.noborder" = false; # Borderless window mode
-          "gwfox.ac" = false; # Accent color
-          "gwfox.tp" = false; # Enable New Tab transparency Requires allow_transparent_browser
+          "gwfox.newtab" = false; # Enable New Tab transparency (requires allow_transparent_browser)
+          "gwfox.urlbar" = false; # Move address bar to sidebar
+          "gwfox.atbc" = false; # Adaptive Tab Bar Colour compatibility
           "gwfox.db" = false; # Disable blur on panels/menus
-          # "gwfox.sidebar" = Set sidebar width 1, 2, 3
+          "gwfox.ac" = false; # Accent color (edit --bg0 in CSS to customize)
+          # "gwfox.sidebar" = 1; # Set sidebar width (1, 2, or 3)
         };
       };
     };
