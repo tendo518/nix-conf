@@ -45,7 +45,7 @@
           "gwfox.icons" = true; # Enable menu icons
           "gwfox.blur" = true; # Enable UI blur effects
           "gwfox.toolbar" = true; # Auto-hide bookmarks toolbar
-          "gwfox.bms" = if stdenv.isLinux then true else false; # Enable transparency (Linux only)
+          "gwfox.bms" = false; # Enable transparency (Linux only)
           "gwfox.noborder" = false; # Borderless window mode
           "gwfox.newtab" = false; # Enable New Tab transparency (requires allow_transparent_browser)
           "gwfox.urlbar" = false; # Move address bar to sidebar
