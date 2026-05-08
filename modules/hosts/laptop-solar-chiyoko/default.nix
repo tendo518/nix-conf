@@ -1,4 +1,4 @@
-# Laptop for travel
+# Lenovo ThinkPad X13s (aarch64)
 # Host configuration and module registrations
 { inputs, ... }:
 {
@@ -13,9 +13,9 @@
       "desktop"
       "hosts/laptop-solar-chiyoko"
       "network/tailscale"
+      "hardware/lenovo-x13s"
       "hardware/fwupd"
       "hardware/smartd"
-      "hardware/disable-sleep"
     ];
     user = {
       name = "tendo";
@@ -26,10 +26,10 @@
       ];
       shell = "fish";
       homeStateVersion = "25.11";
-      extraGroups = [  ];
+      extraGroups = [ ];
       passwordSecret = "tendo-password.age";
     };
-    hostPlatform = "x86_64-linux";
+    hostPlatform = "aarch64-linux";
     stateVersion = "25.11";
   };
 
@@ -52,8 +52,6 @@
       };
 
       environment.systemPackages = with pkgs; [
-        #wechat
-        qq
         libreoffice
         zathura
         telegram-desktop
@@ -65,54 +63,9 @@
         retedo-mono
       ];
 
-      boot = {
-        kernelPackages = pkgs.linuxPackages_zen;
-
-        initrd = {
-          availableKernelModules = [
-            "nvme"
-            "xhci_pci"
-            "thunderbolt"
-            "usb_storage"
-            "sd_mod"
-          ];
-          kernelModules = [ ];
-        };
-
-        kernelModules = [ "kvm-amd" ];
-        extraModulePackages = [ ];
-
-        loader.systemd-boot = {
-          edk2-uefi-shell.enable = true;
-          windows = {
-            "win11" = {
-              title = "Windows 11";
-              efiDeviceHandle = "HD0d";
-              sortKey = "z_windows";
-            };
-          };
-        };
-      };
-
-      fileSystems."/" = {
-        device = "/dev/disk/by-uuid/72662836-19da-4d7a-9da4-6699d77e3862";
-        fsType = "xfs";
-      };
-
-      fileSystems."/boot" = {
-        device = "/dev/disk/by-uuid/E6AE-21BC";
-        fsType = "vfat";
-        options = [
-          "fmask=0077"
-          "dmask=0077"
-        ];
-      };
-
-      swapDevices = [ ];
+      boot.loader.systemd-boot.edk2-uefi-shell.enable = true;
 
       networking.useDHCP = lib.mkDefault true;
-
-      hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
       services = {
         v2raya = {
