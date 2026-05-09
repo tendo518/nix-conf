@@ -8,7 +8,10 @@
       };
 
       networking.firewall.allowedTCPPorts = [ 22000 ];
-      networking.firewall.allowedUDPPorts = [ 22000 21027 ];
+      networking.firewall.allowedUDPPorts = [
+        22000
+        21027
+      ];
     };
 
   # Darwin uses home-manager for syncthing since macOS doesn't have

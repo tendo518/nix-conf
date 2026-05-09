@@ -81,6 +81,15 @@
         capSysAdmin = true;
         package = pkgs.sunshine.override { cudaSupport = true; };
       };
+      # fix upsteam: https://github.com/NixOS/nixpkgs/issues/455737
+      hardware.uinput.enable = true;
+      users.users =
+        let
+          user = config.host.user.name;
+        in
+        {
+          "${user}".extraGroups = [ "wireshark" ];
+        };
 
       # Local file sharing
       programs.localsend = {
