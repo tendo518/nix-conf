@@ -31,8 +31,6 @@
 
     agenix.url = "github:ryantm/agenix";
 
-    nix-index-database.url = "github:nix-community/nix-index-database";
-
     import-tree.url = "github:vic/import-tree";
 
     llm-agents.url = "github:numtide/llm-agents.nix";

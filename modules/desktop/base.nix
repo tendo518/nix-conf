@@ -72,21 +72,13 @@
         xdg-user-dirs
       ];
 
-      xdg = {
+      # XDG base directory env vars are set in core/xdg
+      xdg.userDirs = {
         enable = true;
-
-        cacheHome = "${config.home.homeDirectory}/.cache";
-        configHome = "${config.home.homeDirectory}/.config";
-        dataHome = "${config.home.homeDirectory}/.local/share";
-        stateHome = "${config.home.homeDirectory}/.local/state";
-
-        userDirs = {
-          enable = true;
-          createDirectories = true;
-          setSessionVariables = true;
-          extraConfig = {
-            SCREENSHOTS = "${config.xdg.userDirs.pictures}/Screenshots";
-          };
+        createDirectories = true;
+        setSessionVariables = true;
+        extraConfig = {
+          SCREENSHOTS = "${config.xdg.userDirs.pictures}/Screenshots";
         };
       };
     };

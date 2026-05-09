@@ -42,7 +42,7 @@
       xdg.portal = {
         enable = true;
         xdgOpenUsePortal = true;
-        config.common = {
+        config.kde = {
           default = [
             "kde"
           ];

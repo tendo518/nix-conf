@@ -1,7 +1,4 @@
-environment {
-    _JAVA_AWT_WM_NONREPARENTING "1"
-    NIXOS_OZONE_WL "1"
-}
+environment {}
 
 cursor {
     xcursor-size 36
