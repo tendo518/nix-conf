@@ -7,8 +7,8 @@
         enable = true;
         interfaceName = "tailscale0";
         openFirewall = true;
-        useRoutingFeatures = "client";
-        extraUpFlags = "--accept-routes";
+        # useRoutingFeatures = "client";
+        # extraUpFlags = "--accept-routes";
       };
     };
   flake.modules.darwin."network/tailscale" =

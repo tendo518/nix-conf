@@ -1,6 +1,6 @@
 {
   flake.modules.nixos."network/core" =
-    { config, ... }:
+    { config, lib, ... }:
     {
       networking.hostName = config.host.hostname;
       networking.usePredictableInterfaceNames = true;
@@ -18,6 +18,13 @@
           userServices = true;
         };
       };
+      networking.firewall = {
+        enable = lib.mkDefault true;
+        allowPing = true;
+      };
+
+      # Avahi/mDNS for local hostname discovery
+      services.avahi.openFirewall = true;
 
       # Use an NTP server located in the mainland of China to synchronize the system time
       networking.timeServers = [
