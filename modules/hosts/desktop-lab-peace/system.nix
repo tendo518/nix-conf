@@ -83,12 +83,15 @@
       };
       # fix upsteam: https://github.com/NixOS/nixpkgs/issues/455737
       hardware.uinput.enable = true;
+      users.groups.hqlab = {
+        gid = 11000;
+      };
       users.users =
         let
           user = config.host.user.name;
         in
         {
-          "${user}".extraGroups = [ "wireshark" ];
+          "${user}".extraGroups = [ "wireshark" "hqlab" ];
         };
 
       # Local file sharing
