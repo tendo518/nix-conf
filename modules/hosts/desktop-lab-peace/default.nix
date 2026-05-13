@@ -16,7 +16,6 @@
       "apps/ghostty"
       "apps/kitty"
       "apps/mpv"
-
       "apps/vscode"
       "apps/wireshark"
       "network"
