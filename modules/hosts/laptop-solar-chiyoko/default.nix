@@ -1,8 +1,6 @@
 # Lenovo ThinkPad X13s (aarch64)
-# Host configuration and module registrations
 { inputs, ... }:
 {
-  # Host definition
   hosts.nixos.laptop-solar-chiyoko = {
     modules = [
       "core"
@@ -32,29 +30,21 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKLqKE9nQVet+MSWdtO0mlECDSwJz8md4ZIZgv9y09KR"
       ];
       shell = "fish";
-      homeStateVersion = "25.11";
+      homeStateVersion = "26.05";
       extraGroups = [ ];
-      passwordSecret = "tendo-password.age";
     };
     hostPlatform = "aarch64-linux";
-    stateVersion = "25.11";
+    stateVersion = "26.05";
   };
 
-  # NixOS system configuration
   flake.modules.nixos."hosts/laptop-solar-chiyoko" =
-    {
-      pkgs,
-      lib,
-      config,
-      ...
-    }:
+    { pkgs, lib, ... }:
     {
       imports = [
         inputs.nixpkgs.nixosModules.notDetected
         inputs.disko.nixosModules.disko
       ];
 
-      # Disko partition layout: nvme0n1p1=1G ESP, nvme0n1p2=btrfs with @root, @nix, @home
       disko.devices = {
         disk.main = {
           device = "/dev/nvme0n1";
@@ -69,10 +59,7 @@
                   type = "filesystem";
                   format = "vfat";
                   mountpoint = "/boot";
-                  mountOptions = [
-                    "fmask=0022"
-                    "dmask=0022"
-                  ];
+                  mountOptions = [ "fmask=0022" "dmask=0022" ];
                 };
               };
               root = {
@@ -87,10 +74,7 @@
                     };
                     "@nix" = {
                       mountpoint = "/nix";
-                      mountOptions = [
-                        "compress=zstd"
-                        "noatime"
-                      ];
+                      mountOptions = [ "compress=zstd" "noatime" ];
                     };
                     "@home" = {
                       mountpoint = "/home";
@@ -128,22 +112,6 @@
       services = {
         v2raya.enable = true;
         fwupd.enable = true;
-      };
-
-      users.mutableUsers = false;
-
-      services.userborn.enable = true; # needed by nixos-init
-      system = {
-        etc.overlay = {
-          enable = true;
-          mutable = true;
-        };
-        nixos-init.enable = true;
-        tools = {
-          nixos-option.enable = true;
-          nixos-version.enable = false;
-          nixos-generate-config.enable = false;
-        };
       };
     };
 

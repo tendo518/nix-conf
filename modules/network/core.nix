@@ -3,7 +3,7 @@
     { config, lib, ... }:
     {
       networking.hostName = config.host.hostname;
-      networking.usePredictableInterfaceNames = true;
+      networking.usePredictableInterfaceNames = lib.mkDefault true;
 
       # Network discovery, mDNS
       # With this enabled, you can access your machine at <hostname>.local
