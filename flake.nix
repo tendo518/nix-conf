@@ -35,6 +35,8 @@
 
     llm-agents.url = "github:numtide/llm-agents.nix";
 
+    disko.url = "github:nix-community/disko";
+
     rime-ice = {
       url = "github:tendo518/rime-ice";
       flake = false;

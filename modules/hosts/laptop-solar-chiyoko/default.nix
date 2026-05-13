@@ -44,7 +44,58 @@
     {
       imports = [
         inputs.nixpkgs.nixosModules.notDetected
+        inputs.disko.nixosModules.disko
       ];
+
+      # Disko partition layout: nvme0n1p1=1G ESP, nvme0n1p2=btrfs with @root, @nix, @home
+      disko.devices = {
+        disk.main = {
+          device = "/dev/nvme0n1";
+          type = "disk";
+          content = {
+            type = "gpt";
+            partitions = {
+              ESP = {
+                size = "1G";
+                type = "EF00";
+                content = {
+                  type = "filesystem";
+                  format = "vfat";
+                  mountpoint = "/boot";
+                  mountOptions = [
+                    "fmask=0022"
+                    "dmask=0022"
+                  ];
+                };
+              };
+              root = {
+                size = "100%";
+                content = {
+                  type = "btrfs";
+                  extraArgs = [ "-f" ];
+                  subvolumes = {
+                    "@root" = {
+                      mountpoint = "/";
+                      mountOptions = [ "compress=zstd" ];
+                    };
+                    "@nix" = {
+                      mountpoint = "/nix";
+                      mountOptions = [
+                        "compress=zstd"
+                        "noatime"
+                      ];
+                    };
+                    "@home" = {
+                      mountpoint = "/home";
+                      mountOptions = [ "compress=zstd" ];
+                    };
+                  };
+                };
+              };
+            };
+          };
+        };
+      };
 
       nix.settings = {
         cores = 4;
@@ -68,10 +119,7 @@
       networking.useDHCP = lib.mkDefault true;
 
       services = {
-        v2raya = {
-          enable = true;
-          openFirewall = true;
-        };
+        v2raya.enable = true;
         fwupd.enable = true;
       };
 
