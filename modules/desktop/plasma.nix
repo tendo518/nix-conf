@@ -57,106 +57,61 @@
         {
           "${user}".extraGroups = [ "networkmanager" ];
         };
-    };
-  flake.modules.homeManager."desktop/plasma" =
-    {
-      config,
-      pkgs,
-      ...
-    }:
-    let
-      # ========== Application Groups ==========
-      # Each group is a list - first entry is primary, others are fallbacks
 
-      # Web browsers
-      browser = [ "firefox.desktop" ];
+      # System-wide MIME defaults — Plasma is free to modify ~/.config/mimeapps.list
+      xdg.mime.defaultApplications = {
+        "text/html" = "firefox.desktop";
+        "application/xhtml+xml" = "firefox.desktop";
+        "application/xml" = "firefox.desktop";
+        "application/xhtml_xml" = "firefox.desktop";
+        "application/rdf+xml" = "firefox.desktop";
+        "application/rss+xml" = "firefox.desktop";
+        "text/xml" = "firefox.desktop";
 
-      # Text editors
-      editor = [ "code.desktop" ];
+        "x-scheme-handler/http" = "firefox.desktop";
+        "x-scheme-handler/https" = "firefox.desktop";
+        "x-scheme-handler/ftp" = "firefox.desktop";
+        "x-scheme-handler/about" = "firefox.desktop";
 
-      # PDF viewers
-      pdfViewer = [ "okularApplication_pdf.desktop" ];
+        "application/pdf" = "okularApplication_pdf.desktop";
+        "application/x-pdf" = "okularApplication_pdf.desktop";
 
-      # Image viewers
-      imageView = [ "org.kde.gwenview.desktop" ];
+        "text/plain" = "code.desktop";
+        "text/css" = "code.desktop";
+        "application/json" = "code.desktop";
+        "application/x-shellscript" = "code.desktop";
+        "application/x-python" = "code.desktop";
 
-      # Video/Audio players
-      videoPlayer = [ "mpv.desktop" ];
+        "image/gif" = "org.kde.gwenview.desktop";
+        "image/jpeg" = "org.kde.gwenview.desktop";
+        "image/png" = "org.kde.gwenview.desktop";
+        "image/webp" = "org.kde.gwenview.desktop";
+        "image/svg+xml" = "org.kde.gwenview.desktop";
 
-      # File managers
-      fileManager = [ "org.kde.dolphin.desktop" ];
+        "audio/*" = "mpv.desktop";
+        "video/*" = "mpv.desktop";
+        "audio/mp3" = "mpv.desktop";
+        "audio/mp4" = "mpv.desktop";
+        "video/mp4" = "mpv.desktop";
+        "video/x-matroska" = "mpv.desktop";
 
-      # Terminal emulator (for xdg-terminal-exec)
-      terminal = [ "kitty.desktop" ];
-    in
-    {
-      # Use KDE defaults for mimeapps
-      xdg.mimeApps = {
-        enable = true;
-
-        defaultApplications = {
-          # ========== Web / URL Handlers ==========
-          "text/html" = browser;
-          "application/xhtml+xml" = browser;
-          "application/xml" = browser;
-          "application/xhtml_xml" = browser;
-          "application/rdf+xml" = browser;
-          "application/rss+xml" = browser;
-          "text/xml" = browser;
-
-          "x-scheme-handler/http" = browser;
-          "x-scheme-handler/https" = browser;
-          "x-scheme-handler/ftp" = browser;
-          "x-scheme-handler/about" = browser;
-
-          # ========== Document Handlers ==========
-          "application/pdf" = pdfViewer;
-          "application/x-pdf" = pdfViewer;
-
-          # ========== Text / Code Handlers ==========
-          "text/plain" = editor;
-          "text/css" = editor;
-          "application/json" = editor;
-          "application/x-shellscript" = editor;
-          "application/x-python" = editor;
-
-          # ========== Image Handlers ==========
-          "image/gif" = imageView;
-          "image/jpeg" = imageView;
-          "image/png" = imageView;
-          "image/webp" = imageView;
-          "image/svg+xml" = imageView;
-
-          # ========== Media Handlers ==========
-          "audio/*" = videoPlayer;
-          "video/*" = videoPlayer;
-          "audio/mp3" = videoPlayer;
-          "audio/mp4" = videoPlayer;
-          "video/mp4" = videoPlayer;
-          "video/x-matroska" = videoPlayer;
-
-          # ========== Directory Handler ==========
-          "inode/directory" = fileManager;
-
-          # ========== Terminal Handler ==========
-          "application/x-terminal-emulator" = terminal;
-        };
-
-        # Remove unwanted associations - prevent apps from stealing handlers
-        associations.removed = {
-          # Prevent Firefox from handling PDFs
-          "application/pdf" = [ "firefox.desktop" ];
-
-          # Prevent VS Code from handling plain text files (keep it for code)
-          "text/plain" = [ "code.desktop" ];
-        };
+        "inode/directory" = "org.kde.dolphin.desktop";
+        "application/x-terminal-emulator" = "kitty.desktop";
       };
 
-      # Terminal emulator setting (separate from mimeApps)
+      xdg.mime.removedAssociations = {
+        "application/pdf" = "firefox.desktop";
+        "text/plain" = "code.desktop";
+      };
+    };
+  flake.modules.homeManager."desktop/plasma" =
+    { config, pkgs, ... }:
+    {
+      # Terminal emulator setting
       xdg.terminal-exec = {
         enable = true;
         settings = {
-          default = terminal;
+          default = [ "kitty.desktop" ];
         };
       };
     };

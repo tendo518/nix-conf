@@ -5,6 +5,7 @@
     { pkgs, config, ... }:
     {
       environment.systemPackages = with pkgs; [
+        wechat
         # Office & Productivity
         spotify
         obsidian
@@ -83,16 +84,6 @@
       };
       # fix upsteam: https://github.com/NixOS/nixpkgs/issues/455737
       hardware.uinput.enable = true;
-      users.groups.hqlab = {
-        gid = 11000;
-      };
-      users.users =
-        let
-          user = config.host.user.name;
-        in
-        {
-          "${user}".extraGroups = [ "wireshark" "hqlab" ];
-        };
 
       # Local file sharing
       programs.localsend = {
@@ -104,12 +95,27 @@
       users.mutableUsers = false;
       services.userborn.enable = true;
 
-      system = {
-        etc.overlay = {
-          enable = true;
-          mutable = true;
+      # This is needed for HQLAB NAS access
+      users.groups.hqlab = {
+        gid = 110000;
+      };
+      users.users =
+        let
+          user = config.host.user.name;
+        in
+        {
+          "${user}".extraGroups = [
+            "wireshark"
+            "hqlab"
+          ];
         };
-        nixos-init.enable = true;
+
+      system = {
+        # etc.overlay = {
+        #   enable = true;
+        #   mutable = true;
+        # };
+        # nixos-init.enable = true;
         tools = {
           nixos-option.enable = true;
           nixos-version.enable = false;
