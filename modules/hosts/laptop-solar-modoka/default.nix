@@ -41,6 +41,7 @@
       system.defaults.smb.NetBIOSName = "laptop-solar-modoka";
 
       environment.systemPackages = with pkgs; [
+        iina
         google-chrome
         obsidian
         skimpdf

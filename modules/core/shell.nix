@@ -158,9 +158,6 @@
         # --- System Monitoring ---
         htop # Interactive process viewer
 
-        # --- Media ---
-        # ffmpeg-full # A complete, cross-platform solution to record, convert and stream audio and video
-
         # --- Development & Code ---
         tokei # Displays statistics about your code
         bat # A cat(1) clone with wings
