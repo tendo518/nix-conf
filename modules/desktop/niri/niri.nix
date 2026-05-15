@@ -27,10 +27,9 @@
       environment.systemPackages = with pkgs; [
         niri
         noctalia-shell
-        swaybg
-        swaylock
         brightnessctl
         playerctl
+        kitty
       ];
 
       # niri is NixOS-only, set home-manager options directly instead of a homeManager module

@@ -1,13 +1,23 @@
 # ThinkPad X13s (Qualcomm SC8280XP / Snapdragon 8cx Gen 3)
 # Aligned with nixos-hardware/lenovo/thinkpad/x13s
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
-  wifiMac = "e6:65:38:52:22:aa";
-  bluetoothMac = "E6:25:18:22:44:AB";
+  wifiMac = "98:d6:a5:99:05:a7";
+  bluetoothMac = "D0:10:28:00:75:95";
 in
 {
   flake.modules.nixos."hardware/lenovo-x13s" =
-    { config, lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     {
       hardware.deviceTree = {
         enable = true;
@@ -66,12 +76,6 @@ in
         ];
       };
 
-      # TPM is non-functional on X13s — mask the service to avoid 90s timeout
-      systemd.services.systemd-tpm2-setup = {
-        enable = false;
-        unitConfig.ConditionPathExists = "";
-      };
-
       hardware.enableRedistributableFirmware = true;
 
       systemd.services.bluetooth-x13s-mac = {
@@ -91,13 +95,12 @@ in
         ACTION=="add", SUBSYSTEM=="net", KERNELS=="0006:01:00.0", RUN+="${pkgs.iproute2}/bin/ip link set dev $name address ${wifiMac}"
       '';
 
-      # X13s TPM is non-functional — mask device units to avoid 90s timeout
-      systemd = {
-        services."systemd-tpm2-setup".masked = true;
-        services."systemd-pcrmachine".masked = true;
-        targets."tpm2".masked = true;
-        units."dev-tpm0.device".masked = true;
-        units."dev-tpmrm0.device".masked = true;
-      };
+      # X13s TPM is non-functional — disable all TPM2 systemd units to avoid 90s boot timeout
+      # BIOS does not have an option to disable TPM
+      # systemd.tpm2.enable = false removes upstream TPM units entirely;
+      # enable=false on individual units creates a symlink to /dev/null (same as systemctl mask)
+      boot.initrd.systemd.tpm2.enable = false;
+      systemd.tpm2.enable = false;
+      systemd.services.systemd-pcrmachine.enable = false;
     };
 }

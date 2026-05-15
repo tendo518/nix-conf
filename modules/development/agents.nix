@@ -322,7 +322,7 @@
 
       home.activation.setupOpenCodeConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         mkdir -p "${config.xdg.configHome}/opencode"
-        cp "${config.xdg.configHome}/opencode/opencode.json.template" "${config.xdg.configHome}/opencode/opencode.json"
+        cp -f "${config.xdg.configHome}/opencode/opencode.json.template" "${config.xdg.configHome}/opencode/opencode.json"
         ${mkOpenCodeInjectKeys}
       '';
 

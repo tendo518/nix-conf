@@ -104,6 +104,12 @@
         ghostty
         retedo-mono
       ];
+      # Network
+      programs.clash-verge = {
+        enable = true;
+        tunMode = true;
+        serviceMode = true;
+      };
 
       boot.loader.systemd-boot.edk2-uefi-shell.enable = true;
 

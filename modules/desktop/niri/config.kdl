@@ -1,7 +1,7 @@
 environment {}
 
 cursor {
-    xcursor-size 36
+    xcursor-size 24
 }
 
 spawn-at-startup "noctalia-shell"
@@ -18,14 +18,14 @@ input {
         tap
         dwt
         dwtp
-        natural-scroll
+        // natural-scroll
         accel-profile "flat"
         scroll-method "two-finger"
     }
 }
 
 layout {
-    gaps 16
+    gaps 8
     center-focused-column "never"
     preset-column-widths {
         proportion 0.33333
@@ -39,14 +39,14 @@ layout {
 
     focus-ring {
         on
-        width 2
+        width 1.5
         active-color "#bcc0cc"
         inactive-color "#e6e9ef"
     }
 
     shadow {
-        on
-        softness 4
+        off
+        softness 2
         spread 2
         offset x=0 y=2
         color "rgba(0, 0, 0, 0.2)"
@@ -57,10 +57,10 @@ prefer-no-csd
 
 screenshot-path "~/Pictures/Screenshots/Screenshots_%Y-%m-%d_%H-%M-%S.png"
 
-window-rule {
-    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
-    open-floating true
-}
+//window-rule {
+//    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+//    open-floating true
+//}
 
 // [Nocatalia Shell] Set the overview wallpaper on the backdrop.
 layer-rule {
@@ -85,31 +85,11 @@ window-rule {
     block-out-from "screen-capture"
 }
 
-window-rule {
-    match app-id="kitty"
-    match app-id="code"
-    match app-id="dev.zed.Zed"
-
-    focus-ring {
-        active-color "#fab387"
-        inactive-color "#181825"
-    }
-}
-
-window-rule {
-    match app-id="rmmv-game"
-    match app-id="rmmz-game"
-
-    geometry-corner-radius 0
-    clip-to-geometry true
-    open-floating true
-}
-
 binds {
     Super+L   { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
     Mod+T     { spawn "kitty"; }
     Mod+S     { spawn "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
-    Mod+Space { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
+    Alt+Space { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
 
     XF86AudioRaiseVolume  allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "increase"; }
     XF86AudioLowerVolume  allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "decrease"; }
