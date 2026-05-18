@@ -1,7 +1,9 @@
 {
   flake.modules.nixos."network/networkmanager" =
-    { lib, ... }:
+    { config, lib, ... }:
     {
+      users.users.${config.host.user.name}.extraGroups = [ "networkmanager" ];
+
       networking.networkmanager = {
         enable = true;
         dns = "systemd-resolved";

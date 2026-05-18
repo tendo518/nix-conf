@@ -217,6 +217,9 @@
             # Extensions
             "extensions.getAddons.showPane" = false;
 
+            # Use XDG desktop portal for file picker (KDE integration)
+            "widget.use-xdg-desktop-portal.file-picker" = 1;
+
             # Discovery & UI Tours
             "browser.discovery.enabled" = false;
             "browser.uitour.enabled" = false;

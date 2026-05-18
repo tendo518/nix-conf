@@ -9,8 +9,6 @@
       services.displayManager.sessionPackages = [ pkgs.niri ];
 
       xdg.portal = {
-        enable = true;
-        xdgOpenUsePortal = true;
         config.niri = {
           default = [
             "gnome"
@@ -30,16 +28,18 @@
         brightnessctl
         playerctl
         kitty
+        zathura
       ];
+
+      # Niri-specific MIME types
+      xdg.mime.defaultApplications = {
+        "application/pdf" = "org.pwmt.zathura.desktop";
+        "application/x-pdf" = "org.pwmt.zathura.desktop";
+      };
 
       # niri is NixOS-only, set home-manager options directly instead of a homeManager module
       home-manager.users.${config.host.user.name} = {
         xdg.configFile."niri/config.kdl".source = ./config.kdl;
-
-        # qt = {
-        #   enable = true;
-        #   platformTheme.name = "qtct";
-        # };
       };
     };
 }

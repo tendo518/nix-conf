@@ -4,6 +4,7 @@ cursor {
     xcursor-size 24
 }
 
+spawn-at-startup "fcitx5 -d --replace"
 spawn-at-startup "noctalia-shell"
 
 hotkey-overlay {
