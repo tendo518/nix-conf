@@ -59,7 +59,10 @@
                   type = "filesystem";
                   format = "vfat";
                   mountpoint = "/boot";
-                  mountOptions = [ "fmask=0022" "dmask=0022" ];
+                  mountOptions = [
+                    "fmask=0022"
+                    "dmask=0022"
+                  ];
                 };
               };
               root = {
@@ -74,7 +77,10 @@
                     };
                     "@nix" = {
                       mountpoint = "/nix";
-                      mountOptions = [ "compress=zstd" "noatime" ];
+                      mountOptions = [
+                        "compress=zstd"
+                        "noatime"
+                      ];
                     };
                     "@home" = {
                       mountpoint = "/home";
@@ -92,6 +98,7 @@
         cores = 4;
         max-jobs = 2;
       };
+      services.power-profiles-daemon.enable = true;
 
       environment.systemPackages = with pkgs; [
         libreoffice
@@ -111,9 +118,15 @@
         serviceMode = true;
       };
 
+      # IDK not this cause failed to boot
+      # fprintd — Synaptics Prometheus sensor (standard libfprint, not TOD)
+      # services.fprintd.enable = true;
+
       boot.loader.systemd-boot.edk2-uefi-shell.enable = true;
 
       networking.useDHCP = lib.mkDefault true;
+      # https://wiki.gentoo.org/wiki/NetworkManager#Failed_to_add_new_connection:_802.1x_connections_must_have_IWD_provisioning_files
+      networking.networkmanager.wifi.backend = "wpa_supplicant";
 
       services = {
         v2raya.enable = true;
