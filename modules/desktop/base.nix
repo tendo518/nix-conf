@@ -134,6 +134,13 @@
         };
       };
 
+      # GTK / dconf defaults for non-GNOME/Plasma desktops
+      dconf.settings = {
+        "org/gnome/desktop/interface" = {
+          icon-theme = "Adwaita";
+        };
+      };
+
       # Default terminal emulator
       xdg.terminal-exec = {
         enable = true;
