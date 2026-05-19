@@ -43,7 +43,7 @@
     };
 
     gwfox = {
-      url = "github:akkva/gwfox/7169ea7341b4c9e64b760f3a5990acfc83c0f350";
+      url = "github:akkva/gwfox";
       flake = false;
     };
   };
