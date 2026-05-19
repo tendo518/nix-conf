@@ -33,7 +33,7 @@
       ];
       shell = "fish";
       homeStateVersion = "26.05";
-      extraGroups = [ ];
+      extraGroups = [ "video" ];
     };
     hostPlatform = "aarch64-linux";
     stateVersion = "26.05";
@@ -112,6 +112,7 @@
       };
 
       environment.systemPackages = with pkgs; [
+        libcamera
         libreoffice
         zathura
         telegram-desktop
