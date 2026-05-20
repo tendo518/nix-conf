@@ -14,120 +14,120 @@
 
         settings = {
           "*" = {
-            control_master = "auto";
-            control_path = "~/.ssh/.control-%h-%p-%r";
-            control_persist = "yes";
-            server_alive_interval = 10;
+            ControlMaster = "auto";
+            ControlPath = "~/.ssh/.control-%h-%p-%r";
+            ControlPersist = "yes";
+            ServerAliveInterval = 10;
           };
           "lab-server.local" = {
-            hostname = "192.168.40.1";
-            user = "pengwy";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "192.168.40.1";
+            User = "pengwy";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "lab-desktop.local" = {
-            hostname = "192.168.40.244";
-            user = "pengwy";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "192.168.40.244";
+            User = "pengwy";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "hpc1-login01.cluster" = {
-            hostname = "172.18.34.23";
-            user = "30017301";
-            port = 10022;
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.34.23";
+            User = "30017301";
+            Port = 10022;
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "hpc1-login02.cluster" = {
-            hostname = "172.18.34.17";
-            user = "30017301";
-            port = 10022;
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.34.17";
+            User = "30017301";
+            Port = 10022;
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "hpc2-login01.cluster" = {
-            hostname = "172.18.34.26";
-            user = "cse30017301";
-            port = 10022;
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.34.26";
+            User = "cse30017301";
+            Port = 10022;
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "hpc2-login02.cluster" = {
-            hostname = "172.18.34.25";
-            user = "cse30017301";
-            port = 10022;
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.34.25";
+            User = "cse30017301";
+            Port = 10022;
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           # this is a GPU server using hpc authentication
           "gpu-4l40s-37-114.cluster" = {
-            hostname = "172.18.37.114";
-            user = "30017301";
-            port = 10022;
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.37.114";
+            User = "30017301";
+            Port = 10022;
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "gpu-8p100-36-44_old.cluster" = {
-            hostname = "172.18.36.44";
-            user = "pengweiyuan";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.36.44";
+            User = "pengweiyuan";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "gpu-8p100-36-44.cluster" = {
-            hostname = "172.18.36.44";
-            user = "pengwy";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.36.44";
+            User = "pengwy";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "gpu-8p100-36-44_gangroup.cluster" = {
-            hostname = "172.18.36.44";
-            user = "gangroup";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.36.44";
+            User = "gangroup";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "gpu-4v100s-36-182.cluster" = {
-            hostname = "172.18.36.182";
-            user = "pengwy";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.36.182";
+            User = "pengwy";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "gpu-4v100s-36-182_zhangmy.cluster" = {
-            hostname = "172.18.36.182";
-            user = "zhangmy";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.36.182";
+            User = "zhangmy";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "gpu-4v100-36-33.cluster" = {
-            hostname = "172.18.36.33";
-            user = "pengwy";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.36.33";
+            User = "pengwy";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "gpu-7v100-35-208.cluster" = {
-            hostname = "172.18.35.208";
-            user = "pengwy";
-            port = 22;
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.35.208";
+            User = "pengwy";
+            Port = 22;
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "gpu-5titan-35-233.cluster" = {
-            hostname = "172.18.35.233";
-            user = "pengwy";
-            port = 10022;
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.35.233";
+            User = "pengwy";
+            Port = 10022;
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "gpu-6r2080ti-35-212.cluster" = {
-            hostname = "172.18.35.212";
-            user = "pengwy";
-            port = 22;
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "172.18.35.212";
+            User = "pengwy";
+            Port = 22;
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           # Tailscale devices
           "desktop-home-saki.tailscale" = {
-            hostname = "100.77.154.86";
-            user = "tendo";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "100.77.154.86";
+            User = "tendo";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "desktop-lab-peace.tailscale" = {
-            hostname = "100.116.76.115";
-            user = "pengwy";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "100.116.76.115";
+            User = "pengwy";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "laptop-solar-modoka.tailscale" = {
-            hostname = "100.121.236.88";
-            user = "tendo";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "100.121.236.88";
+            User = "tendo";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           "laptop-solar-chiyoko.tailscale" = {
-            hostname = "100.64.197.80";
-            user = "tendo";
-            identity_file = "~/.ssh/id_ed25519";
+            Hostname = "100.64.197.80";
+            User = "tendo";
+            IdentityFile = "~/.ssh/id_ed25519";
           };
           # Offline 436d
           # "nas-home-coin.tailscale" = {

@@ -90,6 +90,8 @@ window-rule {
 binds {
     Super+L   { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
     Mod+T     { spawn "kitty"; }
+    // Mod+F     { spawn "firefox"; }
+    Mod+E     { spawn "kitty -e yazi"; }
     Mod+S     { spawn "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
     Alt+Space { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
 

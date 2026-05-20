@@ -221,6 +221,7 @@
           gemini-cli
           opencode
           claude-code
+          antigravity  # newe antigravity cli
           kilocode-cli
           hermes-agent
 
