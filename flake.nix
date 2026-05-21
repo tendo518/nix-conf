@@ -18,16 +18,16 @@
     # -small cause tooo many compilation in darwin
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    nix-darwin = {
+      url = "github:nix-darwin/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     flake-parts.url = "github:hercules-ci/flake-parts";
 
     home-manager.url = "github:nix-community/home-manager";
 
     lanzaboote.url = "github:nix-community/lanzaboote/v1.0.0";
-
-    nix-darwin = {
-      url = "github:nix-darwin/nix-darwin";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     agenix.url = "github:ryantm/agenix";
 

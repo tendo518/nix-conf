@@ -228,6 +228,7 @@
           cc-switch-cli
           ccstatusline
           ccusage
+          qoder-cli
         ]
         ++ claudecodeWrappers;
 

@@ -85,7 +85,7 @@ in
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
-          ExecStart = "${pkgs.bluez}/bin/btmgmt --index 0 public-addr ${bluetoothMac}";
+          ExecStart = "${pkgs.util-linux}/bin/script -q -c '${pkgs.bluez}/bin/btmgmt --index 0 public-addr ${bluetoothMac}' /dev/null";
         };
       };
 

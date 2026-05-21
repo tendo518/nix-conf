@@ -119,21 +119,20 @@
             User = "pengwy";
             IdentityFile = "~/.ssh/id_ed25519";
           };
+          # "laptop-solar-chiyoko.tailscale" = {
+          #   Hostname = "100.64.197.80";
+          #   User = "tendo";
+          #   IdentityFile = "~/.ssh/id_ed25519";
+          # };
           "laptop-solar-modoka.tailscale" = {
             Hostname = "100.121.236.88";
             User = "tendo";
             IdentityFile = "~/.ssh/id_ed25519";
           };
-          "laptop-solar-chiyoko.tailscale" = {
-            Hostname = "100.64.197.80";
-            User = "tendo";
-            IdentityFile = "~/.ssh/id_ed25519";
-          };
-          # Offline 436d
           # "nas-home-coin.tailscale" = {
-          #   hostname = "100.123.207.55";
-          #   user = "pengwy";
-          #   identity_file = "~/.ssh/id_ed25519";
+          #   Hostname = "100.123.207.55";
+          #   User = "tendo";
+          #   IdentityFile = "~/.ssh/id_ed25519";
           # };
         };
       };

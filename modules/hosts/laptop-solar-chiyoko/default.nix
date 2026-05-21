@@ -120,6 +120,7 @@
         bitwarden-desktop
         darktable
         antigravity
+        moonlight-qt
         ghostty
         retedo-mono
       ];
