@@ -100,10 +100,7 @@
           "dropbox"
           "keepingyouawake"
           "deskflow"
-          "tencent-meeting"
-          "tencent-docs"
           "clash-verge-rev"
-          "sfm"
         ];
       };
     };
