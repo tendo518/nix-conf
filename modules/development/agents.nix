@@ -218,10 +218,10 @@
         with pkgs.llm-agents;
         [
           codex
-          gemini-cli
+          # gemini-cli  # orphan pkg
           opencode
           claude-code
-          antigravity  # newe antigravity cli
+          antigravity  # new antigravity cli
           kilocode-cli
           hermes-agent
 
