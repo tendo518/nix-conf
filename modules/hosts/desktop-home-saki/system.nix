@@ -26,12 +26,11 @@
         # Office & Productivity
         spotify
         obsidian
-        # yt-dlp  # upstream deno build fail
-        bottles
+        yt-dlp  # upstream deno build fail
         qq
         obs-studio
         libreoffice
-        calibre
+        # calibre
         zathura
         moonlight-qt
 
@@ -45,6 +44,7 @@
         antigravity
         cudaPackages.cudatoolkit
         realesrgan-ncnn-vulkan
+        qbittorrent
       ];
 
       environment.sessionVariables = {
