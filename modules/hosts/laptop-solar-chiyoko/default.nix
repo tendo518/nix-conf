@@ -6,23 +6,21 @@
       "core"
       "system"
       "development"
-      "apps/chrome"
-      "apps/dropbox"
-
-      "apps/firefox"
-      "apps/ghostty"
-      "apps/kitty"
-      "apps/mpv"
-      "apps/vscode"
+      "apps"
       "network"
-      "desktop/niri"
-      "desktop/base"
-      "desktop/fonts"
+      "desktop"
       "hosts/laptop-solar-chiyoko"
       "network/tailscale"
-      "hardware/lenovo-x13s"
-      "hardware/fwupd"
-      "hardware/smartd"
+      "hardware"
+    ];
+    excludeModules = [
+      "apps/deskflow"
+      "apps/gaming"
+      "apps/wireshark"
+      "desktop/plasma"
+      "hardware/disable-sleep"
+      "hardware/nvidia"
+      "system/virtualisation"
     ];
     user = {
       name = "tendo";

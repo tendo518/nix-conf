@@ -10,14 +10,13 @@
       "development"
       "apps"
       "network"
-      "desktop/base"
-      "desktop/plasma"
-      "desktop/fonts"
+      "desktop"
       "hosts/desktop-home-saki"
-      "hardware/nvidia"
-      "hardware/fwupd"
-      "hardware/smartd"
-      "hardware/disable-sleep"
+      "hardware"
+    ];
+    excludeModules = [
+      "desktop/niri"
+      "hardware/lenovo-x13s"
     ];
     user = {
       name = "tendo";

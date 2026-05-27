@@ -8,25 +8,16 @@
       "core"
       "system"
       "development"
-      "apps/chrome"
-      "apps/deskflow"
-      "apps/dropbox"
-
-      "apps/firefox"
-      "apps/ghostty"
-      "apps/kitty"
-      "apps/mpv"
-      "apps/vscode"
-      "apps/wireshark"
+      "apps"
       "network"
-      "desktop/base"
-      "desktop/plasma"
-      "desktop/fonts"
+      "desktop"
       "hosts/desktop-lab-peace"
-      "hardware/nvidia"
-      "hardware/fwupd"
-      "hardware/smartd"
-      "hardware/disable-sleep"
+      "hardware"
+    ];
+    excludeModules = [
+      "apps/gaming"
+      "desktop/niri"
+      "hardware/lenovo-x13s"
     ];
     user = {
       name = "pengwy";

@@ -11,12 +11,13 @@
       "network"
       "hosts/laptop-solar-modoka"
       "desktop/fonts"
-      "apps/firefox"
-      # "apps/kitty"
-      "apps/ghostty"
-      # "apps/mpv"
-      "apps/vscode"
+      "apps"
       "network/tailscale"
+    ];
+    excludeModules = [
+      "apps/dropbox"
+      "apps/kitty"
+      "apps/mpv"
     ];
     user = {
       name = "tendo";

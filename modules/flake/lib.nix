@@ -21,6 +21,23 @@ let
       in
       if keys == [ ] then [ ] else builtins.map (k: registry.${k}) keys;
 
+  # Resolve a list of module names, with optional exclusions (mirrors disabledModules).
+  resolveModuleList =
+    label: registry: names: excludeModules:
+    let
+      resolveKeys =
+        name:
+        if builtins.elem name (builtins.attrNames registry) then
+          [ name ]
+        else
+          builtins.filter (k: lib.hasPrefix "${name}/" k) (builtins.attrNames registry);
+
+      includedKeys = builtins.concatMap resolveKeys names;
+      excludedKeys = builtins.concatMap resolveKeys excludeModules;
+      finalKeys = builtins.filter (k: !builtins.elem k excludedKeys) includedKeys;
+    in
+    builtins.map (k: registry.${k}) finalKeys;
+
   # Build host configurations for a given platform.
   # Parameterized by platform-specific builder, agenix/home-manager modules,
   # home base path, and backup file extension.
@@ -43,7 +60,7 @@ let
       builder {
         modules = [
           {
-            imports = builtins.concatMap (resolveModules "system" systemModules) hostCfg.modules;
+            imports = resolveModuleList "system" systemModules hostCfg.modules hostCfg.excludeModules;
           }
           {
             options.host = {
@@ -82,7 +99,7 @@ let
                     }
                   ]
                   ++ [ inputs.agenix.homeManagerModules.default ]
-                  ++ builtins.concatMap (resolveModules "hm" config.flake.modules.homeManager) hostCfg.modules;
+                  ++ resolveModuleList "hm" config.flake.modules.homeManager hostCfg.modules hostCfg.excludeModules;
                 };
               };
             }

@@ -20,6 +20,11 @@ let
         type = types.listOf types.str;
         description = "List of module names to include";
       };
+      excludeModules = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "List of module names to exclude (mirrors disabledModules)";
+      };
       user = mkOption {
         type = types.submodule {
           options = {
