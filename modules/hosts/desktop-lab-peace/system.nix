@@ -75,15 +75,7 @@
         serviceMode = true;
       };
 
-      # Game streaming
-      services.sunshine = {
-        enable = true;
-        openFirewall = true;
-        capSysAdmin = true;
-        package = pkgs.sunshine.override { cudaSupport = true; };
-      };
-      # fix upsteam: https://github.com/NixOS/nixpkgs/issues/455737
-      hardware.uinput.enable = true;
+      services.sunshine.package = pkgs.sunshine.override { cudaSupport = true; };
 
       # Local file sharing
       programs.localsend = {
