@@ -17,15 +17,22 @@
       # --- Shared Providers Metadata ---
       # Common capabilities configuration
       thinkingOnly = {
-        thinking = { budgetTokens = 8192; };
+        thinking = {
+          budgetTokens = 8192;
+        };
       };
 
       multimodalThinking = {
         modalities = {
-          input = [ "text" "image" ];
+          input = [
+            "text"
+            "image"
+          ];
           output = [ "text" ];
         };
-        thinking = { budgetTokens = 8192; };
+        thinking = {
+          budgetTokens = 8192;
+        };
       };
 
       providers = {
@@ -36,13 +43,28 @@
           models = {
             qwen3-max.model = "qwen3-max-2026-01-23";
             qwen3-6-plus.model = "qwen3.6-plus";
-            qwen3-5-plus = { model = "qwen3.5-plus"; } // multimodalThinking;
+            qwen3-5-plus = {
+              model = "qwen3.5-plus";
+            }
+            // multimodalThinking;
             qwen3-coder-next.model = "qwen3-coder-next";
             qwen3-coder-plus.model = "qwen3-coder-plus";
-            kimi-k2-5 = { model = "kimi-k2.5"; } // multimodalThinking;
-            glm-5 = { model = "glm-5"; } // thinkingOnly;
-            glm-4-7 = { model = "glm-4.7"; } // thinkingOnly;
-            minimax-m2-5 = { model = "MiniMax-M2.5"; } // thinkingOnly;
+            kimi-k2-5 = {
+              model = "kimi-k2.5";
+            }
+            // multimodalThinking;
+            glm-5 = {
+              model = "glm-5";
+            }
+            // thinkingOnly;
+            glm-4-7 = {
+              model = "glm-4.7";
+            }
+            // thinkingOnly;
+            minimax-m2-5 = {
+              model = "MiniMax-M2.5";
+            }
+            // thinkingOnly;
           };
         };
         volcengine = {
@@ -101,57 +123,69 @@
       # --- Pi Helpers ---
       mkPiModels =
         provider:
-        lib.mapAttrsToList (
-          name: m:
+        lib.mapAttrsToList (name: m: {
+          id = m.model;
+          name = name;
+        }) provider.models;
+
+      mkPiProviders =
+        lib.mapAttrs
+          (name: p: {
+            baseUrl = p.baseUrl;
+            api = "anthropic-messages";
+            apiKey = "$ALIYUN_API_KEY";
+            models = mkPiModels p;
+          })
           {
-            id = m.model;
-            name = name;
-          }
-        ) provider.models;
+            inherit (providers) aliyun;
+          };
 
-      mkPiProviders = lib.mapAttrs (name: p: {
-        baseUrl = p.baseUrl;
-        api = "anthropic-messages";
-        apiKey = "$ALIYUN_API_KEY";
-        models = mkPiModels p;
-      }) {
-        inherit (providers) aliyun;
-      };
+      mkPiInjectKeys =
+        lib.concatMapStrings
+          (
+            name:
+            let
+              p = providers.${name};
+            in
+            ''
+              if [ -r "${p.apiKeyPath}" ]; then
+                ${pkgs.jq}/bin/jq \
+                  --arg key "$(cat "${p.apiKeyPath}")" \
+                  '.${name} = { type: "api_key", key: $key }' \
+                  "$HOME/.pi/agent/auth.json" > "$HOME/.pi/agent/auth.json.tmp"
+                mv "$HOME/.pi/agent/auth.json.tmp" "$HOME/.pi/agent/auth.json"
+              fi
+            ''
+          )
+          [
+            "aliyun"
+            "deepseek"
+          ];
 
-      mkPiInjectKeys = lib.concatMapStrings (
-        name:
-        let
-          p = providers.${name};
-        in
-        ''
-          if [ -r "${p.apiKeyPath}" ]; then
-            ${pkgs.jq}/bin/jq \
-              --arg key "$(cat "${p.apiKeyPath}")" \
-              '.${name} = { type: "api_key", key: $key }' \
-              "$HOME/.pi/agent/auth.json" > "$HOME/.pi/agent/auth.json.tmp"
-            mv "$HOME/.pi/agent/auth.json.tmp" "$HOME/.pi/agent/auth.json"
-          fi
-        ''
-      ) [ "aliyun" "deepseek" ];
-
-      mkDeepseekModel = { id, name, cost }: {
-        inherit id name cost;
-        contextWindow = 1000000;
-        maxTokens = 384000;
-        input = [ "text" ];
-        reasoning = true;
-        compat = {
-          requiresReasoningContentOnAssistantMessages = true;
-          thinkingFormat = "deepseek";
-          reasoningEffortMap = {
-            minimal = "high";
-            low = "high";
-            medium = "high";
-            high = "high";
-            xhigh = "max";
+      mkDeepseekModel =
+        {
+          id,
+          name,
+          cost,
+        }:
+        {
+          inherit id name cost;
+          contextWindow = 1000000;
+          maxTokens = 384000;
+          input = [ "text" ];
+          reasoning = true;
+          compat = {
+            requiresReasoningContentOnAssistantMessages = true;
+            thinkingFormat = "deepseek";
+            reasoningEffortMap = {
+              minimal = "high";
+              low = "high";
+              medium = "high";
+              high = "high";
+              xhigh = "max";
+            };
           };
         };
-      };
 
       # --- Hermes Helpers ---
       mkHermesAuxYaml =
@@ -181,7 +215,7 @@
           codex
           # gemini-cli  # orphan pkg
           claude-code
-          antigravity  # new antigravity cli
+          antigravity # new antigravity cli
           pi
           kilocode-cli
           hermes-agent

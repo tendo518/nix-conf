@@ -12,7 +12,7 @@
         libinput
         pavucontrol
         xlsclients
-        libnotify  # for notify-send command in path
+        libnotify # for notify-send command in path
 
         # GPU related
         libva-utils # vainfo

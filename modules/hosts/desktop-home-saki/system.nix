@@ -26,7 +26,7 @@
         # Office & Productivity
         spotify
         obsidian
-        yt-dlp  # upstream deno build fail
+        yt-dlp # upstream deno build fail
         qq
         obs-studio
         libreoffice

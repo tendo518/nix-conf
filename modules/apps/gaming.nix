@@ -43,8 +43,8 @@
         # winetricks
 
         ffmpeg-full
-        gst_all_1.gstreamer        # bin: gst-play-1.0, gst-launch-1.0, etc.
-        gst_all_1.gstreamer.out    # out: core plugins (typefind, coreelements, etc.)
+        gst_all_1.gstreamer # bin: gst-play-1.0, gst-launch-1.0, etc.
+        gst_all_1.gstreamer.out # out: core plugins (typefind, coreelements, etc.)
         gst_all_1.gst-plugins-base
         gst_all_1.gst-plugins-good
         gst_all_1.gst-plugins-bad
@@ -90,8 +90,9 @@
         let
           gst32 = pkgs.pkgsi686Linux.gst_all_1;
         in
-        "/run/current-system/sw/lib/gstreamer-1.0" + ":" +
-        lib.makeSearchPath "lib/gstreamer-1.0" [
+        "/run/current-system/sw/lib/gstreamer-1.0"
+        + ":"
+        + lib.makeSearchPath "lib/gstreamer-1.0" [
           gst32.gstreamer.out
           gst32.gst-plugins-base
           gst32.gst-plugins-good
