@@ -98,16 +98,19 @@
         cores = 4;
         max-jobs = 2;
       };
-      services.power-profiles-daemon.enable = false;
-      services.tlp = {
-        enable = true;
-        pd.enable = true;
-        settings = {
-          CPU_SCALING_GOVERNOR_ON_AC = "performance";
-          CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-          # PCIE_ASPM_ON_BAT = "powersupersave";
-        };
-      };
+      services.power-profiles-daemon.enable = true;
+
+      # services.power-profiles-daemon.enable = false;
+      # services.tlp = {
+      #   enable = true;
+      #   pd.enable = true;
+      #   settings = {
+      #     CPU_SCALING_GOVERNOR_ON_AC = "performance";
+      #     # very slow and save no battery time
+      #     # CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+      #     # PCIE_ASPM_ON_BAT = "powersupersave";
+      #   };
+      # };
 
       environment.systemPackages = with pkgs; [
         libcamera
@@ -129,20 +132,12 @@
         serviceMode = true;
       };
 
-      # IDK not this cause failed to boot
+      # IDK but this cause failed to boot
       # fprintd — Synaptics Prometheus sensor (standard libfprint, not TOD)
       # services.fprintd.enable = true;
 
+      # in case of boot failure for dtb
       boot.loader.systemd-boot.edk2-uefi-shell.enable = true;
-
-      networking.useDHCP = lib.mkDefault true;
-      # https://wiki.gentoo.org/wiki/NetworkManager#Failed_to_add_new_connection:_802.1x_connections_must_have_IWD_provisioning_files
-      networking.networkmanager.wifi.backend = "wpa_supplicant";
-
-      services = {
-        v2raya.enable = true;
-        fwupd.enable = true;
-      };
     };
 
   flake.modules.homeManager."hosts/laptop-solar-chiyoko" =

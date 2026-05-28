@@ -42,15 +42,9 @@
         gcc
         clang
         antigravity
-        cudaPackages.cudatoolkit
         realesrgan-ncnn-vulkan
         qbittorrent
       ];
-
-      environment.sessionVariables = {
-        CUDA_HOME = pkgs.cudaPackages.cudatoolkit;
-        CUDA_PATH = pkgs.cudaPackages.cudatoolkit;
-      };
 
       # VSCode remote SSH workaround
       systemd.tmpfiles.settings."10-vscode-remote-ssh-workaround" = {
@@ -60,36 +54,11 @@
         };
       };
 
-
-
       # Network
       programs.clash-verge = {
         enable = true;
         tunMode = true;
         serviceMode = true;
-      };
-
-      # Game streaming
-      services.sunshine = {
-        enable = true;
-        openFirewall = true;
-        capSysAdmin = true;
-        package = pkgs.sunshine.override { cudaSupport = true; };
-      };
-      # fix upsteam: https://github.com/NixOS/nixpkgs/issues/455737
-      hardware.uinput.enable = true;
-      users.users =
-        let
-          user = config.host.user.name;
-        in
-        {
-          "${user}".extraGroups = [ "wireshark" ];
-        };
-
-      # Local file sharing
-      programs.localsend = {
-        enable = true;
-        openFirewall = true;
       };
 
       # User management

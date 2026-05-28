@@ -35,7 +35,7 @@
           zlib
           glib
           libGL
-          xorg.libxcb
+          libxcb
           stdenv.cc.cc
         ];
       };

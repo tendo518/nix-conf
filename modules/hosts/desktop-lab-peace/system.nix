@@ -25,7 +25,6 @@
         gcc
         clang
         antigravity
-        cudaPackages.cudatoolkit
         realesrgan-ncnn-vulkan
 
         # Texlive for Chinese/English writing with IEEE templates
@@ -42,11 +41,6 @@
         # })
       ];
 
-      environment.sessionVariables = {
-        CUDA_HOME = pkgs.cudaPackages.cudatoolkit;
-        CUDA_PATH = pkgs.cudaPackages.cudatoolkit;
-      };
-
       # VSCode remote SSH workaround
       systemd.tmpfiles.settings."10-vscode-remote-ssh-workaround" = {
         "/usr/lib64/".d = { };
@@ -54,8 +48,6 @@
           argument = "${lib.getLib pkgs.stdenv.cc.cc}/lib/libstdc++.so.6";
         };
       };
-
-
 
       # SDDM autologin
       services.displayManager.autoLogin = {
@@ -74,14 +66,6 @@
         serviceMode = true;
       };
 
-      services.sunshine.package = pkgs.sunshine.override { cudaSupport = true; };
-
-      # Local file sharing
-      programs.localsend = {
-        enable = true;
-        openFirewall = true;
-      };
-
       # User management
       users.mutableUsers = false;
       services.userborn.enable = true;
@@ -90,16 +74,7 @@
       users.groups.hqlab = {
         gid = 110000;
       };
-      users.users =
-        let
-          user = config.host.user.name;
-        in
-        {
-          "${user}".extraGroups = [
-            "wireshark"
-            "hqlab"
-          ];
-        };
+      users.users.${config.host.user.name}.extraGroups = [ "hqlab" ];
 
       system = {
         # etc.overlay = {

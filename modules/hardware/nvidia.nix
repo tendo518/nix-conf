@@ -56,8 +56,16 @@
         pkgs.cudaPackages.cudatoolkit
       ];
 
-      # Triton bypasses ld.so and calls /sbin/ldconfig directly; tell it where libcuda.so lives
-      environment.sessionVariables.TRITON_LIBCUDA_PATH = "/run/opengl-driver/lib";
+      environment.systemPackages = [ pkgs.cudaPackages.cudatoolkit ];
+
+      environment.sessionVariables = {
+        CUDA_HOME = pkgs.cudaPackages.cudatoolkit;
+        CUDA_PATH = pkgs.cudaPackages.cudatoolkit;
+        # Triton bypasses ld.so and calls /sbin/ldconfig directly; tell it where libcuda.so lives
+        TRITON_LIBCUDA_PATH = "/run/opengl-driver/lib";
+      };
+      # ensure sunshine works
+      services.sunshine.package = pkgs.sunshine.override { cudaSupport = true; };
 
       # hardware.nvidia-container-toolkit.enable = true;  # when nvidia driver update, version mismatch error when restart, lead to switch failure
     };

@@ -78,6 +78,10 @@ in
 
       hardware.enableRedistributableFirmware = true;
 
+      networking.useDHCP = lib.mkDefault true;
+      # https://wiki.gentoo.org/wiki/NetworkManager#Failed_to_add_new_connection:_802.1x_connections_must_have_IWD_provisioning_files
+      networking.networkmanager.wifi.backend = "wpa_supplicant";
+
       systemd.services.bluetooth-x13s-mac = {
         wantedBy = [ "multi-user.target" ];
         before = [ "bluetooth.service" ];
