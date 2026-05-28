@@ -28,7 +28,17 @@
           parted
         ];
       # enable nix-ld to support some non-patched packages
-      programs.nix-ld.enable = true;
+      programs.nix-ld = {
+        enable = true;
+        libraries = with pkgs; [
+          # Common FHS libraries needed by precompiled Python wheels and other non-Nix binaries
+          zlib
+          glib
+          libGL
+          xorg.libxcb
+          stdenv.cc.cc
+        ];
+      };
       documentation = {
         enable = true;
         doc.enable = false;

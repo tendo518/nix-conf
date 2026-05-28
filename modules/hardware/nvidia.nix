@@ -1,7 +1,9 @@
 {
   flake.modules.nixos."hardware/nvidia" =
     {
+      config,
       lib,
+      pkgs,
       ...
     }:
     {
@@ -47,6 +49,15 @@
         # cache only build for stable kernel ...
         # package = config.boot.kernelPackages.nvidiaPackages.stable;
       };
+
+      # Make NVIDIA driver + CUDA libraries available to precompiled binaries via nix-ld
+      programs.nix-ld.libraries = [
+        config.hardware.nvidia.package
+        pkgs.cudaPackages.cudatoolkit
+      ];
+
+      # Triton bypasses ld.so and calls /sbin/ldconfig directly; tell it where libcuda.so lives
+      environment.sessionVariables.TRITON_LIBCUDA_PATH = "/run/opengl-driver/lib";
 
       # hardware.nvidia-container-toolkit.enable = true;  # when nvidia driver update, version mismatch error when restart, lead to switch failure
     };

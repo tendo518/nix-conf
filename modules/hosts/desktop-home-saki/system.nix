@@ -60,8 +60,7 @@
         };
       };
 
-      programs.nix-ld.libraries =
-        (with pkgs.cudaPackages; [ cudatoolkit ]) ++ (with pkgs; [ stdenv.cc.cc ]);
+
 
       # Network
       programs.clash-verge = {
