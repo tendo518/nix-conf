@@ -98,19 +98,19 @@
         cores = 4;
         max-jobs = 2;
       };
-      services.power-profiles-daemon.enable = true;
+      # services.power-profiles-daemon.enable = true;
 
-      # services.power-profiles-daemon.enable = false;
-      # services.tlp = {
-      #   enable = true;
-      #   pd.enable = true;
-      #   settings = {
-      #     CPU_SCALING_GOVERNOR_ON_AC = "performance";
-      #     # very slow and save no battery time
-      #     # CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-      #     # PCIE_ASPM_ON_BAT = "powersupersave";
-      #   };
-      # };
+      services.power-profiles-daemon.enable = false;
+      services.tlp = {
+        enable = true;
+        pd.enable = true;
+        settings = {
+          CPU_SCALING_GOVERNOR_ON_AC = "performance";
+          # very slow and save no battery time
+          # CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+          # PCIE_ASPM_ON_BAT = "powersupersave";
+        };
+      };
 
       environment.systemPackages = with pkgs; [
         libcamera
