@@ -48,10 +48,6 @@
         skimpdf
         spotify
 
-        inkscape
-        darktable
-
-        localsend
         alt-tab-macos
         ticktick
 
@@ -67,9 +63,7 @@
 
         antigravity
 
-        bitwarden-desktop
 
-        code-cursor
       ];
 
       # Homebrew
