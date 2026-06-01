@@ -224,6 +224,7 @@
           ccstatusline
           ccusage
           qoder-cli
+          reasonix
         ]
         ++ claudecodeWrappers;
 
@@ -370,6 +371,35 @@
           echo "ANTHROPIC_API_KEY=$(cat "${providers.aliyun.apiKeyPath}")" > "$HOME/.hermes/.env"
           echo "ANTHROPIC_BASE_URL=${providers.aliyun.baseUrl}" >> "$HOME/.hermes/.env"
           chmod 600 "$HOME/.hermes/.env"
+        fi
+      '';
+
+      xdg.configFile."reasonix/config.toml".text = ''
+        default_model = "deepseek-flash"
+
+        [[providers]]
+        name        = "deepseek-flash"
+        kind        = "openai"
+        base_url    = "https://api.deepseek.com"
+        model       = "deepseek-v4-flash"
+        api_key_env = "DEEPSEEK_API_KEY"
+
+        [[providers]]
+        name        = "deepseek-pro"
+        kind        = "openai"
+        base_url    = "https://api.deepseek.com"
+        model       = "deepseek-v4-pro"
+        api_key_env = "DEEPSEEK_API_KEY"
+
+        [agent]
+        subagent_model = "deepseek-pro"
+      '';
+
+      home.activation.setupReasonixEnv = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        if [ -r "${providers.deepseek.apiKeyPath}" ]; then
+          mkdir -p "$HOME/.config/reasonix"
+          echo "DEEPSEEK_API_KEY=$(cat "${providers.deepseek.apiKeyPath}")" > "$HOME/.config/reasonix/.env"
+          chmod 600 "$HOME/.config/reasonix/.env"
         fi
       '';
 

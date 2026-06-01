@@ -61,9 +61,6 @@
 
         moonlight-qt
 
-        antigravity
-
-
       ];
 
       # Homebrew

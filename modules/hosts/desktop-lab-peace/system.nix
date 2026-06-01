@@ -24,7 +24,6 @@
         darktable
         gcc
         clang
-        antigravity
         realesrgan-ncnn-vulkan
 
         # Texlive for Chinese/English writing with IEEE templates

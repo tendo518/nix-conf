@@ -41,7 +41,6 @@
         darktable
         gcc
         clang
-        antigravity
         realesrgan-ncnn-vulkan
         qbittorrent
       ];

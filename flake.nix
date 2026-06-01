@@ -22,10 +22,13 @@
       url = "github:nix-darwin/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
-
-    home-manager.url = "github:nix-community/home-manager";
 
     lanzaboote.url = "github:nix-community/lanzaboote/v1.0.0";
 
