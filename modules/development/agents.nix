@@ -223,7 +223,7 @@
           codex
           # gemini-cli  # orphan pkg
           claude-code
-          antigravity # new antigravity cli
+          antigravity-cli # new antigravity cli
           pi
           kilocode-cli
           hermes-agent

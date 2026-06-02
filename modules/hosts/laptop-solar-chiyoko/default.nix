@@ -118,7 +118,7 @@
         zathura
         telegram-desktop
         chromium
-        bitwarden-desktop
+
         darktable
         moonlight-qt
         ghostty

@@ -37,7 +37,7 @@
         # Development & Browsing
         telegram-desktop
         chromium
-        bitwarden-desktop
+
         darktable
         gcc
         clang
