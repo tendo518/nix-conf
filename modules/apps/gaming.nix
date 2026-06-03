@@ -63,7 +63,7 @@
       #      simply running the game will automatically activate GameMode.
       programs.gamescope = {
         enable = true;
-        capSysNice = true;
+        capSysNice = false;
       };
       # GStreamer plugin discovery:
       # - GST_PLUGIN_PATH: 32-bit plugins only, scanned first by any
