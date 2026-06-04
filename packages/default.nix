@@ -13,4 +13,7 @@ in
 
   # ticktick only available on darwin
   ticktick = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./ticktick { } else null;
+
+  # skimpdf only available on darwin
+  skimpdf = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./skimpdf { } else null;
 }

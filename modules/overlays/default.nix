@@ -16,6 +16,15 @@
           prev.ticktick;
     };
 
+    # Skim PDF overlay with macOS support (Pin version)
+    skimpdf = final: prev: {
+      skimpdf =
+        if prev.stdenv.hostPlatform.isDarwin then
+          final.callPackage ../../packages/skimpdf { }
+        else
+          prev.skimpdf;
+    };
+
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
     llm-agents = inputs.llm-agents.overlays.default;

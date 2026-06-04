@@ -47,6 +47,7 @@
         obsidian
         skimpdf
         spotify
+        zed-editor
 
         alt-tab-macos
         ticktick
