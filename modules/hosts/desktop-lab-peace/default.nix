@@ -35,6 +35,4 @@
     stateVersion = "26.05";
   };
 
-  # Home Manager configuration
-  flake.modules.homeManager."hosts/desktop-lab-peace" = { ... }: { };
 }

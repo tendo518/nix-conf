@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."core/yazi" =
+  flake.modules.homeManager."apps/yazi" =
     {
       ...
     }:

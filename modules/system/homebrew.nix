@@ -14,6 +14,10 @@
     {
       # Set variables for you to manually install homebrew packages.
       environment.variables = homebrew_mirror_env;
+      # fix https://github.com/nix-darwin/nix-darwin/issues/1787
+      homebrew.onActivation.extraFlags = [
+        "--force-cleanup"
+      ];
 
       # Set environment variables for nix-darwin before run `brew bundle`.
       system.activationScripts.homebrew.text =

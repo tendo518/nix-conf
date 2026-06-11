@@ -11,6 +11,7 @@
       "network"
       "hosts/laptop-solar-modoka"
       "desktop/fonts"
+      "desktop/input-method"
       "apps"
       "network/tailscale"
     ];
@@ -49,7 +50,7 @@
         spotify
         zed-editor
 
-        alt-tab-macos
+        # alt-tab-macos
         ticktick
 
         wechat
@@ -84,15 +85,12 @@
         };
 
         taps = [
-          "deskflow/tap"
         ];
 
         brews = [ ];
 
         casks = [
           "dropbox"
-          "keepingyouawake"
-          "deskflow"
           "clash-verge-rev"
         ];
       };
@@ -121,16 +119,6 @@
             ;
         })
       ];
-
-      home.file."Library/Rime" = {
-        source = inputs.rime-ice;
-        recursive = true;
-      };
-
-      home.file.".local/share/fcitx5/rime" = {
-        source = inputs.rime-ice;
-        recursive = true;
-      };
 
       xdg = {
         enable = true;

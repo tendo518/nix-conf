@@ -2,7 +2,6 @@
   flake.modules.nixos."network/core" =
     { config, lib, ... }:
     {
-      networking.hostName = config.host.hostname;
       networking.usePredictableInterfaceNames = lib.mkDefault true;
 
       # Network discovery, mDNS
