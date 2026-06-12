@@ -297,8 +297,8 @@
         RENPY_PATH_TO_SAVES = "${xdg.dataHome}/renpy";
         RENPY_MULTIPERSISTENT = "${xdg.dataHome}/renpy_shared";
 
-        # ── ripgrep ──
-        RIPGREP_CONFIG_PATH = "${xdg.configHome}/ripgrep/config";
+        # # ── ripgrep ──  not needed actaully, we do not have ripgrep config
+        # RIPGREP_CONFIG_PATH = "${xdg.configHome}/ripgrep/config";
 
         # ── rlwrap ──
         RLWRAP_HOME = "${xdg.dataHome}/rlwrap";

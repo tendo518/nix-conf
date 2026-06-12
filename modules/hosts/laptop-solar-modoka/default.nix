@@ -8,6 +8,7 @@
       "core"
       "system"
       "development"
+      "agents"
       "network"
       "hosts/laptop-solar-modoka"
       "desktop/fonts"
@@ -49,6 +50,7 @@
         skimpdf
         spotify
         zed-editor
+        telegram-desktop
 
         # alt-tab-macos
         ticktick

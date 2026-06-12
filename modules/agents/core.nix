@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."development/agents/core" =
+  flake.modules.homeManager."agents/core" =
     { pkgs, ... }:
     {
       home.packages = with pkgs.llm-agents; [

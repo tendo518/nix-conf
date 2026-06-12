@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."development/agents/claude-code" =
+  flake.modules.homeManager."agents/claude-code" =
     {
       pkgs,
       config,
@@ -31,14 +31,16 @@
             minimax-m2-5.model = "MiniMax-M2.5";
           };
         };
-        volcengine = {
+        volces = {
           baseUrl = "https://ark.cn-beijing.volces.com/api/coding";
           apiKeyPath = volcengine-codingplan-api-key.path;
-          smallModel = "minimax-m2-7";
+          smallModel = "ds-v4flash";
           models = {
             kimi-k2-6.model = "kimi-k2.6";
             glm-5-1.model = "glm-5.1";
-            minimax-m2-7.model = "minimax-m2.7";
+            minimax-m3.model = "minimax-m3";
+            ds-v4pro.model = "deepseek-v4-pro";
+            ds-v4flash.model = "deepseek-v4-flash";
           };
         };
         deepseek = {
@@ -115,9 +117,9 @@
       '';
 
       age.secrets = {
-        deepseek-api-key.file = ../../../secrets/deepseek-api-key.age;
-        aliyun-codingplan-api-key.file = ../../../secrets/aliyun-codingplan-api-key.age;
-        volcengine-codingplan-api-key.file = ../../../secrets/volcengine-codingplan-api-key.age;
+        deepseek-api-key.file = ../../secrets/deepseek-api-key.age;
+        aliyun-codingplan-api-key.file = ../../secrets/aliyun-codingplan-api-key.age;
+        volcengine-codingplan-api-key.file = ../../secrets/volcengine-codingplan-api-key.age;
       };
     };
 }

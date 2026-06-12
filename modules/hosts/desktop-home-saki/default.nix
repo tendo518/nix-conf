@@ -8,6 +8,7 @@
       "core"
       "system"
       "development"
+      "agents"
       "apps"
       "network"
       "desktop"
