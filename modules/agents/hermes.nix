@@ -27,7 +27,8 @@
         exec ${lib.getExe pkgs.llm-agents.hermes-agent} "$@"
       '';
 
-      mkHermesWrapper = name: model:
+      mkHermesWrapper =
+        name: model:
         pkgs.writeShellScriptBin "ha-vol-${name}" ''
           exec ${lib.getExe hermesWrapped} --model "${model}" "$@"
         '';
@@ -57,8 +58,8 @@
         };
       };
 
-      home.file."./hermes/config.yaml".force = true;
-      home.file."./hermes/config.yaml".text = ''
+      home.file."./.hermes/config.yaml".force = true;
+      home.file."./.hermes/config.yaml".text = ''
         model:
           default: "deepseek-v4-flash"
           provider: custom
