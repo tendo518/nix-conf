@@ -3,7 +3,7 @@
   ...
 }:
 {
-  flake.modules.homeManager."core/editors" = {
+  flake.modules.home."core/editors" = {
     # Vim - lowest priority default editor (helix > neovim > vim)
     programs.vim = {
       enable = true;

@@ -22,7 +22,7 @@
       environment.systemPackages = [ pkgs.syncthing ];
     };
 
-  flake.modules.homeManager."network/syncthing" = {
+  flake.modules.home."network/syncthing" = {
 
   };
 }

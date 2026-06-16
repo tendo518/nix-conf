@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."system/xdg-workaround" =
+  flake.modules.home."system/xdg-workaround" =
     { lib, config, ... }:
     let
       inherit (config) xdg;

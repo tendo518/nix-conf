@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."apps/vscode" =
+  flake.modules.home."apps/vscode" =
     {
       pkgs,
       lib,

@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."apps/kitty" =
+  flake.modules.home."apps/kitty" =
     { pkgs, ... }:
     {
       # Kitty

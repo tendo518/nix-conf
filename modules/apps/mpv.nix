@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."apps/mpv" =
+  flake.modules.home."apps/mpv" =
     { pkgs, lib, ... }:
     {
       home.packages = with pkgs; [

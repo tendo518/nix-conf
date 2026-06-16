@@ -38,6 +38,20 @@ let
     in
     builtins.map (k: registry.${k}) finalKeys;
 
+  # flake-parts assigns _class based on the registry key name, but home-manager
+  # expects _class = "homeManager". Override the class on resolved modules.
+  withClass =
+    class: modules:
+    map (
+      m:
+      if builtins.isFunction m then
+        args: (m args) // { _class = class; }
+      else if builtins.isAttrs m then
+        m // { _class = class; }
+      else
+        m
+    ) modules;
+
   # Build host configurations for a given platform.
   # Parameterized by platform-specific builder, agenix/home-manager modules,
   # home base path, and backup file extension.
@@ -99,7 +113,21 @@ let
                     }
                   ]
                   ++ [ inputs.agenix.homeManagerModules.default ]
-                  ++ resolveModuleList "hm" config.flake.modules.homeManager hostCfg.modules hostCfg.excludeModules;
+                  ++ withClass "homeManager" (
+                    resolveModuleList "hm" (config.flake.modules.home or { }) hostCfg.modules hostCfg.excludeModules
+                  )
+                  ++ lib.optionals (target == "nixos") (
+                    withClass "homeManager" (
+                      resolveModuleList "hm-nixos" (config.flake.modules.homeNixOS or { }
+                      ) hostCfg.modules hostCfg.excludeModules
+                    )
+                  )
+                  ++ lib.optionals (target == "darwin") (
+                    withClass "homeManager" (
+                      resolveModuleList "hm-darwin" (config.flake.modules.homeDarwin or { }
+                      ) hostCfg.modules hostCfg.excludeModules
+                    )
+                  );
                 };
               };
             }

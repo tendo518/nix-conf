@@ -95,7 +95,9 @@ Modules live in `modules/` organized by function. Each module registers itself i
 {
   flake.modules.nixos."category/name" = { ... };
   flake.modules.darwin."category/name" = { ... };
-  flake.modules.homeManager."category/name" = { ... };
+  flake.modules.home."category/name" = { ... };
+  flake.modules.homeNixOS."category/name" = { ... };
+  flake.modules.homeDarwin."category/name" = { ... };
 }
 ```
 
@@ -141,7 +143,7 @@ Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `hosts` na
     # hardware config, packages, services, etc.
   };
 
-  flake.modules.homeManager."hosts/my-host" = { ... }: {
+  flake.modules.home."hosts/my-host" = { ... }: {
     # home manager config - receives `userVars` from host.user
   };
 };
@@ -210,7 +212,7 @@ just nix-switch-darwin        # Raw darwin-rebuild switch
 2. **Host Colocation**: Host definition and modules in same `modules/hosts/<hostname>/` directory
 3. **Prefix Expansion**: Use short prefixes (`"core"`) instead of listing submodules
 4. **Secrets**: Store in `secrets/`, reference via `passwordSecret`, edit with `just edit-password`
-5. **Cross-Platform Modules**: Single file can define modules for multiple platforms (nixos/darwin/homeManager)
+5. **Cross-Platform Modules**: Single file can define modules for multiple platforms (nixos/darwin/home/homeNixOS/homeDarwin)
 
 ## Directory Structure
 
@@ -252,7 +254,7 @@ packages/               # Custom package definitions
 1. Create `modules/hosts/<hostname>/default.nix`:
    - Add `hosts.nixos.<hostname>` or `hosts.darwin.<hostname>` definition
    - Add `flake.modules.nixos."hosts/<hostname>"` for system config
-   - Add `flake.modules.homeManager."hosts/<hostname>"` for home config
+   - Add `flake.modules.home."hosts/<hostname>"` for home config
 2. For complex hosts, split into multiple files (hardware.nix, packages.nix, etc.)
 3. Add secrets to `secrets/` and register in `secrets/secrets.nix`
 4. Test with `just build-nixos <hostname>` or `just build-darwin <hostname>`
@@ -263,7 +265,9 @@ packages/               # Custom package definitions
 2. Register with the appropriate `flake.modules` namespace:
    - `flake.modules.nixos` - NixOS system modules
    - `flake.modules.darwin` - Darwin system modules
-   - `flake.modules.homeManager` - Home Manager modules
+   - `flake.modules.home` - Home Manager modules (shared between NixOS and Darwin)
+   - `flake.modules.homeNixOS` - Home Manager modules (NixOS only)
+   - `flake.modules.homeDarwin` - Home Manager modules (Darwin only)
 3. Reference in host configs by key or prefix
 
 ### Editing Secrets

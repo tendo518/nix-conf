@@ -92,7 +92,7 @@
         "application/pdf" = "firefox.desktop";
       };
     };
-  flake.modules.homeManager."desktop/base" =
+  flake.modules.home."desktop/base" =
 
     {
       config,

@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."agents/hermes" =
+  flake.modules.home."agents/hermes" =
     {
       pkgs,
       config,

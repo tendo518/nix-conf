@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."agents/claude-code" =
+  flake.modules.home."agents/claude-code" =
     {
       pkgs,
       config,

@@ -3,7 +3,7 @@
   ...
 }:
 {
-  flake.modules.homeManager."apps/neovim" = {
+  flake.modules.home."apps/neovim" = {
     # Neovim - medium priority default editor (helix > neovim > vim)
     programs.neovim = {
       enable = true;

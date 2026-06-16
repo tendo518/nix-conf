@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."agents/ccstatusline" =
+  flake.modules.home."agents/ccstatusline" =
     { pkgs, ... }:
     {
       home.packages = [ pkgs.llm-agents.ccstatusline ];

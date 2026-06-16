@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."development/git" =
+  flake.modules.home."development/git" =
     {
       lib,
       config,

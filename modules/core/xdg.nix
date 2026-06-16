@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager."core/xdg" =
+  flake.modules.home."core/xdg" =
     {
       config,
       ...

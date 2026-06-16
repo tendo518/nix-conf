@@ -3,7 +3,7 @@
   ...
 }:
 {
-  flake.modules.homeManager."apps/helix" = {
+  flake.modules.home."apps/helix" = {
     # Helix - highest priority default editor (helix > neovim > vim)
     home.sessionVariables = {
       EDITOR = lib.mkOverride 500 "hx";

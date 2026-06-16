@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."agents/reasonix" =
+  flake.modules.home."agents/reasonix" =
     {
       pkgs,
       config,

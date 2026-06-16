@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."apps/firefox/ui-fix" =
+  flake.modules.home."apps/firefox/ui-fix" =
     {
       pkgs,
       lib,

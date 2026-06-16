@@ -37,7 +37,7 @@
   };
 
   # Hermes Telegram gateway — only on this host
-  flake.modules.homeManager."hosts/desktop-lab-peace" =
+  flake.modules.home."hosts/desktop-lab-peace" =
     {
       pkgs,
       config,

@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager."apps/dropbox" =
+  flake.modules.home."apps/dropbox" =
     { pkgs, ... }:
     {
       # home.packages = with pkgs; [

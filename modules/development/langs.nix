@@ -53,7 +53,7 @@ in
   flake.modules.darwin."development/langs" = systemModule;
 
   # Home-manager module for HM-specific config (env vars, XDG, programs)
-  flake.modules.homeManager."development/langs" =
+  flake.modules.home."development/langs" =
     { config, ... }:
     let
       xdg = config.xdg;

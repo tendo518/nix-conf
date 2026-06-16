@@ -98,7 +98,7 @@
       };
     };
 
-  flake.modules.homeManager."hosts/laptop-solar-modoka" =
+  flake.modules.home."hosts/laptop-solar-modoka" =
     {
       inputs,
       config,
