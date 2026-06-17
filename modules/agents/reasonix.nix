@@ -43,16 +43,19 @@
         kind           = "openai"
         base_url       = "https://api.deepseek.com"
         models         = ["deepseek-v4-flash", "deepseek-v4-pro"]
-        default        = "deepseek-v4-flash"   # optional; defaults to models[0]
+        default        = "deepseek-v4-pro"   # optional; defaults to models[0]
         api_key_env    = "DEEPSEEK_API_KEY"
         context_window = 1000000   # tokens; harness compacts older history near this limit (0 disables)
         effort         = "auto"    # DeepSeek thinking effort: high | max
 
-        [agent]
-        max_steps          = 0     # executor tool-call rounds; 0 = no limit
-        planner_max_steps  = 12    # planner read-only tool-call rounds; 0 = no limit
-        planner_model      = "deepseek-v4-pro"
-        subagent_model = "deepseek-v4-pro"
+        # not very usable subagent, seems planner are put into sandbox but still try to finish itself
+        # the planner is not well prompted howto give instruction to executor
+        # 所以回退到使用单模型
+        # [agent]
+        # max_steps          = 0     # executor tool-call rounds; 0 = no limit
+        # planner_max_steps  = 0    # planner read-only tool-call rounds; 0 = no limit
+        # planner_model      = "deepseek-v4-pro"
+        # subagent_model = "deepseek-v4-pro"
 
         [codegraph]
         enabled      = true
