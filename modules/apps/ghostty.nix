@@ -10,7 +10,7 @@
         enableFishIntegration = true;
         settings = {
           font-size = if pkgs.stdenv.isDarwin then 14 else 12;
-          font-family = if pkgs.stdenv.isDarwin then "Retedo Mono" else "monospace";
+          font-family = "Retedo Mono";
           theme = "Dark Modern";
           scrollback-limit = 200000;
           background-opacity = 0.90;

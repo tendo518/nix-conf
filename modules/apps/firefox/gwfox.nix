@@ -44,13 +44,12 @@
           # gwfox customizations
           "gwfox.icons" = true; # Enable menu icons
           "gwfox.blur" = true; # Enable UI blur effects
-          "gwfox.toolbar" = true; # Auto-hide bookmarks toolbar
+          "gwfox.toolbar" = false; # Auto-hide bookmarks toolbar
           "gwfox.bms" = false; # Enable transparency (Linux only)
           "gwfox.noborder" = false; # Borderless window mode
           "gwfox.newtab" = false; # Enable New Tab transparency (requires allow_transparent_browser)
           "gwfox.urlbar" = false; # Move address bar to sidebar
-          "gwfox.atbc" = false; # Adaptive Tab Bar Colour compatibility
-          "gwfox.db" = false; # Disable blur on panels/menus
+          "gwfox.atbc" = true; # Adaptive Tab Bar Colour compatibility
           "gwfox.ac" = false; # Accent color (edit --bg0 in CSS to customize)
           # "gwfox.sidebar" = 1; # Set sidebar width (1, 2, or 3)
         };
