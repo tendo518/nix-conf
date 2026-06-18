@@ -10,22 +10,24 @@
         enableFishIntegration = true;
         settings = {
           font-size = if pkgs.stdenv.isDarwin then 14 else 12;
-          font-family = "Retedo Mono";
+          font-family = if pkgs.stdenv.isDarwin then "Retedo Mono" else "monospace";
           theme = "Dark Modern";
-          scrollback-limit = 20000;
-          background-opacity = 0.95;
-
+          scrollback-limit = 200000;
+          background-opacity = 0.90;
+          unfocused-split-opacity = 1; # disable unfocus darken
           # notify
           notify-on-command-finish = "unfocused";
           notify-on-command-finish-action = "no-bell, notify";
-          notify-on-command-finish-after = "15s";
-
-        }
-        // lib.optionalAttrs pkgs.stdenv.isDarwin {
-          # macOS blur
+          notify-on-command-finish-after = "30s";
+          # macOS blur, seems works on KDE too
           background-blur = "macos-glass-regular";
-          background-blur-radius = 10;
+          background-blur-radius = 20;
         };
+        # // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        #   # macOS blur
+        #   background-blur = "macos-glass-regular";
+        #   background-blur-radius = 20;
+        # };
       };
     };
 }
