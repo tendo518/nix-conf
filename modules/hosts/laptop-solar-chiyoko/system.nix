@@ -21,7 +21,6 @@
 
       environment.systemPackages = with pkgs; [
         libcamera
-        libreoffice
         zathura
         telegram-desktop
         chromium

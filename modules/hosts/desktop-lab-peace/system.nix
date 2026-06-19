@@ -12,7 +12,6 @@
         # yt-dlp  # upstream deno build fail
         qq
         obs-studio
-        libreoffice-qt6-fresh
         calibre
         zathura
         moonlight-qt
