@@ -158,9 +158,9 @@ workspace "Text"
 
 binds {
     // Super+L   { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
-    Mod+T repeat=false    { spawn "kitty"; }
+    Mod+T repeat=false    { spawn "ghostty"; }
     Mod+B  repeat=false   { spawn "firefox"; }
-    Mod+E     { spawn "kitty" "-e" "yazi"; }
+    Mod+E     { spawn "ghostty" "-e" "yazi"; }
     Mod+S     { spawn "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
     Alt+Space { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
 

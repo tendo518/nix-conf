@@ -85,7 +85,7 @@
         "video/x-matroska" = "mpv.desktop";
 
         # Terminal
-        "application/x-terminal-emulator" = "kitty.desktop";
+        "application/x-terminal-emulator" = "com.mitchellh.ghostty.desktop";
       };
 
       xdg.mime.removedAssociations = {
@@ -127,7 +127,7 @@
       xdg.terminal-exec = {
         enable = true;
         settings = {
-          default = [ "kitty.desktop" ];
+          default = [ "com.mitchellh.ghostty.desktop" ];
         };
       };
 

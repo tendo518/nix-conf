@@ -23,7 +23,7 @@
         noctalia-shell
         brightnessctl
         playerctl
-        kitty
+        ghostty
         zathura
 
         # niri Important Software recommendations
