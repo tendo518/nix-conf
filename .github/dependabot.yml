@@ -3,8 +3,8 @@ updates:
   - package-ecosystem: "nix"
     directory: "/"
     schedule:
-      interval: "daily"
-      time: "18:00"  # CST 2:00
+      interval: "cron"
+      cronjob: "0 18 * * *"  # 18:00 UTC = 02:00 CST (Asia/Shanghai, UTC+8) every day incl. weekends
       
     groups:
       nix-updates:
