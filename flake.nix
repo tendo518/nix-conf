@@ -30,7 +30,7 @@
 
     flake-parts.url = "github:hercules-ci/flake-parts";
 
-    lanzaboote.url = "github:nix-community/lanzaboote/v1.0.0";
+    lanzaboote.url = "github:nix-community/lanzaboote/v1.1.0";
 
     agenix.url = "github:ryantm/agenix";
 
