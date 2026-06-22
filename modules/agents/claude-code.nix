@@ -18,39 +18,39 @@
         aliyun = {
           baseUrl = "https://coding.dashscope.aliyuncs.com/apps/anthropic";
           apiKeyPath = aliyun-codingplan-api-key.path;
-          smallModel = "qwen3-5-plus";
+          smallModel = "qwen3_5_plus";
           models = {
-            qwen3-max.model = "qwen3-max-2026-01-23";
-            qwen3-6-plus.model = "qwen3.6-plus";
-            qwen3-5-plus.model = "qwen3.5-plus";
-            qwen3-coder-next.model = "qwen3-coder-next";
-            qwen3-coder-plus.model = "qwen3-coder-plus";
-            kimi-k2-5.model = "kimi-k2.5";
-            glm-5.model = "glm-5";
-            glm-4-7.model = "glm-4.7";
-            minimax-m2-5.model = "MiniMax-M2.5";
+            qwen3_max.model = "qwen3-max-2026-01-23";
+            qwen3_6_plus.model = "qwen3.6-plus";
+            qwen3_5_plus.model = "qwen3.5-plus";
+            qwen3_coder_next.model = "qwen3-coder-next";
+            qwen3_coder_plus.model = "qwen3-coder-plus";
+            kimi_k2_5.model = "kimi-k2.5";
+            glm_5.model = "glm-5";
+            glm_4_7.model = "glm-4.7";
+            minimax_m2_5.model = "MiniMax-M2.5";
           };
         };
         volces = {
           baseUrl = "https://ark.cn-beijing.volces.com/api/coding";
           apiKeyPath = volcengine-codingplan-api-key.path;
-          smallModel = "ds-v4flash";
+          smallModel = "ds_v4flash";
           models = {
-            kimi-k2-6.model = "kimi-k2.6";
-            glm-5-1.model = "glm-5.1";
-            glm-5-2.model = "glm-5.2";
-            minimax-m3.model = "minimax-m3";
-            ds-v4pro.model = "deepseek-v4-pro";
-            ds-v4flash.model = "deepseek-v4-flash";
+            kimi_k2_6.model = "kimi-k2.6";
+            glm_5_1.model = "glm-5.1";
+            glm_5_2.model = "glm-5.2";
+            minimax_m3.model = "minimax-m3";
+            ds_v4pro.model = "deepseek-v4-pro";
+            ds_v4flash.model = "deepseek-v4-flash";
           };
         };
         deepseek = {
           baseUrl = "https://api.deepseek.com/anthropic";
           apiKeyPath = deepseek-api-key.path;
-          smallModel = "v4-flash";
+          smallModel = "v4_flash";
           models = {
-            v4-flash.model = "deepseek-v4-flash[1m]";
-            v4-pro.model = "deepseek-v4-pro[1m]";
+            v4_flash.model = "deepseek-v4-flash[1m]";
+            v4_pro.model = "deepseek-v4-pro[1m]";
           };
         };
       };
