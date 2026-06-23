@@ -218,8 +218,8 @@
           maxConcurrency = 8; # avoid rate limits on third-party APIs (was 32)
         };
         display.showTokenUsage = true; # per-turn token usage
-        symbolPreset = "ascii"; # no Nerd Font dependency
-        statusLine.preset = "ascii"; # match symbol preset
+        symbolPreset = "unicode"; # no Nerd Font dependency
+        statusLine.preset = "default"; # match symbol preset
         images.blockImages = true; # GLM/DeepSeek are text-only coding models
         secrets.enabled = true; # obfuscate secrets before sending to API gateways
       };
