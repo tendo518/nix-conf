@@ -37,7 +37,6 @@
           smallModel = "ds_v4flash";
           models = {
             kimi_k2_6.model = "kimi-k2.6";
-            glm_5_1.model = "glm-5.1";
             glm_5_2.model = "glm-5.2";
             minimax_m3.model = "minimax-m3";
             ds_v4pro.model = "deepseek-v4-pro";

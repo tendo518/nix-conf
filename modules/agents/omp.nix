@@ -35,10 +35,6 @@
               model = "kimi-k2.6";
               contextWindow = 262144;
             };
-            glm_5_1 = {
-              model = "glm-5.1";
-              contextWindow = 200000;
-            };
             glm_5_2 = {
               model = "glm-5.2";
               contextWindow = 1000000;

@@ -13,7 +13,6 @@
 
       models = {
         kimi-k2-6 = "kimi-k2.6";
-        glm-5-1 = "glm-5.1";
         minimax-m3 = "minimax-m3";
         ds-v4pro = "deepseek-v4-pro";
         ds-v4flash = "deepseek-v4-flash";
