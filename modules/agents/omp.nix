@@ -33,23 +33,27 @@
           models = {
             kimi_k2_6 = {
               model = "kimi-k2.6";
-              contextWindow = 262144;
+              contextWindow = 256000;
+            };
+            kimi_k2_7_code = {
+              model = "kimi-k2.7-code";
+              contextWindow = 256000;
             };
             glm_5_2 = {
               model = "glm-5.2";
-              contextWindow = 1000000;
+              contextWindow = 1024000;
             };
             minimax_m3 = {
               model = "minimax-m3";
-              contextWindow = 1000000;
+              contextWindow = 512000;
             };
             ds_v4pro = {
               model = "deepseek-v4-pro";
-              contextWindow = 1000000;
+              contextWindow = 1024000;
             };
             ds_v4flash = {
               model = "deepseek-v4-flash";
-              contextWindow = 1000000;
+              contextWindow = 1024000;
             };
           };
         };
@@ -158,6 +162,17 @@
           commit = "volces/deepseek-v4-flash";
           title = "volces/deepseek-v4-flash";
         };
+        volces-ds = {
+          # All roles on volces
+          default = "volces/deepseek-v4-pro";
+          smol = "volces/deepseek-v4-flash";
+          slow = "volces/deepseek-v4-pro";
+          plan = "volces/deepseek-v4-pro";
+          advisor = "volces/deepseek-v4-pro";
+          task = "volces/deepseek-v4-flash";
+          commit = "volces/deepseek-v4-flash";
+          title = "volces/deepseek-v4-flash";
+        };
         deepseek = {
           # All roles on deepseek API
           default = "deepseek/deepseek-v4-pro[1m]";
@@ -214,7 +229,7 @@
           maxConcurrency = 8; # avoid rate limits on third-party APIs (was 32)
         };
         display.showTokenUsage = true; # per-turn token usage
-        symbolPreset = "unicode"; # no Nerd Font dependency
+        symbolPreset = "ascii"; # no Nerd Font dependency
         statusLine.preset = "default"; # match symbol preset
         images.blockImages = true; # GLM/DeepSeek are text-only coding models
         secrets.enabled = true; # obfuscate secrets before sending to API gateways

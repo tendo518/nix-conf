@@ -11,13 +11,6 @@
         volcengine-codingplan-api-key
         ;
 
-      models = {
-        kimi-k2-6 = "kimi-k2.6";
-        minimax-m3 = "minimax-m3";
-        ds-v4pro = "deepseek-v4-pro";
-        ds-v4flash = "deepseek-v4-flash";
-      };
-
       hermesWrapped = pkgs.writeShellScriptBin "hermes-agent" ''
         if [ -r "${volcengine-codingplan-api-key.path}" ]; then
           export VOLCENGINE_API_KEY="$(cat "${volcengine-codingplan-api-key.path}")"
@@ -25,17 +18,9 @@
         exec ${lib.getExe pkgs.llm-agents.hermes-agent} "$@"
       '';
 
-      mkHermesWrapper =
-        name: model:
-        pkgs.writeShellScriptBin "ha-vol-${name}" ''
-          exec ${lib.getExe hermesWrapped} --model "${model}" "$@"
-        '';
-
-      hermesWrappers = lib.mapAttrsToList mkHermesWrapper models;
-
     in
     {
-      home.packages = [ hermesWrapped ] ++ hermesWrappers;
+      home.packages = [ hermesWrapped ];
 
       home.file."./.hermes/config.yaml".force = true;
       home.file."./.hermes/config.yaml".text = ''

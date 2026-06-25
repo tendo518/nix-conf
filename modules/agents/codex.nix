@@ -19,90 +19,12 @@
       # in modules/agents/claude-code.nix so wrapper names stay in sync.
       models = {
         kimi_k2_6 = "kimi-k2.6";
+        kimi_k2_7_code = "kimi-k2.7-code";
         glm_5_2 = "glm-5.2";
         minimax_m3 = "minimax-m3";
         ds_v4pro = "deepseek-v4-pro";
         ds_v4flash = "deepseek-v4-flash";
       };
-
-      # Model metadata catalog so codex doesn't fall back to degraded defaults
-      # for custom-provider models.  Referenced from config.toml via
-      # model_catalog_json.  Context windows are approximate; tune as needed.
-      mkModelEntry =
-        slug: contextWindow: displayName: reasoningEfforts:
-        let
-          mid = builtins.length reasoningEfforts / 2;
-        in
-        {
-          inherit slug;
-          display_name = displayName;
-          description = "${displayName} via Volces Coding Plan";
-          context_window = contextWindow;
-          max_context_window = contextWindow;
-          effective_context_window_percent = 90;
-          input_modalities = [ "text" ];
-          default_reasoning_level =
-            if reasoningEfforts == [ ] then null else builtins.elemAt reasoningEfforts mid;
-          supported_reasoning_levels = builtins.map (e: { effort = e; description = ""; }) reasoningEfforts;
-          supports_reasoning_summaries = false;
-          default_reasoning_summary = "none";
-          support_verbosity = false;
-          default_verbosity = "low";
-          supports_parallel_tool_calls = true;
-          supports_image_detail_original = false;
-          supports_search_tool = false;
-          shell_type = "shell_command";
-          apply_patch_tool_type = "freeform";
-          web_search_tool_type = "none";
-          visibility = "list";
-          supported_in_api = true;
-          priority = 0;
-          additional_speed_tiers = [ ];
-          service_tiers = [ ];
-          upgrade = null;
-          use_responses_lite = false;
-          model_messages = null;
-          truncation_policy = {
-            mode = "percent";
-            limit = 90;
-          };
-        };
-
-      modelCatalog = pkgs.writeText "codex-model-catalog.json" (
-        builtins.toJSON {
-          models = [
-            (mkModelEntry "deepseek-v4-flash" 1000000 "DeepSeek V4 Flash" [
-              "minimal"
-              "low"
-              "medium"
-              "high"
-              "xhigh"
-            ])
-            (mkModelEntry "deepseek-v4-pro" 1000000 "DeepSeek V4 Pro" [
-              "minimal"
-              "low"
-              "medium"
-              "high"
-              "xhigh"
-            ])
-            (mkModelEntry "kimi-k2.6" 262144 "Kimi K2.6" [
-              "low"
-              "medium"
-              "high"
-            ])
-            (mkModelEntry "glm-5.2" 1000000 "GLM 5.2" [
-              "low"
-              "medium"
-              "high"
-            ])
-            (mkModelEntry "minimax-m3" 1000000 "MiniMax M3" [
-              "low"
-              "medium"
-              "high"
-            ])
-          ];
-        }
-      );
 
       # Seeded on first activation. After that, the file is owned by the user
       # so Codex can persist things like `projects.<path>.trust_level` without
@@ -114,7 +36,6 @@
       codexConfig = pkgs.writeText "codex-config.toml" ''
         model = "deepseek-v4-flash"
         model_provider = "volces"
-        model_catalog_json = "${modelCatalog}"
         approval_policy = "on-request"
         sandbox_mode = "workspace-write"
 
@@ -140,13 +61,19 @@
 
       codexVolcesModel =
         key: model:
-        pkgs.writeShellScriptBin "codex-volces-${key}" (mkCodexExec "--model \"${model}\"" "codex-volces-${key}");
+        pkgs.writeShellScriptBin "codex-volces-${key}" (
+          mkCodexExec "--model \"${model}\"" "codex-volces-${key}"
+        );
 
       codexModelWrappers = lib.mapAttrsToList codexVolcesModel models;
 
     in
     {
-      home.packages = [ codexVolces ] ++ codexModelWrappers;
+      home.packages = [
+        pkgs.llm-agents.codex
+        codexVolces
+      ]
+      ++ codexModelWrappers;
 
       # xdg.configFile would symlink config.toml into /nix/store (read-only),
       # which makes Codex's trust prompts fail with `config/batchWrite failed`

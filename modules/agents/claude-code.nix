@@ -37,10 +37,11 @@
           smallModel = "ds_v4flash";
           models = {
             kimi_k2_6.model = "kimi-k2.6";
-            glm_5_2.model = "glm-5.2";
+            kimi_k2_7_code.model = "kimi-k2.7-code";
+            glm_5_2.model = "glm-5.2[1m]";
             minimax_m3.model = "minimax-m3";
-            ds_v4pro.model = "deepseek-v4-pro";
-            ds_v4flash.model = "deepseek-v4-flash";
+            ds_v4pro.model = "deepseek-v4-pro[1m]";
+            ds_v4flash.model = "deepseek-v4-flash[1m]";
           };
         };
         deepseek = {
@@ -107,7 +108,6 @@
                 command = "${lib.getExe pkgs.llm-agents.ccstatusline}";
                 padding = 0;
               };
-              enabledPlugins."pyright-lsp@claude-plugins-official" = true;
               skipWebFetchPreflight = true;
               theme = "auto";
             }
