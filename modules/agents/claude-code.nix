@@ -15,23 +15,20 @@
         ;
 
       providers = {
-        # aliyun = {
-        #   baseUrl = "https://coding.dashscope.aliyuncs.com/apps/anthropic";
-        #   apiKeyPath = aliyun-codingplan-api-key.path;
-        #   smallModel = "qwen3_5_plus";
-        #   models = {
-        #     qwen3_max.model = "qwen3-max-2026-01-23";
-        #     qwen3_6_plus.model = "qwen3.6-plus";
-        #     qwen3_5_plus.model = "qwen3.5-plus";
-        #     qwen3_coder_next.model = "qwen3-coder-next";
-        #     qwen3_coder_plus.model = "qwen3-coder-plus";
-        #     kimi_k2_5.model = "kimi-k2.5";
-        #     glm_5.model = "glm-5";
-        #     glm_4_7.model = "glm-4.7";
-        #     minimax_m2_5.model = "MiniMax-M2.5";
-        #   };
-        # };
+        aliyun = {
+          enable = false;
+          baseUrl = "https://coding.dashscope.aliyuncs.com/apps/anthropic";
+          apiKeyPath = aliyun-codingplan-api-key.path;
+          smallModel = "qwen3_5_plus";
+          models = {
+            qwen3_max.model = "qwen3-max-2026-01-23";
+            qwen3_6_plus.model = "qwen3.6-plus";
+            kimi_k2_5.model = "kimi-k2.5";
+            glm_5.model = "glm-5";
+          };
+        };
         volces = {
+          enable = true;
           baseUrl = "https://ark.cn-beijing.volces.com/api/coding";
           apiKeyPath = volcengine-codingplan-api-key.path;
           smallModel = "ds_v4flash";
@@ -45,19 +42,26 @@
           };
         };
         deepseek = {
+          enable = true;
           baseUrl = "https://api.deepseek.com/anthropic";
           apiKeyPath = deepseek-api-key.path;
           smallModel = "v4_flash";
           models = {
-            v4_flash.model = "deepseek-v4-flash[1m]";
-            v4_pro.model = "deepseek-v4-pro[1m]";
+            v4_flash = {
+              model = "deepseek-v4-flash[1m]";
+              effortLevel = "max";
+            };
+            v4_pro = {
+              model = "deepseek-v4-pro[1m]";
+              effortLevel = "max";
+            };
           };
         };
       };
 
       # --- Claude Code Helpers ---
       mkClaudecodeWrapper =
-        baseUrl: model: smallModel: apiKeyPath: name:
+        baseUrl: model: smallModel: apiKeyPath: name: effortLevel:
         pkgs.writeShellScriptBin name ''
           export ANTHROPIC_BASE_URL="${baseUrl}"
           export ANTHROPIC_MODEL="${model}"
@@ -65,7 +69,7 @@
           export ANTHROPIC_DEFAULT_SONNET_MODEL="${model}"
           export ANTHROPIC_DEFAULT_HAIKU_MODEL="${smallModel}"
           export CLAUDE_CODE_SUBAGENT_MODEL="${smallModel}"
-          export CLAUDE_CODE_EFFORT_LEVEL="max"
+          ${lib.optionalString (effortLevel != "") "export CLAUDE_CODE_EFFORT_LEVEL=\"${effortLevel}\""}
           export API_TIMEOUT_MS="600000"
           export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
           if [ -r "${apiKeyPath}" ]; then
@@ -82,10 +86,12 @@
         lib.mapAttrsToList (
           name: m:
           mkClaudecodeWrapper provider.baseUrl m.model smallModelId provider.apiKeyPath
-            "cc-${providerName}-${name}"
+            "cc-${providerName}-${name}" (m.effortLevel or "")
         ) provider.models;
 
-      claudecodeWrappers = lib.concatLists (lib.mapAttrsToList mkClaudecodeWrappers providers);
+      claudecodeWrappers = lib.concatLists (lib.mapAttrsToList mkClaudecodeWrappers (
+        lib.filterAttrs (_: p: p.enable) providers
+      ));
 
     in
     {
@@ -93,8 +99,8 @@
         with pkgs.llm-agents;
         [
           claude-code
-          cc-switch-cli
-          ccusage
+          # cc-switch-cli
+          # ccusage
         ]
         ++ claudecodeWrappers;
 
