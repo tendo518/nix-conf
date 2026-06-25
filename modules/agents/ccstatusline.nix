@@ -15,20 +15,19 @@
             }
             {
               id = "sep1";
-              type = "separator";
-              color = "white";
-
+              type = "custom-text";
+              customText = "-";
+              color = "cyan";
             }
             {
               id = "think";
               type = "thinking-effort";
-              color = "yellow";
+              color = "cyan";
             }
             {
               id = "sep2";
               type = "separator";
               color = "white";
-
             }
             {
               id = "cwd";
@@ -49,14 +48,14 @@
             }
             {
               id = "sep4";
-              type = "separator";
-              color = "white";
-
+              type = "custom-text";
+              customText = " ";
+              color = "magenta";
             }
             {
               id = "changes";
               type = "git-changes";
-              color = "yellow";
+              color = "magenta";
             }
             {
               id = "sep5";
