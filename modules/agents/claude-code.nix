@@ -15,22 +15,22 @@
         ;
 
       providers = {
-        aliyun = {
-          baseUrl = "https://coding.dashscope.aliyuncs.com/apps/anthropic";
-          apiKeyPath = aliyun-codingplan-api-key.path;
-          smallModel = "qwen3_5_plus";
-          models = {
-            qwen3_max.model = "qwen3-max-2026-01-23";
-            qwen3_6_plus.model = "qwen3.6-plus";
-            qwen3_5_plus.model = "qwen3.5-plus";
-            qwen3_coder_next.model = "qwen3-coder-next";
-            qwen3_coder_plus.model = "qwen3-coder-plus";
-            kimi_k2_5.model = "kimi-k2.5";
-            glm_5.model = "glm-5";
-            glm_4_7.model = "glm-4.7";
-            minimax_m2_5.model = "MiniMax-M2.5";
-          };
-        };
+        # aliyun = {
+        #   baseUrl = "https://coding.dashscope.aliyuncs.com/apps/anthropic";
+        #   apiKeyPath = aliyun-codingplan-api-key.path;
+        #   smallModel = "qwen3_5_plus";
+        #   models = {
+        #     qwen3_max.model = "qwen3-max-2026-01-23";
+        #     qwen3_6_plus.model = "qwen3.6-plus";
+        #     qwen3_5_plus.model = "qwen3.5-plus";
+        #     qwen3_coder_next.model = "qwen3-coder-next";
+        #     qwen3_coder_plus.model = "qwen3-coder-plus";
+        #     kimi_k2_5.model = "kimi-k2.5";
+        #     glm_5.model = "glm-5";
+        #     glm_4_7.model = "glm-4.7";
+        #     minimax_m2_5.model = "MiniMax-M2.5";
+        #   };
+        # };
         volces = {
           baseUrl = "https://ark.cn-beijing.volces.com/api/coding";
           apiKeyPath = volcengine-codingplan-api-key.path;
