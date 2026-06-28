@@ -86,12 +86,13 @@
         lib.mapAttrsToList (
           name: m:
           mkClaudecodeWrapper provider.baseUrl m.model smallModelId provider.apiKeyPath
-            "cc-${providerName}-${name}" (m.effortLevel or "")
+            "cc-${providerName}-${name}"
+            (m.effortLevel or "")
         ) provider.models;
 
-      claudecodeWrappers = lib.concatLists (lib.mapAttrsToList mkClaudecodeWrappers (
-        lib.filterAttrs (_: p: p.enable) providers
-      ));
+      claudecodeWrappers = lib.concatLists (
+        lib.mapAttrsToList mkClaudecodeWrappers (lib.filterAttrs (_: p: p.enable) providers)
+      );
 
     in
     {

@@ -27,7 +27,7 @@
         # of just the bare essentials.
 
         # failed to boot on some systems (with PCI-E extension cable)
-        powerManagement.enable = lib.mkDefault false;
+        powerManagement.enable = lib.mkDefault true;
 
         # Fine-grained power management. Turns off GPU when not in use.
         # Experimental and only works on modern Nvidia GPUs (Turing or newer).

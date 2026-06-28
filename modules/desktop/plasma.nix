@@ -12,7 +12,7 @@
         papirus-icon-theme
         kdePackages.sddm-kcm
         qalculate-qt
-        kdePackages.kamoso  # Idk but not included defaultly
+        kdePackages.kamoso # Idk but not included defaultly
       ];
       environment.plasma6.excludePackages = with pkgs.kdePackages; [
         elisa # use mpv for audio

@@ -11,6 +11,7 @@
 
       # Kernel and hardware detection
       boot = {
+        kernelParams = [ "pcie_aspm=off" ];
         tmp.cleanOnBoot = true;
 
         initrd = {
@@ -61,6 +62,9 @@
         enable = true;
         pkiBundle = "/var/lib/sbctl";
       };
+
+      # PCIe power management causes instability with riser cable
+      hardware.nvidia.powerManagement.enable = false;
 
       # Platform and firmware
       nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
