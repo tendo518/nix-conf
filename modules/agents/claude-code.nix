@@ -45,13 +45,13 @@
           enable = true;
           baseUrl = "https://api.deepseek.com/anthropic";
           apiKeyPath = deepseek-api-key.path;
-          smallModel = "v4_flash";
+          smallModel = "ds_v4flash";
           models = {
-            v4_flash = {
+            ds_v4flash = {
               model = "deepseek-v4-flash[1m]";
               effortLevel = "max";
             };
-            v4_pro = {
+            ds_v4pro = {
               model = "deepseek-v4-pro[1m]";
               effortLevel = "max";
             };

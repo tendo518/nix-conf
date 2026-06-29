@@ -62,11 +62,11 @@
           apiKeyEnv = "DEEPSEEK_API_KEY";
           apiKeyPath = deepseek-api-key.path;
           models = {
-            v4_flash = {
+            ds_v4flash = {
               model = "deepseek-v4-flash[1m]";
               contextWindow = 1000000;
             };
-            v4_pro = {
+            ds_v4pro = {
               model = "deepseek-v4-pro[1m]";
               contextWindow = 1000000;
             };
@@ -148,7 +148,7 @@
       # clobbering setup state.
       #
       # Two levels of control:
-      #   omp-volces / omp-deepseek   — full family-specific composition
+      #   omp-volces / omp-volces-deepseek / omp-deepseek   — multi-agent compositions
       #   omp-volces-glm_5_2 etc.     — single-model, no subagents
       compositions = {
         volces = {
@@ -162,8 +162,8 @@
           commit = "volces/deepseek-v4-flash";
           title = "volces/deepseek-v4-flash";
         };
-        volces-ds = {
-          # All roles on volces
+        volces-deepseek = {
+          # All deepseek models on volces
           default = "volces/deepseek-v4-pro";
           smol = "volces/deepseek-v4-flash";
           slow = "volces/deepseek-v4-pro";
