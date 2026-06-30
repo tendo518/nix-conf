@@ -103,9 +103,9 @@ in
       # ── Python: uv mirror ──
       programs.uv = {
         enable = true;
-        settings = {
-          index-url = "https://mirrors.sustech.edu.cn/pypi/web/simple";
-        };
+        # settings = {
+        #   index-url = "https://mirrors.bfsu.edu.cn/pypi/web/simple/";
+        # };
       };
     };
 }

@@ -109,17 +109,19 @@
       imports = [ ];
 
       # Texlive for Chinese/English writing with IEEE templates
+      
       home.packages = [
-        (pkgs.texlive.combine {
-          inherit (pkgs.texlive)
-            scheme-medium
-            collection-langchinese
-            latexmk
-            ieeetran
-            biblatex
-            biber
-            ;
-        })
+        pkgs.texlive.combined.scheme-full
+        # (pkgs.texlive.combine {
+        #   inherit (pkgs.texlive)
+        #     scheme-medium
+        #     collection-langchinese
+        #     latexmk
+        #     ieeetran
+        #     biblatex
+        #     biber
+        #     ;
+        # })
       ];
 
       xdg = {
