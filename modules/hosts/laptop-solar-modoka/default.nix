@@ -50,7 +50,7 @@
         skimpdf
         spotify
         zed-editor
-        telegram-desktop
+        # telegram-desktop
 
         # alt-tab-macos
         ticktick

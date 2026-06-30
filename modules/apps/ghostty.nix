@@ -14,7 +14,7 @@
           theme = "Dark Modern";
           # Force dark window chrome (tabs/titlebar) instead of following system light/dark
           window-theme = "dark";
-          scrollback-limit = 200000;
+          scrollback-limit = 200000000;
           background-opacity = 0.90;
           unfocused-split-opacity = 1; # disable unfocus darken
           # notify
