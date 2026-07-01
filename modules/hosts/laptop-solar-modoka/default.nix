@@ -64,38 +64,10 @@
         # ghostty-bin
 
         moonlight-qt
+        dropbox
+        clash-verge-rev
 
       ];
-
-      # Homebrew
-      homebrew = {
-        enable = true;
-        onActivation = {
-          autoUpdate = false;
-          upgrade = false;
-          cleanup = "zap";
-        };
-
-        masApps = {
-          # Xcode = 497799835;
-          # Wechat = 836500024;
-          # NeteaseCloudMusic = 944848654;
-          # QQ = 451108668;
-          # WeCom = 1189898970;
-          # TecentMetting = 1484048379;
-          # QQMusic = 595615424;
-        };
-
-        taps = [
-        ];
-
-        brews = [ ];
-
-        casks = [
-          "dropbox"
-          "clash-verge-rev"
-        ];
-      };
     };
 
   flake.modules.home."hosts/laptop-solar-modoka" =
@@ -109,7 +81,7 @@
       imports = [ ];
 
       # Texlive for Chinese/English writing with IEEE templates
-      
+
       home.packages = [
         pkgs.texlive.combined.scheme-full
         # (pkgs.texlive.combine {

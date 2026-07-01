@@ -284,5 +284,4 @@ just edit-password secrets/tendo-password.age
 
 - `stateVersion` is an integer (e.g., 6), not a string
 - `hostPlatform` is `aarch64-darwin` for Apple Silicon
-- Homebrew integration available via `homebrew` option in darwin modules
 - Home directory base is `/Users` instead of `/home`
