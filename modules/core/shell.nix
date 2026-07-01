@@ -170,6 +170,7 @@
         # --- Miscellaneous ---
         tmux # Terminal multiplexer
         zellij # Another terminal workspace with batteries included
+        nb  # in terminal note taking
 
         imagemagick
         pandoc
