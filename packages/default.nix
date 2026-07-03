@@ -13,8 +13,6 @@
   # skimpdf only available on darwin
   skimpdf = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./skimpdf { } else null;
 
-  # dropbox only available on darwin
-  dropbox = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./dropbox { } else null;
 
   # clash-verge-rev only available on darwin
   clash-verge-rev =

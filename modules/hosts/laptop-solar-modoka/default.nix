@@ -17,7 +17,6 @@
       "network/tailscale"
     ];
     excludeModules = [
-      "apps/dropbox"
       "apps/kitty"
       "apps/mpv"
     ];
@@ -64,7 +63,6 @@
         # ghostty-bin
 
         moonlight-qt
-        dropbox
         clash-verge-rev
 
       ];

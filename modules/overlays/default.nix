@@ -25,15 +25,6 @@
           prev.skimpdf;
     };
 
-    # Dropbox overlay with macOS support (Pin version)
-    dropbox = final: prev: {
-      dropbox =
-        if prev.stdenv.hostPlatform.isDarwin then
-          final.callPackage ../../packages/dropbox { }
-        else
-          prev.dropbox;
-    };
-
     # Clash Verge Rev overlay with macOS support (Pin version)
     clash-verge-rev = final: prev: {
       clash-verge-rev =
