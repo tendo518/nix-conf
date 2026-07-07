@@ -70,7 +70,7 @@
           export ANTHROPIC_DEFAULT_HAIKU_MODEL="${smallModel}"
           export CLAUDE_CODE_SUBAGENT_MODEL="${smallModel}"
           ${lib.optionalString (effortLevel != "") "export CLAUDE_CODE_EFFORT_LEVEL=\"${effortLevel}\""}
-          export API_TIMEOUT_MS="600000"
+          export API_TIMEOUT_MS="1200000"
           export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
           if [ -r "${apiKeyPath}" ]; then
             export ANTHROPIC_AUTH_TOKEN="$(cat "${apiKeyPath}")"

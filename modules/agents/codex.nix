@@ -45,6 +45,8 @@
         env_key = "VOLCENGINE_API_KEY"
         wire_api = "responses"
         requires_openai_auth = false
+        stream_idle_timeout_ms = 600000
+        request_max_retries = 6
 
         [projects."${config.home.homeDirectory}"]
         trust_level = "trusted"

@@ -29,6 +29,9 @@
           provider: custom
           base_url: "https://ark.cn-beijing.volces.com/api/coding/v3"
           api_key: "''${VOLCENGINE_API_KEY}"
+        providers:
+          custom:
+            request_timeout_seconds: 600
       '';
 
       age.secrets = {
