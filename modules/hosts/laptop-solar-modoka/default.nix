@@ -48,7 +48,7 @@
         obsidian
         skimpdf
         spotify
-        zed-editor
+        # zed-editor  # broken again and again in macos
         # telegram-desktop
 
         # alt-tab-macos
