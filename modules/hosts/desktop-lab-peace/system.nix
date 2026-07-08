@@ -27,6 +27,8 @@
 
         # Texlive for Chinese/English writing with IEEE templates
         texlive.combined.scheme-full
+        pdf2svg
+        ghostscript
         # (pkgs.texlive.combine {
         #   inherit (pkgs.texlive)
         #     scheme-medium

@@ -82,6 +82,8 @@
 
       home.packages = [
         pkgs.texlive.combined.scheme-full
+        pkgs.pdf2svg
+        pkgs.ghostscript
         # (pkgs.texlive.combine {
         #   inherit (pkgs.texlive)
         #     scheme-medium

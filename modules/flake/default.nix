@@ -15,7 +15,13 @@
   ];
 
   perSystem =
-    { pkgs, ... }:
+    { system, ... }:
+    let
+      pkgs = import inputs.nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
+    in
     {
       formatter = pkgs.nixfmt-tree;
 

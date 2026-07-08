@@ -69,10 +69,18 @@
 
       codexModelWrappers = lib.mapAttrsToList codexVolcesModel models;
 
+      # Raw Codex: override the config.toml's model_provider back to Codex's
+      # built-in "openai" default so `codex` uses its own models rather than
+      # routing through Volces. No VOLCENGINE_API_KEY export — the user
+      # authenticates via `codex login` or OPENAI_API_KEY.
+      codexRaw = pkgs.writeShellScriptBin "codex" ''
+        exec ${lib.getExe pkgs.llm-agents.codex} -c model_provider=openai "$@"
+      '';
+
     in
     {
       home.packages = [
-        pkgs.llm-agents.codex
+        codexRaw
         codexVolces
       ]
       ++ codexModelWrappers;
