@@ -13,21 +13,53 @@
         volcengine-codingplan-api-key
         ;
 
-      # Same Anthropic-compatible endpoints Claude Code uses (ANTHROPIC_BASE_URL).
-      # omp's `anthropic-messages` api appends `/v1/messages` to `baseUrl`, matching
-      # those gateways exactly. `apiKey` is env-var-name-or-literal per omp's docs,
-      # so each wrapper exports the named var from the age secret and omp reads it.
-      # `authHeader: true` injects `Authorization: Bearer <key>` — what Claude Code
-      # sends via ANTHROPIC_AUTH_TOKEN — so these endpoints accept it.
+      # volces uses the Anthropic-compatible coding endpoint with omp's
+      # `anthropic-messages` api (appends `/v1/messages` to baseUrl).
+      # `apiKey` is env-var-name-or-literal per omp's docs, so each wrapper
+      # exports the named var from the age secret and omp reads it.
+      # `authHeader: true` injects `Authorization: Bearer <key>`.
+      #
+      # deepseek uses the OpenAI-compatible endpoint per DeepSeek's official
+      # omp integration guide (api-docs.deepseek.com/.../oh_my_pi). The full
+      # compat block is required - without the three critical fields
+      # (supportsToolChoice, requiresReasoningContentForToolCalls,
+      # requiresAssistantContentForToolCalls) DeepSeek V4 returns 400 errors
+      # on tool calls in thinking mode. compat does not merge with built-in
+      # entries, so the full set must be specified.
       #
       # contextWindow values are taken from omp's bundled model catalog
-      # (packages/catalog/src/models.json) — the native provider entry for each
+      # (packages/catalog/src/models.json) - the native provider entry for each
       # model: moonshot (kimi), zhipu-coding-plan (glm), minimax (MiniMax),
-      # deepseek (deepseek-v4). The [1m] suffix on the deepseek-api models is
-      # DeepSeek's 1M-context variant.
+      # deepseek (deepseek-v4).
+      deepseekCompat = {
+        reasoning = true;
+        thinking = {
+          minLevel = "high";
+          maxLevel = "xhigh";
+          mode = "effort";
+        };
+        input = [ "text" ];
+        maxTokens = 384000;
+        compat = {
+          supportsDeveloperRole = false;
+          supportsReasoningEffort = true;
+          maxTokensField = "max_tokens";
+          reasoningEffortMap = {
+            high = "high";
+            xhigh = "max";
+          };
+          supportsToolChoice = false;
+          requiresReasoningContentForToolCalls = true;
+          requiresAssistantContentForToolCalls = true;
+          extraBody = {
+            thinking.type = "enabled";
+          };
+        };
+      };
       providers = {
         volces = {
           baseUrl = "https://ark.cn-beijing.volces.com/api/coding";
+          api = "anthropic-messages";
           apiKeyEnv = "VOLCENGINE_API_KEY";
           apiKeyPath = volcengine-codingplan-api-key.path;
           models = {
@@ -58,17 +90,22 @@
           };
         };
         deepseek = {
-          baseUrl = "https://api.deepseek.com/anthropic";
+          baseUrl = "https://api.deepseek.com";
+          api = "openai-completions";
           apiKeyEnv = "DEEPSEEK_API_KEY";
           apiKeyPath = deepseek-api-key.path;
           models = {
             ds_v4flash = {
-              model = "deepseek-v4-flash[1m]";
+              model = "deepseek-v4-flash";
+              name = "DeepSeek V4 Flash";
               contextWindow = 1000000;
+              extra = deepseekCompat;
             };
             ds_v4pro = {
-              model = "deepseek-v4-pro[1m]";
+              model = "deepseek-v4-pro";
+              name = "DeepSeek V4 Pro";
               contextWindow = 1000000;
+              extra = deepseekCompat;
             };
           };
         };
@@ -114,14 +151,18 @@
       modelsYml = builtins.toJSON {
         providers = lib.mapAttrs (_name: p: {
           baseUrl = p.baseUrl;
-          api = "anthropic-messages";
+          api = p.api;
           apiKey = p.apiKeyEnv;
           authHeader = true;
-          models = lib.mapAttrsToList (_n: m: {
-            id = m.model;
-            name = m.model;
-            contextWindow = m.contextWindow;
-          }) p.models;
+          models = lib.mapAttrsToList (
+            _n: m:
+            {
+              id = m.model;
+              name = m.name or m.model;
+              contextWindow = m.contextWindow;
+            }
+            // (m.extra or { })
+          ) p.models;
         }) providers;
       };
 
@@ -175,14 +216,14 @@
         };
         deepseek = {
           # All roles on deepseek API
-          default = "deepseek/deepseek-v4-pro[1m]";
-          smol = "deepseek/deepseek-v4-flash[1m]";
-          slow = "deepseek/deepseek-v4-pro[1m]";
-          plan = "deepseek/deepseek-v4-pro[1m]";
-          advisor = "deepseek/deepseek-v4-pro[1m]";
-          task = "deepseek/deepseek-v4-flash[1m]";
-          commit = "deepseek/deepseek-v4-flash[1m]";
-          title = "deepseek/deepseek-v4-flash[1m]";
+          default = "deepseek/deepseek-v4-pro";
+          smol = "deepseek/deepseek-v4-flash";
+          slow = "deepseek/deepseek-v4-pro";
+          plan = "deepseek/deepseek-v4-pro";
+          advisor = "deepseek/deepseek-v4-pro";
+          task = "deepseek/deepseek-v4-flash";
+          commit = "deepseek/deepseek-v4-flash";
+          title = "deepseek/deepseek-v4-flash";
         };
       };
 
