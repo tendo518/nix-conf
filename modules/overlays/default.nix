@@ -26,13 +26,25 @@
     };
 
     # Clash Verge Rev overlay with macOS support (Pin version)
-    clash-verge-rev = final: prev: {
-      clash-verge-rev =
-        if prev.stdenv.hostPlatform.isDarwin then
-          final.callPackage ../../packages/clash-verge-rev { }
-        else
-          prev.clash-verge-rev;
-    };
+    clash-verge-rev = final: prev:
+      if prev.stdenv.hostPlatform.isDarwin then
+        { clash-verge-rev = final.callPackage ../../packages/clash-verge-rev { }; }
+      else
+        {
+          # mihomo 1.19.27 is incompatible with clash-verge-rev 2.5.1 (nixpkgs#535128).
+          # TODO: remove once a clash-verge-rev release with the fix lands in nixpkgs.
+          mihomo_1_19_26 = prev.mihomo.overrideAttrs (old: rec {
+            version = "1.19.26";
+            src = final.fetchFromGitHub {
+              owner = "MetaCubeX";
+              repo = "mihomo";
+              rev = "v${version}";
+              hash = "sha256-As0MqIGHs1Gn+aUWpeFsC231n9v7lBNmGlQdAwVWcJs=";
+            };
+            vendorHash = "sha256-ySpBMR/djPPs1aTw7yiCrCFxDFsvRfTJEChg8v1C408=";
+          });
+          clash-verge-rev = prev.clash-verge-rev.override { mihomo = final.mihomo_1_19_26; };
+        };
 
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
