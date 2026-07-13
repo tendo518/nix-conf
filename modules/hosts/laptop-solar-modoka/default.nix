@@ -81,7 +81,7 @@
       # Texlive for Chinese/English writing with IEEE templates
 
       home.packages = [
-        pkgs.texlive.combined.scheme-full
+        pkgs.texliveFull
         pkgs.pdf2svg
         pkgs.ghostscript
         # (pkgs.texlive.combine {

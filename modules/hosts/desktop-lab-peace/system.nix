@@ -26,7 +26,7 @@
         realesrgan-ncnn-vulkan
 
         # Texlive for Chinese/English writing with IEEE templates
-        texlive.combined.scheme-full
+        texliveFull
         pdf2svg
         ghostscript
         # (pkgs.texlive.combine {
