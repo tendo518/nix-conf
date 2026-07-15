@@ -87,20 +87,19 @@
         (mkSingleWrapper "flash" "deepseek/deepseek-v4-flash")
       ];
 
-      # Two-model wrapper: uses REASONIX_HOME to load a config that enables
-      # planner_model, so the coordinator runs planner + executor in separate
-      # cache-stable sessions.
+      # Two-model wrapper: copies the store config to a writable temp dir at
+      # runtime so reasonix can write migrations/upgrades without hitting the
+      # read-only Nix store. REASONIX_HOME points reasonix at this temp config,
+      # enabling planner_model for the coordinator.
       dualConfigToml = pkgs.writeText "reasonix-dual-config.toml" dualModelConfig;
-      dualConfigDir = pkgs.runCommandLocal "reasonix-dual-config" { } ''
-        mkdir -p "$out"
-        cp ${dualConfigToml} "$out/config.toml"
-      '';
 
       reasonixDual = pkgs.writeShellScriptBin "reasonix-dual" ''
         if [ -r "${deepseek-api-key.path}" ]; then
-          export DEEPSEEK_API_KEY="$(cat "${deepseek-api-key.path}")"
+          export DEEPSEEK_API_KEY="[redacted] "${deepseek-api-key.path}")"
         fi
-        export REASONIX_HOME="${dualConfigDir}"
+        REASONIX_HOME=$(mktemp -d "''${TMPDIR:-/tmp}/reasonix-dual.XXXXXXXX")
+        cp ${dualConfigToml} "$REASONIX_HOME/config.toml"
+        export REASONIX_HOME
         exec ${lib.getExe pkgs.llm-agents.reasonix} "$@"
       '';
 
