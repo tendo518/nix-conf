@@ -48,14 +48,13 @@
 
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
-    # Upstream removed its `overlays` output, so expose packages directly.
     llm-agents = final: _prev: {
       llm-agents = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system};
     };
 
+    # pr-tracker: nixpkgs#536365 target=nixos-unstable package=moonlight-qt
     # moonlight-qt: link with LLVM lld on Darwin to work around the classic
-    # ld64 crash (SIGTRAP in the stubs pass when linking Obj-C). Same fix as
-    # nixpkgs#540463 (starship). TODO: remove once #536365 reaches nixos-unstable.
+    # ld64 crash (SIGTRAP in the stubs pass when linking Obj-C).
     moonlight-qt = final: prev: {
       moonlight-qt = prev.moonlight-qt.overrideAttrs (old:
         final.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
@@ -65,6 +64,7 @@
       );
     };
 
+    # pr-tracker: nixpkgs#536365 target=nixos-unstable package=stats
     # stats: same ld64 crash (Swift/Obj-C link). stats uses __structuredAttrs,
     # so the flag must go through `env` rather than a top-level attribute.
     stats = final: prev: {

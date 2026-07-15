@@ -285,3 +285,39 @@ just edit-password secrets/tendo-password.age
 - `stateVersion` is an integer (e.g., 6), not a string
 - `hostPlatform` is `aarch64-darwin` for Apple Silicon
 - Home directory base is `/Users` instead of `/home`
+
+### Checking Temporary Overlay Fixes
+
+Use the repo-local nixpkgs PR/channel helper before removing upstream
+workarounds from `modules/overlays/default.nix`:
+
+```bash
+# Check PR markers found in the overlay against nixos-unstable.
+scripts/check-nixpkgs-pr-channel.py --overlay
+
+# Check a specific PR or a different channel/branch.
+scripts/check-nixpkgs-pr-channel.py 536365 -t nixpkgs-unstable
+```
+
+Only PR-backed overlay workarounds should be tagged for automatic scanning:
+
+```nix
+# pr-tracker: nixpkgs#536365 target=nixos-unstable package=moonlight-qt
+```
+
+Keep issue links and non-PR context as normal comments so `--overlay` does not
+mistake them for channel-tracked PRs.
+
+When adding a temporary overlay fixup:
+
+1. Keep the patch scoped to the affected package in `modules/overlays/default.nix`.
+2. Put the `pr-tracker:` marker directly above the overlay entry it governs.
+3. Include `target=<channel>` for the channel that makes the fix removable and
+   `package=<attr>` for the local package attr being patched.
+4. If the workaround tracks an issue rather than a merged PR, do not add a
+   `pr-tracker:` marker; keep the issue link in a normal comment.
+5. Run `scripts/check-nixpkgs-pr-channel.py --overlay` before removing any
+   marked fixup.
+
+The helper follows pr-tracker's branch propagation rules and exits nonzero when
+a checked PR is not yet usable in the requested target.
