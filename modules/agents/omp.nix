@@ -116,6 +116,29 @@
       # advisor, so there are no subagents or multi-model interactions —
       # just a clean single-model session. Uses --config overlay so it works
       # regardless of what the user's ~/.omp/agent/config.yml contains.
+
+      # `/resume` and startup `--resume`/`--continue` both restore the
+      # session's last model, but a custom provider in models.yml is always
+      # "available": its `apiKey` is an env-var name, and omp's
+      # resolveConfigValue falls back to that literal string when the env var
+      # is unset, so the provider passes the auth check even with no key
+      # exported. A wrapper that exports only one provider's key thus 401s
+      # after resuming a session that last used the other one. Two levers
+      # suppress the restore:
+      #  - `disabledProviders` overlay gates getAvailable() *before* the auth
+      #    check, so interactive `/resume` (switchSession) can't find the
+      #    cross-provider model and keeps the wrapper's pinned model.
+      #  - `--model` sets hasExplicitModel, so startup `--resume`/`--continue`
+      #    (which uses hasConfiguredAuth, ignoring disabledProviders) skips the
+      #    restore entirely.
+      # Same-provider/different-model resumes still restore but share the
+      # exported key, so they don't fail.
+      disabledProvidersFor =
+        roleValues:
+        let
+          used = lib.unique (map (v: lib.head (lib.splitString "/" v)) roleValues);
+        in
+        lib.subtractLists used (lib.attrNames providers);
       mkOmpWrapper =
         providerName: provider: name: m:
         let
@@ -132,6 +155,7 @@
                 title = model;
               };
               advisor.enabled = false;
+              disabledProviders = disabledProvidersFor [ model ];
             }
           );
         in
@@ -139,7 +163,7 @@
           if [ -r "${provider.apiKeyPath}" ]; then
             export ${provider.apiKeyEnv}="$(cat "${provider.apiKeyPath}")"
           fi
-          exec ${lib.getExe pkgs.llm-agents.omp} --config "${overlay}" "$@"
+          exec ${lib.getExe pkgs.llm-agents.omp} --config "${overlay}" --model "${model}" "$@"
         '';
 
       mkOmpWrappers =
@@ -238,6 +262,7 @@
                 syncBacklog = "3";
                 immuneTurns = 3;
               };
+              disabledProviders = disabledProvidersFor (builtins.attrValues roles);
             }
           );
         in
@@ -248,7 +273,7 @@
           if [ -r "${deepseek-api-key.path}" ]; then
             export DEEPSEEK_API_KEY="$(cat "${deepseek-api-key.path}")"
           fi
-          exec ${lib.getExe pkgs.llm-agents.omp} --config "${overlay}" "$@"
+          exec ${lib.getExe pkgs.llm-agents.omp} --config "${overlay}" --model "${roles.default}" "$@"
         '';
 
       compositionWrappers = lib.mapAttrsToList mkCompositionWrapper compositions;
