@@ -32,7 +32,10 @@ let
         else
           builtins.filter (k: lib.hasPrefix "${name}/" k) (builtins.attrNames registry);
 
-      includedKeys = builtins.concatMap resolveKeys names;
+      # Deduplicate resolved keys: listing both a prefix ("network") and one of
+      # its children ("network/tailscale") would otherwise load that module
+      # twice, duplicating its config contributions (e.g. extraSetFlags).
+      includedKeys = lib.unique (builtins.concatMap resolveKeys names);
       excludedKeys = builtins.concatMap resolveKeys excludeModules;
       finalKeys = builtins.filter (k: !builtins.elem k excludedKeys) includedKeys;
     in
