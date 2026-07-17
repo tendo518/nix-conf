@@ -15,8 +15,9 @@
 
       # volces uses the Anthropic-compatible coding endpoint with omp's
       # `anthropic-messages` api (appends `/v1/messages` to baseUrl).
-      # `apiKey` is env-var-name-or-literal per omp's docs, so each wrapper
-      # exports the named var from the age secret and omp reads it.
+      # `apiKey` can be a command when prefixed with `!`. Read age secrets at
+      # runtime so omp never falls back to sending the env-var name itself as
+      # the bearer token when launched outside a wrapper.
       # `authHeader: true` injects `Authorization: Bearer <key>`.
       #
       # deepseek uses the OpenAI-compatible endpoint per DeepSeek's official
@@ -31,6 +32,7 @@
       # (packages/catalog/src/models.json) - the native provider entry for each
       # model: moonshot (kimi), zhipu-coding-plan (glm), minimax (MiniMax),
       # deepseek (deepseek-v4).
+      apiKeyCommand = path: "!${pkgs.coreutils}/bin/cat ${path}";
       deepseekCompat = {
         reasoning = true;
         thinking = {
@@ -118,13 +120,9 @@
       # regardless of what the user's ~/.omp/agent/config.yml contains.
 
       # `/resume` and startup `--resume`/`--continue` both restore the
-      # session's last model, but a custom provider in models.yml is always
-      # "available": its `apiKey` is an env-var name, and omp's
-      # resolveConfigValue falls back to that literal string when the env var
-      # is unset, so the provider passes the auth check even with no key
-      # exported. A wrapper that exports only one provider's key thus 401s
-      # after resuming a session that last used the other one. Two levers
-      # suppress the restore:
+      # session's last model. A wrapper should still stay pinned to its
+      # provider/model, even though models.yml can now read all configured age
+      # secrets itself. Two levers suppress cross-provider restore:
       #  - `disabledProviders` overlay gates getAvailable() *before* the auth
       #    check, so interactive `/resume` (switchSession) can't find the
       #    cross-provider model and keeps the wrapper's pinned model.
@@ -176,7 +174,7 @@
         providers = lib.mapAttrs (_name: p: {
           baseUrl = p.baseUrl;
           api = p.api;
-          apiKey = p.apiKeyEnv;
+          apiKey = apiKeyCommand p.apiKeyPath;
           authHeader = true;
           models = lib.mapAttrsToList (
             _n: m:
