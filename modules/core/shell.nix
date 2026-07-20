@@ -45,7 +45,7 @@
           "..." = "cd ../..";
           "...." = "cd ../../..";
           del = "trash";
-          ts = "sudo tailscale";
+          ts = "tailscale";
           kssh = "kitty +kitten ssh";
           icat = "kitty +kitten icat";
         };

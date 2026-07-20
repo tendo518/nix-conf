@@ -44,12 +44,14 @@
   # accepts the same route sends its own directly-connected subnet traffic
   # through itself (the HA subnet-router pitfall).
   flake.modules.nixos."hosts/desktop-lab-peace" =
-    { ... }:
+    { config, ... }:
     {
       services.tailscale = {
         useRoutingFeatures = "server";
         extraSetFlags = [
           "--advertise-routes=172.18.36.0/23,172.18.34.0/23,10.16.0.0/17"
+          # Re-added because this override replaces the shared default list.
+          "--operator=${config.host.user.name}"
         ];
       };
     };

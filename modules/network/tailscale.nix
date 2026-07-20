@@ -26,7 +26,14 @@
         # routes override both of these (useRoutingFeatures = "server" + their
         # own extraSetFlags); the mkDefault lets that override win cleanly.
         useRoutingFeatures = lib.mkDefault "client";
-        extraSetFlags = lib.mkDefault [ "--accept-routes" ];
+        extraSetFlags = lib.mkDefault [
+          "--accept-routes"
+          # Designate the host's primary user as the Tailscale operator so
+          # they can run `tailscale` without sudo. Hosts that override
+          # extraSetFlags (e.g. desktop-lab-peace, which advertises routes)
+          # must re-add this flag, since the override replaces the whole list.
+          "--operator=${config.host.user.name}"
+        ];
       };
     };
   flake.modules.darwin."network/tailscale" =
@@ -36,5 +43,30 @@
       # macOS auto-accepts advertised subnet routes (no --accept-routes flag
       # needed, unlike Linux), so just enabling the daemon is enough.
       services.tailscale.enable = true;
+    };
+
+  # Tailscale system tray (Linux only). Runs `tailscale systray` as a user
+  # service so the tray icon appears in the desktop session. macOS uses the
+  # standalone Tailscale menu bar app, so this is homeNixOS-only. Replaces the
+  # previously hand-managed ~/.config/systemd/user/tailscale-systray.service.
+  flake.modules.homeNixOS."network/tailscale" =
+    { pkgs, lib, ... }:
+    {
+      systemd.user.services.tailscale-systray = {
+        Unit = {
+          Description = "Tailscale System Tray";
+          Documentation = [ "https://tailscale.com/kb/1597/linux-systray" ];
+          Requires = [ "dbus.service" ];
+          After = [ "dbus.service" ];
+          PartOf = [ "default.target" ];
+        };
+        Service = {
+          Type = "simple";
+          ExecStart = "${lib.getExe pkgs.tailscale} systray";
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+        };
+      };
     };
 }
