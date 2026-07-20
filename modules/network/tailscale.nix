@@ -1,12 +1,24 @@
 {
   flake.modules.nixos."network/tailscale" =
-    { pkgs, lib, ... }:
+    { pkgs, lib, config, ... }:
     {
       environment.systemPackages = [ pkgs.tailscale ];
+      age.secrets.tailscale-authkey = {
+        file = ../../secrets/tailscale-authkey.age;
+        owner = "root";
+        group = "root";
+        mode = "0400";
+      };
       services.tailscale = {
         enable = true;
         interfaceName = "tailscale0";
         openFirewall = true;
+        # Auto-auth at first login via an agenix secret. tailscaled-autoconnect
+        # only runs `tailscale up --auth-key` while the backend is in
+        # NeedsLogin state, so this is idempotent on later boots. Darwin's
+        # nix-darwin module has no authKey option, so macOS still logs in via
+        # the GUI app.
+        authKeyFile = config.age.secrets.tailscale-authkey.path;
         # Default role: accept advertised subnet routes so this host can reach
         # remote subnets (e.g. the lab networks advertised by desktop-lab-peace).
         # extraSetFlags runs `tailscale set` on every activation, unlike

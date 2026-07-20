@@ -26,4 +26,5 @@ in
   "syncthing-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "telegram-hermes-bot-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "telegram-userid.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
+  "tailscale-authkey.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
 }

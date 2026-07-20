@@ -1,7 +1,9 @@
 # Flake library functions
 #
-# Exports resolveModules: resolves module names from the registry.
-# Supports exact match ("core/nix") or prefix expansion ("core" loads all submodules).
+# Exports mkHostConfigurations, the shared host builder. Module-name resolution
+# (resolveModuleList) matches an exact key plus everything nested under it as a
+# prefix: "core" loads all core/* submodules, "hosts/foo" loads hosts/foo and
+# hosts/foo/*.
 {
   config,
   lib,
@@ -10,33 +12,29 @@
 let
   inherit (lib) types mkOption;
 
-  # Resolve module names (exact match or prefix match)
-  resolveModules =
-    label: registry: name:
-    if builtins.elem name (builtins.attrNames registry) then
-      [ registry.${name} ]
-    else
-      let
-        keys = builtins.filter (k: lib.hasPrefix "${name}/" k) (builtins.attrNames registry);
-      in
-      if keys == [ ] then [ ] else builtins.map (k: registry.${k}) keys;
-
-  # Resolve a list of module names, with optional exclusions (mirrors disabledModules).
+  # Resolve a list of module names into modules, with optional exclusions.
+  #
+  # A name resolves to its exact key (if one exists) plus every key nested
+  # under it: "core" -> core/*, "hosts/foo" -> hosts/foo + hosts/foo/*. This
+  # lets a name be both a module and a namespace parent, so listing a host
+  # loads the host module and its split submodules (hardware, system, ...).
+  #
+  # Results are deduplicated by first occurrence, so listing both a namespace
+  # ("network") and one of its children ("network/tailscale") loads the child
+  # once. Exclusions expand the same way: excluding a namespace drops its
+  # whole subtree.
   resolveModuleList =
     label: registry: names: excludeModules:
     let
+      allKeys = builtins.attrNames registry;
+
       resolveKeys =
         name:
-        if builtins.elem name (builtins.attrNames registry) then
-          [ name ]
-        else
-          builtins.filter (k: lib.hasPrefix "${name}/" k) (builtins.attrNames registry);
+        lib.optional (builtins.elem name allKeys) name
+        ++ builtins.filter (k: lib.hasPrefix "${name}/" k) allKeys;
 
-      # Deduplicate resolved keys: listing both a prefix ("network") and one of
-      # its children ("network/tailscale") would otherwise load that module
-      # twice, duplicating its config contributions (e.g. extraSetFlags).
       includedKeys = lib.unique (builtins.concatMap resolveKeys names);
-      excludedKeys = builtins.concatMap resolveKeys excludeModules;
+      excludedKeys = lib.unique (builtins.concatMap resolveKeys excludeModules);
       finalKeys = builtins.filter (k: !builtins.elem k excludedKeys) includedKeys;
     in
     builtins.map (k: registry.${k}) finalKeys;
@@ -155,7 +153,6 @@ in
   };
 
   config.flake.lib = {
-    resolveModules = resolveModules "";
     inherit mkHostConfigurations;
   };
 }
