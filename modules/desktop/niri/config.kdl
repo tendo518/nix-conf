@@ -152,9 +152,9 @@ window-rule {
     block-out-from "screen-capture"
 }
 
-workspace "Work"
-workspace "Code"
-workspace "Text"
+workspace "💼"
+workspace "💻"
+workspace "📝"
 
 binds {
     // Super+L   { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
