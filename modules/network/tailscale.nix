@@ -1,67 +1,70 @@
-{
-  flake.modules.nixos."network/tailscale" =
+let
+  # tailscale-auth: log in with the agenix auth key and apply host.tailscale.upFlags
+  # + --operator to the profile (persists across reboots). Re-execs under sudo to
+  # read the root-owned key.
+  tailscaleAuth =
+    { pkgs, lib, config }:
+    pkgs.writeShellScriptBin "tailscale-auth" ''
+      if [ "$(id -u)" -ne 0 ]; then exec sudo -- "$0" "$@"; fi
+      exec ${lib.getExe pkgs.tailscale} up --auth-key "$(cat ${config.age.secrets.tailscale-authkey.path})" ${lib.escapeShellArgs config.host.tailscale.upFlags} --operator=${config.host.user.name} "$@"
+    '';
+
+  # Shared by NixOS and Darwin: the upFlags option + the tailscale-auth command.
+  # Replaces the NixOS module's extraSetFlags, which created a tailscaled-set
+  # service that ran before login at boot (so the pref didn't persist). Default
+  # accepts advertised subnet routes; desktop-lab-peace overrides to advertise.
+  # --operator is added by the script itself, not per-host.
+  common =
     { pkgs, lib, config, ... }:
     {
-      age.secrets.tailscale-authkey = {
-        file = ../../secrets/tailscale-authkey.age;
-        owner = "root";
-        group = "root";
-        mode = "0400";
+      options.host.tailscale.upFlags = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ "--accept-routes" ];
+        description = "Route flags passed to `tailscale up` by tailscale-auth (--operator is added automatically).";
       };
-      environment.systemPackages = [
+      config.environment.systemPackages = [
         pkgs.tailscale
-        # Manually authenticate to Tailscale with the agenix auth key (replaces
-        # the removed auth-key autoconnect, which stalled boot behind the GFW).
-        # The key is root-owned, so the script re-execs under sudo to read it
-        # and run `tailscale login` as root - this works unconditionally,
-        # regardless of --operator. Run when the control plane is reachable.
-        (pkgs.writeShellScriptBin "tailscale-auth" ''
-          if [ "$(id -u)" -ne 0 ]; then exec sudo -- "$0" "$@"; fi
-          exec ${lib.getExe pkgs.tailscale} login --auth-key "$(cat ${config.age.secrets.tailscale-authkey.path})" "$@"
-        '')
+        (tailscaleAuth { inherit pkgs lib config; })
       ];
-      services.tailscale = {
-        enable = true;
-        interfaceName = "tailscale0";
-        openFirewall = true;
-        # Default role: accept advertised subnet routes so this host can reach
-        # remote subnets (e.g. the lab networks advertised by desktop-lab-peace).
-        # extraSetFlags runs `tailscale set` on every activation so prefs
-        # persist. Hosts that advertise routes override both of these
-        # (useRoutingFeatures = "server" + their own extraSetFlags); the
-        # mkDefault lets that override win cleanly.
-        useRoutingFeatures = lib.mkDefault "client";
-        extraSetFlags = lib.mkDefault [
-          "--accept-routes"
-          # Designate the host's primary user as the Tailscale operator so
-          # they can run `tailscale` without sudo. Hosts that override
-          # extraSetFlags (e.g. desktop-lab-peace, which advertises routes)
-          # must re-add this flag, since the override replaces the whole list.
-          "--operator=${config.host.user.name}"
-        ];
+    };
+in
+{
+  flake.modules.nixos."network/tailscale" =
+    { lib, ... }:
+    {
+      imports = [ common ];
+      config = {
+        age.secrets.tailscale-authkey = {
+          file = ../../secrets/tailscale-authkey.age;
+          # root-owned: tailscale-auth re-execs under sudo to read it.
+          owner = "root";
+          group = "root";
+          mode = "0400";
+        };
+        services.tailscale = {
+          enable = true;
+          interfaceName = "tailscale0";
+          openFirewall = true;
+          # Default role: accept advertised subnet routes so this host can reach
+          # remote subnets (e.g. the lab networks advertised by desktop-lab-peace).
+          # Hosts that advertise routes override host.tailscale.upFlags and set
+          # useRoutingFeatures = "server"; the mkDefault lets that override win.
+          useRoutingFeatures = lib.mkDefault "client";
+        };
       };
     };
   flake.modules.darwin."network/tailscale" =
-    { pkgs, lib, config, ... }:
+    { ... }:
     {
-      age.secrets.tailscale-authkey = {
-        file = ../../secrets/tailscale-authkey.age;
+      imports = [ common ];
+      config = {
+        age.secrets.tailscale-authkey = {
+          file = ../../secrets/tailscale-authkey.age;
+        };
+        # Route prefs are applied by tailscale-auth at auth time; just enabling
+        # the daemon is enough here.
+        services.tailscale.enable = true;
       };
-      environment.systemPackages = [
-        pkgs.tailscale
-        # Manually authenticate to Tailscale with the agenix auth key, mirroring
-        # the Linux tailscale-auth script. The nix-darwin tailscale module has
-        # no authKey option, so login is manual. The script re-execs under sudo
-        # (macOS tailscale needs root); run when the control plane is reachable.
-        # macOS auto-accepts advertised subnet routes, so no --accept-routes flag.
-        (pkgs.writeShellScriptBin "tailscale-auth" ''
-          if [ "$(id -u)" -ne 0 ]; then exec sudo -- "$0" "$@"; fi
-          exec ${lib.getExe pkgs.tailscale} login --auth-key "$(cat ${config.age.secrets.tailscale-authkey.path})" "$@"
-        '')
-      ];
-      # macOS auto-accepts advertised subnet routes (no --accept-routes flag
-      # needed, unlike Linux), so just enabling the daemon is enough.
-      services.tailscale.enable = true;
     };
 
   # Tailscale system tray (Linux only). Runs `tailscale systray` as a user

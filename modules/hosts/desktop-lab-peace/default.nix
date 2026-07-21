@@ -36,24 +36,21 @@
     stateVersion = "26.05";
   };
 
-  # Subnet router: advertise the lab networks to the tailnet. Overrides the
-  # shared module's client default. `useRoutingFeatures = "server"` enables IP
-  # forwarding. The advertised routes must also be approved in the Tailscale
-  # admin console (or via autoApprovers in the ACL) before they take effect.
-  # Do NOT also set --accept-routes here: a node that both advertises and
-  # accepts the same route sends its own directly-connected subnet traffic
-  # through itself (the HA subnet-router pitfall).
+  # Subnet router: advertise the lab networks to the tailnet. `useRoutingFeatures
+  # = "server"` enables IP forwarding. host.tailscale.upFlags overrides the
+  # default --accept-routes with --advertise-routes (--operator is added by the
+  # tailscale-auth script). The advertised routes must be approved in the
+  # Tailscale admin console (or via autoApprovers in the ACL) to take effect.
+  # Do NOT add --accept-routes: a node that both advertises and accepts the same
+  # route sends its own directly-connected subnet traffic through itself (the
+  # HA subnet-router pitfall).
   flake.modules.nixos."hosts/desktop-lab-peace" =
-    { config, ... }:
+    { ... }:
     {
-      services.tailscale = {
-        useRoutingFeatures = "server";
-        extraSetFlags = [
-          "--advertise-routes=172.18.36.0/23,172.18.34.0/23,10.16.0.0/17"
-          # Re-added because this override replaces the shared default list.
-          "--operator=${config.host.user.name}"
-        ];
-      };
+      host.tailscale.upFlags = [
+        "--advertise-routes=172.18.36.0/23,172.18.34.0/23,10.16.0.0/17"
+      ];
+      services.tailscale.useRoutingFeatures = "server";
     };
 
   # Hermes Telegram gateway — only on this host
