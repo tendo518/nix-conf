@@ -76,6 +76,24 @@
       );
     };
 
+    # pr-tracker: nixpkgs#543825 target=nixos-unstable package=vscode
+    # vscode 1.129 restored app.asar on Darwin, moving native node_modules back
+    # into node_modules.asar.unpacked. generic.nix still resolves nodeModulesPath
+    # to Contents/Resources/app/node_modules, so the `chmod +x ${vscodeRipgrep}`
+    # in postPatch targets a path that no longer exists and the build fails.
+    # Rewrite the interpolated path until the PR lands in the channel.
+    vscode = final: prev: {
+      vscode = prev.vscode.overrideAttrs (old:
+        final.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+          postPatch =
+            final.lib.replaceStrings
+              [ "Contents/Resources/app/node_modules/@vscode/ripgrep-universal" ]
+              [ "Contents/Resources/app/node_modules.asar.unpacked/@vscode/ripgrep-universal" ]
+              (old.postPatch or "");
+        }
+      );
+    };
+
     # patool: override `file` with a landlock hardening workaround
     # https://bugs.astron.com/view.php?id=785
     # TODO: remove once https://github.com/NixOS/nixpkgs/pull/540742 lands
