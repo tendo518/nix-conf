@@ -110,30 +110,25 @@
           };
           # Tailscale devices
           "desktop-home-saki.tailscale" = {
-            Hostname = "100.77.154.86";
+            Hostname = "100.124.50.41";
             User = "tendo";
             IdentityFile = "~/.ssh/id_ed25519";
           };
           "desktop-lab-peace.tailscale" = {
-            Hostname = "100.116.76.115";
+            Hostname = "100.66.176.74";
             User = "pengwy";
             IdentityFile = "~/.ssh/id_ed25519";
           };
-          # "laptop-solar-chiyoko.tailscale" = {
-          #   Hostname = "100.64.197.80";
-          #   User = "tendo";
-          #   IdentityFile = "~/.ssh/id_ed25519";
-          # };
-          "laptop-solar-modoka.tailscale" = {
-            Hostname = "100.121.236.88";
+          "laptop-solar-chiyoko.tailscale" = {
+            Hostname = "100.111.132.42";
             User = "tendo";
             IdentityFile = "~/.ssh/id_ed25519";
           };
-          # "nas-home-coin.tailscale" = {
-          #   Hostname = "100.123.207.55";
-          #   User = "tendo";
-          #   IdentityFile = "~/.ssh/id_ed25519";
-          # };
+          "laptop-solar-modoka.tailscale" = {
+            Hostname = "100.112.217.3";
+            User = "tendo";
+            IdentityFile = "~/.ssh/id_ed25519";
+          };
         };
       };
     };
