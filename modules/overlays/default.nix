@@ -94,6 +94,7 @@
       );
     };
 
+    # pr-tracker: nixpkgs#540742 target=nixos-unstable package=file
     # patool: override `file` with a landlock hardening workaround
     # https://bugs.astron.com/view.php?id=785
     # TODO: remove once https://github.com/NixOS/nixpkgs/pull/540742 lands
