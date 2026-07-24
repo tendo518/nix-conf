@@ -1,6 +1,7 @@
 {
   flake.modules.home."apps/yazi" =
     {
+      pkgs,
       ...
     }:
     {
@@ -8,11 +9,14 @@
         enable = true;
         enableFishIntegration = true;
         shellWrapperName = "y";
+        # magick (ImageMagick) for the image-fill previewer; on PATH on both
+        # macOS and NixOS so image upscaling works cross-platform.
+        extraPackages = [ pkgs.imagemagick ];
 
         settings = {
           mgr = {
             # Hide parent directory pane (leftmost panel)
-            ratio = [0 4 3];
+            ratio = [0 3 4];
             # Show symlink targets after filenames
             show_symlink = true;
             # Show hidden files by default
@@ -31,9 +35,18 @@
             tab_size = 2;
             # No line wrapping in code preview
             wrap = "no";
-            # Larger max dimensions for image preview
-            max_width = 2000;
-            max_height = 2000;
+            # Image render cap. image-fill resizes to actual pane pixels via
+            # cell_size; this only caps ya.image_show, so set high to let
+            # maximized panes fill. Fallback (no cell_size) also uses this.
+            max_width = 9999;
+            max_height = 9999;
+          };
+          plugin = {
+            # Upscale small images to fill the preview pane
+            # (the built-in image previewer only downscales)
+            prepend_previewers = [
+              { mime = "image/*"; run = "image-fill"; }
+            ];
           };
         };
 
@@ -57,6 +70,7 @@
         };
 
         plugins."toggle-pane" = ./plugins/toggle-pane;
+        plugins."image-fill" = ./plugins/image-fill;
       };
 
       # ycd: launch yazi then cd to the directory you navigated to.
