@@ -13,6 +13,9 @@
   # skimpdf only available on darwin
   skimpdf = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./skimpdf { } else null;
 
+  # deskflow only available on darwin
+  deskflow = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./deskflow { } else null;
+
 
   # clash-verge-rev only available on darwin
   clash-verge-rev =

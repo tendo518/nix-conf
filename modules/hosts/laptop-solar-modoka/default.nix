@@ -48,16 +48,13 @@
         google-chrome
         obsidian
         skimpdf
+        deskflow
         spotify
         # zed-editor  # broken again and again in macos
-        # telegram-desktop
 
-        # alt-tab-macos
         ticktick
 
         wechat
-        # upstream cache build faillure
-        # telegram-desktop
         qq
 
         stats

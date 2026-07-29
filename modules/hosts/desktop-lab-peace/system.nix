@@ -11,6 +11,7 @@
         obsidian
         # yt-dlp  # upstream deno build fail
         qq
+        deskflow
         obs-studio
         calibre
         zathura

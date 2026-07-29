@@ -25,6 +25,15 @@
           prev.skimpdf;
     };
 
+    # Deskflow overlay with macOS support (Pin version)
+    deskflow = final: prev: {
+      deskflow =
+        if prev.stdenv.hostPlatform.isDarwin then
+          final.callPackage ../../packages/deskflow { }
+        else
+          prev.deskflow;
+    };
+
     # Clash Verge Rev overlay with macOS support (Pin version)
     clash-verge-rev = final: prev:
       if prev.stdenv.hostPlatform.isDarwin then
