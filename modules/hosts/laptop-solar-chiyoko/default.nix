@@ -18,7 +18,7 @@
       "apps/deskflow"
       "apps/gaming"
       "apps/wireshark"
-      "desktop/plasma"
+      "desktop/niri"
       "hardware/disable-sleep"
       "hardware/nvidia"
       "system/virtualisation"
