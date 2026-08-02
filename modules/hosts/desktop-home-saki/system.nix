@@ -32,6 +32,7 @@
         # calibre
         zathura
         moonlight-qt
+        blender
 
         # Development & Browsing
         telegram-desktop
