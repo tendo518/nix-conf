@@ -6,6 +6,7 @@
         antigravity-cli
         kilocode-cli
         qoder-cli
+        opencode2
       ];
     };
 }

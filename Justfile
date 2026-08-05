@@ -136,18 +136,16 @@ gcroot:
 # Edit an agenix secret file.
 [group('Utility')]
 edit-secret secret_path:
-    @bash -c 'cd "{{ justfile_directory() }}/secrets" && export RULES="{{ justfile_directory() }}/secrets/secrets.nix" && {{ nix }} run github:ryantm/agenix -- -e "$(basename {{ secret_path }})"'
+    cd "{{ justfile_directory() }}/secrets" && {{ nix }} run github:ryantm/agenix -- -e "$(basename {{ secret_path }})"
 
 # Safely create an agenix secret for a password (hashes with sha-512).
 [group('Utility')]
 edit-password secret_path:
-    @bash -c ' \
-        cd "{{ justfile_directory() }}/secrets" && \
-        export RULES="{{ justfile_directory() }}/secrets/secrets.nix" && \
-        FILENAME="$(basename {{ secret_path }})" && \
-        echo "Enter password:" && \
-        read -s PW && \
-        HASH=$(echo "$PW" | nix-shell -p mkpasswd --run "mkpasswd -m sha-512 -s") && \
-        echo -n "$HASH" > "$FILENAME.tmp" && \
-        EDITOR="cp $FILENAME.tmp" {{ nix }} run github:ryantm/agenix -- -e "$FILENAME" && \
-        rm -f "$FILENAME.tmp"'
+    cd "{{ justfile_directory() }}/secrets" && \
+    FILENAME="$(basename {{ secret_path }})" && \
+    echo "Enter password:" && \
+    read -s PW && \
+    HASH=$(echo "$PW" | nix-shell -p mkpasswd --run "mkpasswd -m sha-512 -s") && \
+    echo -n "$HASH" > "$FILENAME.tmp" && \
+    EDITOR="cp $FILENAME.tmp" {{ nix }} run github:ryantm/agenix -- -e "$FILENAME" && \
+    rm -f "$FILENAME.tmp"

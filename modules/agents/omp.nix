@@ -9,29 +9,31 @@
     let
       # --- Credentials & Secrets ---
       inherit (config.age.secrets)
-        deepseek-api-key
-        volcengine-codingplan-api-key
+        opencode-go-api-key
         ;
 
-      # volces uses the Anthropic-compatible coding endpoint with omp's
-      # `anthropic-messages` api (appends `/v1/messages` to baseUrl).
-      # `apiKey` can be a command when prefixed with `!`. Read age secrets at
-      # runtime so omp never falls back to sending the env-var name itself as
-      # the bearer token when launched outside a wrapper.
-      # `authHeader: true` injects `Authorization: Bearer <key>`.
+      # OpenCode Go (docs: opencode.ai/docs/zh-cn/go) is the single provider:
+      # a low-cost subscription covering every omp model. It serves its
+      # models on three wire families, so the provider defaults to the OpenAI
+      # chat-completions route and individual models override `api`/`baseUrl`
+      # where needed:
+      #   chat/completions (deepseek, kimi) -> https://opencode.ai/zen/go/v1
+      #   /responses (gpt-5.6-luna)         -> https://opencode.ai/zen/go/v1
+      #   /v1/messages (qwen3.8-max)        -> https://opencode.ai/zen/go
+      # omp appends `/chat/completions`, `/responses`, or `/v1/messages`
+      # respectively (oh-my-pi docs/models.md §"Practical examples").
       #
-      # deepseek uses the OpenAI-compatible endpoint per DeepSeek's official
-      # omp integration guide (api-docs.deepseek.com/.../oh_my_pi). The full
-      # compat block is required - without the three critical fields
-      # (supportsToolChoice, requiresReasoningContentForToolCalls,
+      # deepseek uses the OpenAI-compatible endpoint. The full compat block is
+      # required - without the three critical fields (supportsToolChoice,
+      # requiresReasoningContentForToolCalls,
       # requiresAssistantContentForToolCalls) DeepSeek V4 returns 400 errors
       # on tool calls in thinking mode. compat does not merge with built-in
       # entries, so the full set must be specified.
       #
       # contextWindow values are taken from omp's bundled model catalog
-      # (packages/catalog/src/models.json) - the native provider entry for each
-      # model: moonshot (kimi), zhipu-coding-plan (glm), minimax (MiniMax),
-      # deepseek (deepseek-v4).
+      # (packages/catalog/src/models.json) - the native provider entry for
+      # each model: moonshot (kimi), deepseek (deepseek-v4), openai
+      # (gpt-5.6-luna), qwen (qwen3.8-max).
       apiKeyCommand = path: "!${pkgs.coreutils}/bin/cat ${path}";
       deepseekCompat = {
         reasoning = true;
@@ -59,43 +61,11 @@
         };
       };
       providers = {
-        volces = {
-          baseUrl = "https://ark.cn-beijing.volces.com/api/coding";
-          api = "anthropic-messages";
-          apiKeyEnv = "VOLCENGINE_API_KEY";
-          apiKeyPath = volcengine-codingplan-api-key.path;
-          models = {
-            kimi_k2_6 = {
-              model = "kimi-k2.6";
-              contextWindow = 256000;
-            };
-            kimi_k2_7_code = {
-              model = "kimi-k2.7-code";
-              contextWindow = 256000;
-            };
-            glm_5_2 = {
-              model = "glm-5.2";
-              contextWindow = 1024000;
-            };
-            minimax_m3 = {
-              model = "minimax-m3";
-              contextWindow = 512000;
-            };
-            ds_v4pro = {
-              model = "deepseek-v4-pro";
-              contextWindow = 1024000;
-            };
-            ds_v4flash = {
-              model = "deepseek-v4-flash";
-              contextWindow = 1024000;
-            };
-          };
-        };
-        deepseek = {
-          baseUrl = "https://api.deepseek.com";
+        opencode-go = {
+          baseUrl = "https://opencode.ai/zen/go/v1";
           api = "openai-completions";
-          apiKeyEnv = "DEEPSEEK_API_KEY";
-          apiKeyPath = deepseek-api-key.path;
+          apiKeyEnv = "OPENCODE_GO_API_KEY";
+          apiKeyPath = opencode-go-api-key.path;
           models = {
             ds_v4flash = {
               model = "deepseek-v4-flash";
@@ -108,6 +78,59 @@
               name = "DeepSeek V4 Pro";
               contextWindow = 1000000;
               extra = deepseekCompat;
+            };
+            kimi_k3 = {
+              model = "kimi-k3";
+              name = "Kimi K3";
+              contextWindow = 1048576;
+              extra = {
+                reasoning = true;
+                thinking = {
+                  mode = "effort";
+                  efforts = [
+                    "low"
+                    "high"
+                    "max"
+                  ];
+                };
+              };
+            };
+            gpt_5_6_luna = {
+              model = "gpt-5.6-luna";
+              name = "GPT-5.6 Luna";
+              contextWindow = 1050000;
+              api = "openai-responses";
+              extra = {
+                reasoning = true;
+                thinking = {
+                  mode = "effort";
+                  efforts = [
+                    "low"
+                    "medium"
+                    "high"
+                    "xhigh"
+                    "max"
+                  ];
+                };
+              };
+            };
+            qwen3_8_max = {
+              model = "qwen3.8-max";
+              name = "Qwen3.8 Max";
+              contextWindow = 983616;
+              api = "anthropic-messages";
+              baseUrl = "https://opencode.ai/zen/go";
+              extra = {
+                reasoning = true;
+                thinking = {
+                  mode = "effort";
+                  efforts = [
+                    "low"
+                    "high"
+                    "xhigh"
+                  ];
+                };
+              };
             };
           };
         };
@@ -183,6 +206,8 @@
               name = m.name or m.model;
               contextWindow = m.contextWindow;
             }
+            // (lib.optionalAttrs (m ? api) { inherit (m) api; })
+            // (lib.optionalAttrs (m ? baseUrl) { inherit (m) baseUrl; })
             // (m.extra or { })
           ) p.models;
         }) providers;
@@ -203,49 +228,25 @@
         - Dead code introduced by the change (orphaned imports, unreachable branches).
       '';
 
-      # --- Two complete multi-agent compositions ---
-      # Each preset sets the full model role stack for one provider family,
-      # plus advisor config (enabled with bounded catch-up). Uses --config
-      # overlay (omp docs/settings.md §"One-shot overlays") so it layers on
-      # top of whatever the user's ~/.omp/agent/config.yml contains without
-      # clobbering setup state.
+      # --- Multi-agent composition ---
+      # One preset setting the full model role stack from the OpenCode Go
+      # subscription, plus advisor config (enabled with bounded catch-up).
+      # Uses --config overlay (omp docs/settings.md §"One-shot overlays") so it
+      # layers on top of whatever the user's ~/.omp/agent/config.yml contains.
       #
       # Two levels of control:
-      #   omp-volces / omp-volces-deepseek / omp-deepseek   — multi-agent compositions
-      #   omp-volces-glm_5_2 etc.     — single-model, no subagents
+      #   omp-go           — multi-agent composition over the Go models
+      #   omp-opencode-go-* — single-model, no subagents
       compositions = {
-        volces = {
-          # All roles on volces
-          default = "volces/glm-5.2";
-          smol = "volces/deepseek-v4-flash";
-          slow = "volces/glm-5.2";
-          plan = "volces/glm-5.2";
-          advisor = "volces/glm-5.2";
-          task = "volces/deepseek-v4-flash";
-          commit = "volces/deepseek-v4-flash";
-          title = "volces/deepseek-v4-flash";
-        };
-        volces-deepseek = {
-          # All deepseek models on volces
-          default = "volces/deepseek-v4-pro";
-          smol = "volces/deepseek-v4-flash";
-          slow = "volces/deepseek-v4-pro";
-          plan = "volces/deepseek-v4-pro";
-          advisor = "volces/deepseek-v4-pro";
-          task = "volces/deepseek-v4-flash";
-          commit = "volces/deepseek-v4-flash";
-          title = "volces/deepseek-v4-flash";
-        };
-        deepseek = {
-          # All roles on deepseek API
-          default = "deepseek/deepseek-v4-pro";
-          smol = "deepseek/deepseek-v4-flash";
-          slow = "deepseek/deepseek-v4-pro";
-          plan = "deepseek/deepseek-v4-pro";
-          advisor = "deepseek/deepseek-v4-pro";
-          task = "deepseek/deepseek-v4-flash";
-          commit = "deepseek/deepseek-v4-flash";
-          title = "deepseek/deepseek-v4-flash";
+        go = {
+          default = "opencode-go/gpt-5.6-luna";
+          smol = "opencode-go/deepseek-v4-flash";
+          slow = "opencode-go/deepseek-v4-pro";
+          plan = "opencode-go/gpt-5.6-luna";
+          advisor = "opencode-go/qwen3.8-max";
+          task = "opencode-go/deepseek-v4-flash";
+          commit = "opencode-go/kimi-k3";
+          title = "opencode-go/deepseek-v4-flash";
         };
       };
 
@@ -263,14 +264,20 @@
               disabledProviders = disabledProvidersFor (builtins.attrValues roles);
             }
           );
+          exports =
+            let
+              used = lib.unique (map (v: lib.head (lib.splitString "/" v)) (builtins.attrValues roles));
+            in
+            lib.concatStringsSep "\n" (
+              map (p: ''
+                if [ -r "${providers.${p}.apiKeyPath}" ]; then
+                  export ${providers.${p}.apiKeyEnv}="$(cat "${providers.${p}.apiKeyPath}")"
+                fi
+              '') used
+            );
         in
         pkgs.writeShellScriptBin "omp-${name}" ''
-          if [ -r "${volcengine-codingplan-api-key.path}" ]; then
-            export VOLCENGINE_API_KEY="$(cat "${volcengine-codingplan-api-key.path}")"
-          fi
-          if [ -r "${deepseek-api-key.path}" ]; then
-            export DEEPSEEK_API_KEY="$(cat "${deepseek-api-key.path}")"
-          fi
+          ${exports}
           exec ${lib.getExe pkgs.llm-agents.omp} --config "${overlay}" --model "${roles.default}" "$@"
         '';
 
@@ -290,7 +297,7 @@
         retry.maxRetries = 5; # fail faster on API errors
         task = {
           enableLsp = true; # allow subagents to use LSP
-          maxConcurrency = 8; # avoid rate limits on third-party APIs (was 32)
+          maxConcurrency = 8; # avoid rate limits on third-party APIs
         };
         display.showTokenUsage = true; # per-turn token usage
         symbolPreset = "ascii"; # no Nerd Font dependency
@@ -311,8 +318,7 @@
       home.file."./.omp/agent/config.yml".text = configYml;
 
       age.secrets = {
-        deepseek-api-key.file = ../../secrets/deepseek-api-key.age;
-        volcengine-codingplan-api-key.file = ../../secrets/volcengine-codingplan-api-key.age;
+        opencode-go-api-key.file = ../../secrets/opencode-go-api-key.age;
       };
     };
 }

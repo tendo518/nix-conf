@@ -12,6 +12,7 @@
         deepseek-api-key
         aliyun-codingplan-api-key
         volcengine-codingplan-api-key
+        opencode-go-api-key
         ;
 
       providers = {
@@ -55,6 +56,18 @@
               model = "deepseek-v4-pro[1m]";
               effortLevel = "max";
             };
+          };
+        };
+        # OpenCode Go's Anthropic-compatible endpoint. Claude Code appends
+        # `/v1/messages` to ANTHROPIC_BASE_URL, so the base is the `/zen/go`
+        # prefix (docs: opencode.ai/docs/zh-cn/go).
+        opencode-go = {
+          enable = true;
+          baseUrl = "https://opencode.ai/zen/go";
+          apiKeyPath = opencode-go-api-key.path;
+          smallModel = "qwen3_8_max";
+          models = {
+            qwen3_8_max.model = "qwen3.8-max";
           };
         };
       };
@@ -127,6 +140,7 @@
         deepseek-api-key.file = ../../secrets/deepseek-api-key.age;
         aliyun-codingplan-api-key.file = ../../secrets/aliyun-codingplan-api-key.age;
         volcengine-codingplan-api-key.file = ../../secrets/volcengine-codingplan-api-key.age;
+        opencode-go-api-key.file = ../../secrets/opencode-go-api-key.age;
       };
     };
 }
