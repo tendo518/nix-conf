@@ -28,7 +28,7 @@
         darktable
         moonlight-qt
         ghostty
-        retedo-mono
+        maple-mono.NF-CN
       ];
 
       # Network

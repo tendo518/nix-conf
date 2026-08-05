@@ -2,11 +2,6 @@
 { inputs, ... }:
 {
   flake.overlays = {
-    # Custom font overlay
-    retedo-mono = final: _prev: {
-      retedo-mono = final.callPackage ../../packages/retedo-mono { };
-    };
-
     # TickTick overlay with macOS support (Pin version)
     ticktick = final: prev: {
       ticktick =
@@ -35,7 +30,8 @@
     };
 
     # Clash Verge Rev overlay with macOS support (Pin version)
-    clash-verge-rev = final: prev:
+    clash-verge-rev =
+      final: prev:
       if prev.stdenv.hostPlatform.isDarwin then
         { clash-verge-rev = final.callPackage ../../packages/clash-verge-rev { }; }
       else
@@ -68,7 +64,8 @@
     # in postPatch targets a path that no longer exists and the build fails.
     # Rewrite the interpolated path until the PR lands in the channel.
     vscode = final: prev: {
-      vscode = prev.vscode.overrideAttrs (old:
+      vscode = prev.vscode.overrideAttrs (
+        old:
         final.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
           postPatch =
             final.lib.replaceStrings
@@ -85,7 +82,8 @@
     # fails in unpackPhase. Drop sourceRoot and copy the app out during
     # installPhase instead, matching the upstream PR.
     obsidian = final: prev: {
-      obsidian = prev.obsidian.overrideAttrs (old:
+      obsidian = prev.obsidian.overrideAttrs (
+        old:
         final.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
           sourceRoot = null;
           installPhase = ''

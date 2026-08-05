@@ -17,8 +17,8 @@ let
       inriafonts
       newcomputermodern
 
-      # custom monospace font
-      retedo-mono
+      # monospace font with Chinese + Nerd Font support
+      maple-mono.NF-CN
       # iosevka-slab
       # iosevka-term
       fira-code
@@ -47,7 +47,7 @@ in
             "Noto Color Emoji"
           ];
           monospace = [
-            "Retedo Mono"
+            "Maple Mono NF CN"
             "Symbols Nerd Font"
             "Sarasa Mono SC"
             "Noto Color Emoji"

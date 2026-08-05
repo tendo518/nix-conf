@@ -71,7 +71,7 @@ Key features:
 - **Secrets management** via `agenix` (encrypted secrets for passwords, API keys)
 - **Disk management** via `disko` (declarative partitioning)
 - **Secure boot** via `lanzaboote` (NixOS only)
-- **Custom overlays** (e.g., `retedo-mono` font, `llm-agents` overlay)
+- **Custom overlays** (e.g., `llm-agents` overlay, pinned macOS packages)
 
 ## Core Architecture
 
@@ -172,7 +172,6 @@ Home Manager modules receive `userVars` containing the user config from `host.us
 ### Overlays (`modules/overlays/`)
 
 Custom overlays are defined in `modules/overlays/default.nix`:
-- `retedo-mono` - Custom monospace font (based on Iosevka)
 - `llm-agents` - AI tools overlay from `numtide/llm-agents.nix`
 
 ## Common Commands (Justfile)
@@ -243,7 +242,6 @@ secrets/                # Agenix encrypted secrets
 └── secrets.nix         # Public keys mapping for each secret
 
 packages/               # Custom package definitions
-├── retedo-mono/        # Custom monospace font (based on Iosevka)
 └── ticktick/           # TickTick app with macOS support
 ```
 

@@ -5,8 +5,6 @@
 # and adding it here.
 { pkgs }:
 {
-  retedo-mono = pkgs.callPackage ./retedo-mono { };
-
   # ticktick only available on darwin
   ticktick = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./ticktick { } else null;
 
@@ -15,7 +13,6 @@
 
   # deskflow only available on darwin
   deskflow = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./deskflow { } else null;
-
 
   # clash-verge-rev only available on darwin
   clash-verge-rev =
