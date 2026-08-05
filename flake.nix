@@ -34,10 +34,9 @@
 
     flake-parts.url = "github:hercules-ci/flake-parts";
 
-    lanzaboote = {
-      url = "github:nix-community/lanzaboote/v1.1.0";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # Keep lanzaboote on its pinned nixpkgs: following the root input would
+    # pull a different rustc toolchain build (large) on secure-boot hosts.
+    lanzaboote.url = "github:nix-community/lanzaboote/v1.1.0";
 
     agenix = {
       url = "github:ryantm/agenix";
