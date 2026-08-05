@@ -2,8 +2,12 @@
   description = "Nix flake for NixOS/macOS configuration";
 
   nixConfig = {
+    # 国内镜像（均为官方 cache.nixos.org 的 store 镜像，使用默认公钥即可）
     substituters = [
       "https://mirrors.ustc.edu.cn/nix-channels/store"
+      "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
+      "https://mirror.sjtu.edu.cn/nix-channels/store"
+      "https://mirror.nju.edu.cn/nix-channels/store"
       "https://cache.nixos.org"
       "https://nix-community.cachix.org"
       "https://cache.numtide.com"
