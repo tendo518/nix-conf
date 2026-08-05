@@ -34,15 +34,24 @@
 
     flake-parts.url = "github:hercules-ci/flake-parts";
 
-    lanzaboote.url = "github:nix-community/lanzaboote/v1.1.0";
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote/v1.1.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-    agenix.url = "github:ryantm/agenix";
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     import-tree.url = "github:vic/import-tree";
 
     llm-agents.url = "github:numtide/llm-agents.nix";
 
-    disko.url = "github:nix-community/disko";
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     rime-ice = {
       url = "github:tendo518/rime-ice";
