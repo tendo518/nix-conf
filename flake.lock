@@ -234,11 +234,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785531816,
-        "narHash": "sha256-vkMnV0JIyw+g/NmcfoajlGaAO+9a0ezia+FZohQJrik=",
+        "lastModified": 1785944609,
+        "narHash": "sha256-oVALwpE6ztz2Ll6vGlCHJs7fhblEmOFz3/TTcgZnrqM=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "bf9ce9fec78f95f374e8dd3b503863a3ec128ebe",
+        "rev": "44a1a0ab16b1b6b8e6b673227d870c3a89cab35e",
         "type": "github"
       },
       "original": {
@@ -293,11 +293,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1785826862,
-        "narHash": "sha256-UOPf9uQHGoNqEMZ2kii8DqlPBd5dYR6uERzdU8wdroQ=",
+        "lastModified": 1785940261,
+        "narHash": "sha256-63Q1aecw7wWOw6b+nLC5L1bXyqBG3d/SL4A9L3Gq7IA=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "fd0508ef842609ad0c6f5af46c6f572214efebd9",
+        "rev": "3295332d02360fd38a978e5b45528075f4fbc726",
         "type": "github"
       },
       "original": {
@@ -415,11 +415,11 @@
     "rime-ice": {
       "flake": false,
       "locked": {
-        "lastModified": 1774541955,
-        "narHash": "sha256-Kj8X5bpuJ6Bx8XEchTOimLyMxSkFzLX1B8fRiw48wSg=",
+        "lastModified": 1785938147,
+        "narHash": "sha256-GjJe9MRH2vIiOdCuvhB3IHAQ7woIzWFJeQonRV0fy4Y=",
         "owner": "tendo518",
         "repo": "rime-ice",
-        "rev": "71cf9a28a043f0693502ecb6d12ad429d81a11ef",
+        "rev": "61e03db21380e5dfbbd66d38e79c2760e0f37bf1",
         "type": "github"
       },
       "original": {
