@@ -7,6 +7,7 @@
         kilocode-cli
         qoder-cli
         opencode2
+        herdr  # https://herdr.dev
       ];
     };
 }

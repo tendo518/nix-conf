@@ -10,6 +10,8 @@
       # --- Credentials & Secrets ---
       inherit (config.age.secrets)
         opencode-go-api-key
+        volcengine-codingplan-api-key
+        deepseek-api-key
         ;
 
       # OpenCode Go (docs: opencode.ai/docs/zh-cn/go) is the single provider:
@@ -134,65 +136,124 @@
             };
           };
         };
+
+        # Volces coding plan - Anthropic Messages endpoint (same base that
+        # Claude Code uses in modules/agents/claude-code.nix; omp appends
+        # `/v1/messages`). Model names mirror claude-code.nix, including the
+        # `[1m]` 1M-context suffix on glm/deepseek. Thinking is set only for the
+        # deepseek models (low/high/max per DeepSeek's catalog); kimi/glm/minimax
+        # omit it - add efforts there once confirmed.
+        volces = {
+          baseUrl = "https://ark.cn-beijing.volces.com/api/coding";
+          api = "anthropic-messages";
+          apiKeyEnv = "VOLCENGINE_API_KEY";
+          apiKeyPath = volcengine-codingplan-api-key.path;
+          models = {
+            kimi_k2_6 = {
+              model = "kimi-k2.6";
+              name = "Kimi K2.6";
+              contextWindow = 1048576;
+            };
+            kimi_k2_7_code = {
+              model = "kimi-k2.7-code";
+              name = "Kimi K2.7 Code";
+              contextWindow = 1048576;
+            };
+            glm_5_2 = {
+              model = "glm-5.2[1m]";
+              name = "GLM 5.2";
+              contextWindow = 1048576;
+            };
+            minimax_m3 = {
+              model = "minimax-m3";
+              name = "MiniMax M3";
+              contextWindow = 1000000;
+            };
+            ds_v4pro = {
+              model = "deepseek-v4-pro[1m]";
+              name = "DeepSeek V4 Pro";
+              contextWindow = 1000000;
+              extra = {
+                reasoning = true;
+                thinking = {
+                  mode = "effort";
+                  efforts = [
+                    "low"
+                    "high"
+                    "max"
+                  ];
+                };
+              };
+            };
+            ds_v4flash = {
+              model = "deepseek-v4-flash[1m]";
+              name = "DeepSeek V4 Flash";
+              contextWindow = 1000000;
+              extra = {
+                reasoning = true;
+                thinking = {
+                  mode = "effort";
+                  efforts = [
+                    "low"
+                    "high"
+                    "max"
+                  ];
+                };
+              };
+            };
+          };
+        };
+
+        # DeepSeek direct - Anthropic Messages endpoint
+        # (api.deepseek.com/anthropic, same as claude-code.nix). `[1m]` selects
+        # 1M context. Thinking efforts low/high/max per DeepSeek's catalog.
+        deepseek = {
+          baseUrl = "https://api.deepseek.com/anthropic";
+          api = "anthropic-messages";
+          apiKeyEnv = "DEEPSEEK_API_KEY";
+          apiKeyPath = deepseek-api-key.path;
+          models = {
+            ds_v4flash = {
+              model = "deepseek-v4-flash[1m]";
+              name = "DeepSeek V4 Flash";
+              contextWindow = 1000000;
+              extra = {
+                reasoning = true;
+                thinking = {
+                  mode = "effort";
+                  efforts = [
+                    "low"
+                    "high"
+                    "max"
+                  ];
+                };
+              };
+            };
+            ds_v4pro = {
+              model = "deepseek-v4-pro[1m]";
+              name = "DeepSeek V4 Pro";
+              contextWindow = 1000000;
+              extra = {
+                reasoning = true;
+                thinking = {
+                  mode = "effort";
+                  efforts = [
+                    "low"
+                    "high"
+                    "max"
+                  ];
+                };
+              };
+            };
+          };
+        };
       };
 
-      # --- Single-model wrappers ---
-      # Each wrapper pins ALL model roles to the same model and disables the
-      # advisor, so there are no subagents or multi-model interactions —
-      # just a clean single-model session. Uses --config overlay so it works
-      # regardless of what the user's ~/.omp/agent/config.yml contains.
-
-      # `/resume` and startup `--resume`/`--continue` both restore the
-      # session's last model. A wrapper should still stay pinned to its
-      # provider/model, even though models.yml can now read all configured age
-      # secrets itself. Two levers suppress cross-provider restore:
-      #  - `disabledProviders` overlay gates getAvailable() *before* the auth
-      #    check, so interactive `/resume` (switchSession) can't find the
-      #    cross-provider model and keeps the wrapper's pinned model.
-      #  - `--model` sets hasExplicitModel, so startup `--resume`/`--continue`
-      #    (which uses hasConfiguredAuth, ignoring disabledProviders) skips the
-      #    restore entirely.
-      # Same-provider/different-model resumes still restore but share the
-      # exported key, so they don't fail.
-      disabledProvidersFor =
-        roleValues:
-        let
-          used = lib.unique (map (v: lib.head (lib.splitString "/" v)) roleValues);
-        in
-        lib.subtractLists used (lib.attrNames providers);
-      mkOmpWrapper =
-        providerName: provider: name: m:
-        let
-          model = "${providerName}/${m.model}";
-          overlay = pkgs.writeText "omp-${providerName}-${name}.yml" (
-            builtins.toJSON {
-              modelRoles = {
-                default = model;
-                smol = model;
-                slow = model;
-                plan = model;
-                task = model;
-                commit = model;
-                title = model;
-              };
-              advisor.enabled = false;
-              disabledProviders = disabledProvidersFor [ model ];
-            }
-          );
-        in
-        pkgs.writeShellScriptBin "omp-${providerName}-${name}" ''
-          if [ -r "${provider.apiKeyPath}" ]; then
-            export ${provider.apiKeyEnv}="$(cat "${provider.apiKeyPath}")"
-          fi
-          exec ${lib.getExe pkgs.llm-agents.omp} --config "${overlay}" --model "${model}" "$@"
-        '';
-
-      mkOmpWrappers =
-        providerName: provider: lib.mapAttrsToList (mkOmpWrapper providerName provider) provider.models;
-
-      ompWrappers = lib.concatLists (lib.mapAttrsToList mkOmpWrappers providers);
-
-      # ~/.omp/agent/models.yml — JSON is valid YAML.
+      # ~/.omp/agent/models.yml - JSON is valid YAML. Declares every provider
+      # and model; omp reads each API key itself via `apiKeyCommand` (the `!`
+      # prefix runs the command), so the bare `omp` binary needs no per-model
+      # wrapper. Pick the model at runtime with `--model <fuzzy>` (e.g.
+      # "deepseek", "gpt-5.6"), `/model`, or Ctrl+P.
       modelsYml = builtins.toJSON {
         providers = lib.mapAttrs (_name: p: {
           baseUrl = p.baseUrl;
@@ -213,80 +274,31 @@
         }) providers;
       };
 
-      # ~/.omp/agent/WATCHDOG.md — advisor-only review guidance.
+      # ~/.omp/agent/WATCHDOG.md - advisor-only review guidance (used when the
+      # advisor is enabled via `--advisor` or `/advisor`).
       watchdogMd = ''
         # Watchdog
 
         Review priorities for the advisor:
 
-        - Unhandled error paths — catches that swallow exceptions silently.
+        - Unhandled error paths - catches that swallow exceptions silently.
         - Missing input validation on public/API boundaries.
         - Changes that bypass existing abstractions or introduce parallel implementations.
-        - Resource leaks — unclosed files, connections, or missing cleanup in error paths.
+        - Resource leaks - unclosed files, connections, or missing cleanup in error paths.
         - Race conditions in concurrent/async code.
         - Security: user input reaching eval/exec/sql without sanitization.
         - Dead code introduced by the change (orphaned imports, unreachable branches).
       '';
 
-      # --- Multi-agent composition ---
-      # One preset setting the full model role stack from the OpenCode Go
-      # subscription, plus advisor config (enabled with bounded catch-up).
-      # Uses --config overlay (omp docs/settings.md §"One-shot overlays") so it
-      # layers on top of whatever the user's ~/.omp/agent/config.yml contains.
-      #
-      # Two levels of control:
-      #   omp-go           — multi-agent composition over the Go models
-      #   omp-opencode-go-* — single-model, no subagents
-      compositions = {
-        go = {
-          default = "opencode-go/gpt-5.6-luna";
-          smol = "opencode-go/deepseek-v4-flash";
-          slow = "opencode-go/deepseek-v4-pro";
-          plan = "opencode-go/gpt-5.6-luna";
-          advisor = "opencode-go/qwen3.8-max";
-          task = "opencode-go/deepseek-v4-flash";
-          commit = "opencode-go/kimi-k3";
-          title = "opencode-go/deepseek-v4-flash";
-        };
-      };
-
-      mkCompositionWrapper =
-        name: roles:
-        let
-          overlay = pkgs.writeText "omp-${name}-overlay.yml" (
-            builtins.toJSON {
-              modelRoles = roles;
-              advisor = {
-                enabled = true;
-                syncBacklog = "3";
-                immuneTurns = 3;
-              };
-              disabledProviders = disabledProvidersFor (builtins.attrValues roles);
-            }
-          );
-          exports =
-            let
-              used = lib.unique (map (v: lib.head (lib.splitString "/" v)) (builtins.attrValues roles));
-            in
-            lib.concatStringsSep "\n" (
-              map (p: ''
-                if [ -r "${providers.${p}.apiKeyPath}" ]; then
-                  export ${providers.${p}.apiKeyEnv}="$(cat "${providers.${p}.apiKeyPath}")"
-                fi
-              '') used
-            );
-        in
-        pkgs.writeShellScriptBin "omp-${name}" ''
-          ${exports}
-          exec ${lib.getExe pkgs.llm-agents.omp} --config "${overlay}" --model "${roles.default}" "$@"
-        '';
-
-      compositionWrappers = lib.mapAttrsToList mkCompositionWrapper compositions;
-
-      # ~/.omp/agent/config.yml — global omp config (declarative).
-      # setupVersion: 1 marks setup as complete so omp skips the wizard.
+      # ~/.omp/agent/config.yml - global omp config (declarative).
+      # `modelRoles.default` gives `omp` a startup model; the setup wizard is
+      # skipped via setupVersion, so without this omp has no default. Switch
+      # models at runtime with `--model`, `/model`, or Ctrl+P - every model in
+      # models.yml is available. Other roles (smol/slow/plan/...) fall back to
+      # omp's defaults; override per-launch with `--smol`, `--slow`, etc.
       configYml = builtins.toJSON {
         setupVersion = 1;
+        modelRoles.default = "opencode-go/gpt-5.6-luna";
         startup = {
           checkUpdate = false; # Nix manages omp version
           setupWizard = false; # skip onboarding
@@ -308,7 +320,7 @@
 
     in
     {
-      home.packages = [ pkgs.llm-agents.omp ] ++ ompWrappers ++ compositionWrappers;
+      home.packages = [ pkgs.llm-agents.omp ];
 
       home.file."./.omp/agent/models.yml".force = true;
       home.file."./.omp/agent/models.yml".text = modelsYml;
@@ -319,6 +331,8 @@
 
       age.secrets = {
         opencode-go-api-key.file = ../../secrets/opencode-go-api-key.age;
+        volcengine-codingplan-api-key.file = ../../secrets/volcengine-codingplan-api-key.age;
+        deepseek-api-key.file = ../../secrets/deepseek-api-key.age;
       };
     };
 }

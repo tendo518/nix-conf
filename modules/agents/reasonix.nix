@@ -55,39 +55,34 @@
         soft_compact_ratio  = 0.5
         compact_ratio       = 0.8
         compact_force_ratio = 0.9
-        cold_resume_prune   = true
-        planner_model  = "deepseek-pro"
-        subagent_model = "deepseek-pro"
+        # planner_model  = "deepseek-pro"
+        # subagent_model = "deepseek-pro"
 
         [[providers]]
         name        = "deepseek-flash"
         kind        = "openai"
         base_url    = "https://api.deepseek.com"
-        model       = "deepseek-v4-flash"
+        models      = ["deepseek-v4-flash", "deepseek-v4-pro"]
+        default     = "deepseek-v4-flash"   # optional; defaults to the first of `models`        
         api_key_env = "DEEPSEEK_API_KEY"
         balance_url = "https://api.deepseek.com/user/balance"
-        context_window = 1000000
-
-        [[providers]]
-        name        = "deepseek-pro"
-        kind        = "openai"
-        base_url    = "https://api.deepseek.com"
-        model       = "deepseek-v4-pro"
-        api_key_env = "DEEPSEEK_API_KEY"
-        balance_url = "https://api.deepseek.com/user/balance"
+        effort      = "high"
         context_window = 1000000
 
         [tools]
         enabled = []
         bash_timeout_seconds = 120
 
-        [lsp]
-        enabled = true
+        [serve]
+        auth_mode = "none"                           # none|token|password
+        behind_proxy = false                         # true only behind trusted proxy
 
         [permissions]
         mode = "ask"
 
         [sandbox]
+        workspace_root = ""
+        allow_write    = ["/tmp"]
         bash    = "enforce"
         network = true
       '';
