@@ -78,10 +78,9 @@
         trust_level = "trusted"
       '';
 
-      # DeepSeek V4 Flash/Pro via DeepSeek's own Responses API. Console Go
-      # serves these over chat completions only, which codex can't use, so
-      # they get their own binary/provider.
-      codexDsConfig = pkgs.writeText "codex-ds-config.toml" ''
+      # DeepSeek V4 Flash/Pro via DeepSeek's own Responses API. Loaded as the
+      # codex-ds profile over Codex's shared CODEX_HOME.
+      codexDsConfig = pkgs.writeText "codex-ds.config.toml" ''
         model = "deepseek-v4-flash"
         model_provider = "deepseek"
         approval_policy = "on-request"
@@ -113,27 +112,28 @@
         exec ${lib.getExe pkgs.llm-agents.codex} "$@"
       '';
 
-      # One wrapper per third-party provider, each with its own CODEX_HOME so
-      # config, auth, and history stay isolated.
+      # Provider commands use profiles over Codex's normal CODEX_HOME, so
+      # `codex`, `codex-go`, and `codex-ds` share one session store. Codex's
+      # native resume picker filters by active model_provider.
       codexGo = pkgs.writeShellScriptBin "codex-go" ''
         if [ -r "${opencode-go-api-key.path}" ]; then
           export OPENCODE_GO_API_KEY="$(cat "${opencode-go-api-key.path}")"
         fi
-        export CODEX_HOME="${config.xdg.configHome}/codex-go"
-        exec ${lib.getExe pkgs.llm-agents.codex} "$@"
+        export CODEX_HOME="${config.xdg.configHome}/codex"
+        exec ${lib.getExe pkgs.llm-agents.codex} --profile codex-go "$@"
       '';
 
       codexDs = pkgs.writeShellScriptBin "codex-ds" ''
         if [ -r "${deepseek-api-key.path}" ]; then
           export DEEPSEEK_API_KEY="$(cat "${deepseek-api-key.path}")"
         fi
-        export CODEX_HOME="${config.xdg.configHome}/codex-ds"
-        exec ${lib.getExe pkgs.llm-agents.codex} "$@"
+        export CODEX_HOME="${config.xdg.configHome}/codex"
+        exec ${lib.getExe pkgs.llm-agents.codex} --profile codex-ds "$@"
       '';
 
     in
     {
-      # Three binaries, one provider each:
+      # Three binaries, one shared Codex session store:
       #   codex    - official OpenAI models (stock bundled catalog)
       #   codex-go - gpt-5.6-luna via OpenCode Go
       #   codex-ds - deepseek-v4-flash/pro via DeepSeek
@@ -154,14 +154,14 @@
       '';
 
       home.activation.setupCodexGoConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        cfg="${config.xdg.configHome}/codex-go/config.toml"
+        cfg="${config.xdg.configHome}/codex/codex-go.config.toml"
         mkdir -p "$(dirname "$cfg")"
         rm -f "$cfg"
         install -m 0644 ${codexGoConfig} "$cfg"
       '';
 
       home.activation.setupCodexDsConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        cfg="${config.xdg.configHome}/codex-ds/config.toml"
+        cfg="${config.xdg.configHome}/codex/codex-ds.config.toml"
         mkdir -p "$(dirname "$cfg")"
         rm -f "$cfg"
         install -m 0644 ${codexDsConfig} "$cfg"
