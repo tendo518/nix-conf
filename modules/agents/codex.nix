@@ -41,29 +41,14 @@
       # picks a valid effort.
       codexDsModelsJson = ./codex-deepseek-models.json;
 
-      # Official binary config: stock bundled model catalog, ChatGPT
-      # subscription only. No model_catalog_json, so /model keeps every model
-      # codex ships. Replaced from Nix on every activation.
+      # Base config shared by the TUI and Desktop. Provider definitions live
+      # here so the separate profile files only select a model/provider/catalog.
       codexConfig = pkgs.writeText "codex-config.toml" ''
         model = "gpt-5.6-terra"
         model_provider = "openai"
         approval_policy = "on-request"
         approvals_reviewer = "auto_review"
         sandbox_mode = "workspace-write"
-
-        [projects."${config.home.homeDirectory}"]
-        trust_level = "trusted"
-      '';
-
-      # gpt-5.6-luna via OpenCode Go (Console Go's Responses endpoint).
-      codexGoConfig = pkgs.writeText "codex-go-config.toml" ''
-        model = "gpt-5.6-luna"
-        model_provider = "opencode-go"
-        approval_policy = "on-request"
-        approvals_reviewer = "auto_review"
-        sandbox_mode = "workspace-write"
-
-        model_catalog_json = "${codexGoModelsJson}"
 
         [model_providers.opencode-go]
         name = "OpenCode Go"
@@ -74,25 +59,6 @@
         stream_idle_timeout_ms = 600000
         request_max_retries = 6
 
-        [projects."${config.home.homeDirectory}"]
-        trust_level = "trusted"
-      '';
-
-      # DeepSeek V4 Flash/Pro via DeepSeek's own Responses API. Loaded as the
-      # codex-ds profile over Codex's shared CODEX_HOME.
-      codexDsConfig = pkgs.writeText "codex-ds.config.toml" ''
-        model = "deepseek-v4-flash"
-        model_provider = "deepseek"
-        approval_policy = "on-request"
-        approvals_reviewer = "auto_review"
-        sandbox_mode = "workspace-write"
-
-        model_catalog_json = "${codexDsModelsJson}"
-
-        # DeepSeek's official Codex guide uses `experimental_bearer_token` with
-        # a literal key; we use `env_key` instead so the agenix-managed secret
-        # is read at runtime by the codex-ds wrapper, not baked into the
-        # (world-buildable) config.
         [model_providers.deepseek]
         name = "DeepSeek"
         base_url = "${deepseekBaseUrl}"
@@ -104,6 +70,18 @@
 
         [projects."${config.home.homeDirectory}"]
         trust_level = "trusted"
+      '';
+
+      codexGoConfig = pkgs.writeText "codex-go.config.toml" ''
+        model = "gpt-5.6-luna"
+        model_provider = "opencode-go"
+        model_catalog_json = "${codexGoModelsJson}"
+      '';
+
+      codexDsConfig = pkgs.writeText "codex-ds.config.toml" ''
+        model = "deepseek-v4-flash"
+        model_provider = "deepseek"
+        model_catalog_json = "${codexDsModelsJson}"
       '';
 
       # Official binary: stock codex with its own CODEX_HOME.
@@ -143,28 +121,31 @@
         codexDs
       ];
 
-      # Force the declarative template over any runtime changes codex made.
-      # rm first so a stale read-only store symlink from an older generation
-      # can't block the write.
+      # Force the declarative base and profile templates over runtime changes.
+      # Remove first so stale read-only store symlinks from an older generation
+      # can't block the writes.
       home.activation.setupCodexConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        cfg="${config.xdg.configHome}/codex/config.toml"
-        mkdir -p "$(dirname "$cfg")"
-        rm -f "$cfg"
-        install -m 0644 ${codexConfig} "$cfg"
+        cfgDir="${config.xdg.configHome}/codex"
+        mkdir -p "$cfgDir"
+        rm -f "$cfgDir/config.toml" "$cfgDir/codex-go.config.toml" "$cfgDir/codex-ds.config.toml"
+        install -m 0644 ${codexConfig} "$cfgDir/config.toml"
+        install -m 0644 ${codexGoConfig} "$cfgDir/codex-go.config.toml"
+        install -m 0644 ${codexDsConfig} "$cfgDir/codex-ds.config.toml"
       '';
 
-      home.activation.setupCodexGoConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        cfg="${config.xdg.configHome}/codex/codex-go.config.toml"
-        mkdir -p "$(dirname "$cfg")"
-        rm -f "$cfg"
-        install -m 0644 ${codexGoConfig} "$cfg"
-      '';
-
-      home.activation.setupCodexDsConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        cfg="${config.xdg.configHome}/codex/codex-ds.config.toml"
-        mkdir -p "$(dirname "$cfg")"
-        rm -f "$cfg"
-        install -m 0644 ${codexDsConfig} "$cfg"
+      # Desktop apps do not inherit shell exports. Keep both third-party
+      # credentials in Codex's shared environment file.
+      home.activation.setupCodexEnv = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        env="${config.xdg.configHome}/codex/.env"
+        mkdir -p "$(dirname "$env")"
+        rm -f "$env"
+        umask 077
+        if [ -r "${opencode-go-api-key.path}" ]; then
+          printf 'OPENCODE_GO_API_KEY=%s\n' "$(cat "${opencode-go-api-key.path}")" >> "$env"
+        fi
+        if [ -r "${deepseek-api-key.path}" ]; then
+          printf 'DEEPSEEK_API_KEY=%s\n' "$(cat "${deepseek-api-key.path}")" >> "$env"
+        fi
       '';
 
       age.secrets = {

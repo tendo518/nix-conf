@@ -49,6 +49,7 @@
         obsidian
         skimpdf
         deskflow
+        codex-desktop
         spotify
         # zed-editor  # broken again and again in macos
 

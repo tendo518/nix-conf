@@ -29,6 +29,15 @@
           prev.deskflow;
     };
 
+    # Codex desktop overlay with macOS support (Pin version)
+    codex-desktop = final: prev: {
+      codex-desktop =
+        if prev.stdenv.hostPlatform.isDarwin then
+          final.callPackage ../../packages/codex-desktop { }
+        else
+          prev.codex-desktop or null;
+    };
+
     # Clash Verge Rev overlay with macOS support (Pin version)
     clash-verge-rev =
       final: prev:
