@@ -10,6 +10,7 @@
       inherit (config.age.secrets)
         deepseek-api-key
         opencode-go-api-key
+        volcengine-codingplan-api-key
         ;
 
       # DeepSeek's native Responses API. base_url matches the official Codex
@@ -23,6 +24,12 @@
       # models (including deepseek) are chat-completions only, which codex
       # can't speak - hence one binary per provider.
       opencodeGoBaseUrl = "https://opencode.ai/zen/go/v1";
+
+      # Volcengine Ark Coding Plan's OpenAI-compatible Responses API. Codex
+      # joins base_url to `/responses`. Use the /api/coding/v3 path (not
+      # /api/v3) so requests consume the Coding Plan quota.
+      # https://docs.volcengine.com/docs/82379/2556056
+      volceBaseUrl = "https://ark.cn-beijing.volces.com/api/coding/v3";
 
       # One catalog per third-party provider. model_catalog_json replaces
       # codex's bundled catalog, so each binary's /model only lists that
@@ -40,6 +47,13 @@
       # declares the supported levels (low/high/max, default high) so codex
       # picks a valid effort.
       codexDsModelsJson = ./codex-deepseek-models.json;
+
+      # Volcengine Coding Plan models. Volcengine publishes no official codex
+      # catalog, so this static file mirrors the deepseek catalog's structure
+      # (the Codex system prompt is generic, not provider-specific). Reasoning
+      # effort is low/medium/high per the doc.
+      # https://docs.volcengine.com/docs/82379/2556056
+      codexVolceModelsJson = ./codex-volce-models.json;
 
       # Base config shared by the TUI and Desktop. Provider definitions live
       # here so the separate profile files only select a model/provider/catalog.
@@ -68,6 +82,15 @@
         stream_idle_timeout_ms = 600000
         request_max_retries = 6
 
+        [model_providers.volcengine-coding-plan]
+        name = "volcengine-coding-plan"
+        base_url = "${volceBaseUrl}"
+        env_key = "ARK_API_KEY"
+        wire_api = "responses"
+        requires_openai_auth = false
+        stream_idle_timeout_ms = 600000
+        request_max_retries = 6
+
         [projects."${config.home.homeDirectory}"]
         trust_level = "trusted"
       '';
@@ -82,6 +105,12 @@
         model = "deepseek-v4-flash"
         model_provider = "deepseek"
         model_catalog_json = "${codexDsModelsJson}"
+      '';
+
+      codexVolceConfig = pkgs.writeText "codex-volce.config.toml" ''
+        model = "glm-5.2"
+        model_provider = "volcengine-coding-plan"
+        model_catalog_json = "${codexVolceModelsJson}"
       '';
 
       # Official binary: stock codex with its own CODEX_HOME.
@@ -109,16 +138,26 @@
         exec ${lib.getExe pkgs.llm-agents.codex} --profile codex-ds "$@"
       '';
 
+      codexVolce = pkgs.writeShellScriptBin "codex-volce" ''
+        if [ -r "${volcengine-codingplan-api-key.path}" ]; then
+          export ARK_API_KEY="$(cat "${volcengine-codingplan-api-key.path}")"
+        fi
+        export CODEX_HOME="${config.xdg.configHome}/codex"
+        exec ${lib.getExe pkgs.llm-agents.codex} --profile codex-volce "$@"
+      '';
+
     in
     {
-      # Three binaries, one shared Codex session store:
-      #   codex    - official OpenAI models (stock bundled catalog)
-      #   codex-go - gpt-5.6-luna via OpenCode Go
-      #   codex-ds - deepseek-v4-flash/pro via DeepSeek
+      # Four binaries, one shared Codex session store:
+      #   codex       - official OpenAI models (stock bundled catalog)
+      #   codex-go    - gpt-5.6-luna via OpenCode Go
+      #   codex-ds    - deepseek-v4-flash/pro via DeepSeek
+      #   codex-volce - glm-5.2 + others via Volcengine Coding Plan
       home.packages = [
         codex
         codexGo
         codexDs
+        codexVolce
       ];
 
       # Force the declarative base and profile templates over runtime changes.
@@ -127,10 +166,11 @@
       home.activation.setupCodexConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         cfgDir="${config.xdg.configHome}/codex"
         mkdir -p "$cfgDir"
-        rm -f "$cfgDir/config.toml" "$cfgDir/codex-go.config.toml" "$cfgDir/codex-ds.config.toml"
+        rm -f "$cfgDir/config.toml" "$cfgDir/codex-go.config.toml" "$cfgDir/codex-ds.config.toml" "$cfgDir/codex-volce.config.toml"
         install -m 0644 ${codexConfig} "$cfgDir/config.toml"
         install -m 0644 ${codexGoConfig} "$cfgDir/codex-go.config.toml"
         install -m 0644 ${codexDsConfig} "$cfgDir/codex-ds.config.toml"
+        install -m 0644 ${codexVolceConfig} "$cfgDir/codex-volce.config.toml"
       '';
 
       # Desktop apps do not inherit shell exports. Keep both third-party
@@ -146,11 +186,15 @@
         if [ -r "${deepseek-api-key.path}" ]; then
           printf 'DEEPSEEK_API_KEY=%s\n' "$(cat "${deepseek-api-key.path}")" >> "$env"
         fi
+        if [ -r "${volcengine-codingplan-api-key.path}" ]; then
+          printf 'ARK_API_KEY=%s\n' "$(cat "${volcengine-codingplan-api-key.path}")" >> "$env"
+        fi
       '';
 
       age.secrets = {
         deepseek-api-key.file = ../../secrets/deepseek-api-key.age;
         opencode-go-api-key.file = ../../secrets/opencode-go-api-key.age;
+        volcengine-codingplan-api-key.file = ../../secrets/volcengine-codingplan-api-key.age;
       };
     };
 }
