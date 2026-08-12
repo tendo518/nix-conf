@@ -26,6 +26,7 @@
         # Office & Productivity
         spotify
         obsidian
+        codex-desktop
         yt-dlp # upstream deno build fail
         qq
         obs-studio

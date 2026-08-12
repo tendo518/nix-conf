@@ -14,9 +14,14 @@
   # deskflow only available on darwin
   deskflow = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./deskflow { } else null;
 
-  # codex desktop only available on darwin
+  # Codex desktop package with platform-specific official artifacts
   codex-desktop =
-    if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./codex-desktop { } else null;
+    if pkgs.stdenv.hostPlatform.isDarwin then
+      pkgs.callPackage ./codex-desktop { }
+    else if pkgs.stdenv.hostPlatform.isLinux then
+      pkgs.callPackage ./chatgpt-desktop-linux { }
+    else
+      null;
 
   # clash-verge-rev only available on darwin
   clash-verge-rev =

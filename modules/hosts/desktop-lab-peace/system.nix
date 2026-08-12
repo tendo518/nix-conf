@@ -12,6 +12,7 @@
         # yt-dlp  # upstream deno build fail
         qq
         deskflow
+        codex-desktop
         obs-studio
         calibre
         zathura
