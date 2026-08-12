@@ -102,7 +102,7 @@
       '';
 
       codexDsConfig = pkgs.writeText "codex-ds.config.toml" ''
-        model = "deepseek-v4-flash"
+        model = "deepseek-v4-pro"
         model_provider = "deepseek"
         model_catalog_json = "${codexDsModelsJson}"
       '';
