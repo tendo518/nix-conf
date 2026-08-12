@@ -55,6 +55,19 @@ stdenv.mkDerivation rec {
     dpkg
   ];
 
+  # The upstream bundle contains optional Qt shims and musl prebuilds in
+  # addition to the glibc binaries used by this package. They are selected at
+  # runtime only on systems that provide those alternate runtimes.
+  autoPatchelfIgnoreMissingDeps = [
+    "libQt5Core.so.5"
+    "libQt5Gui.so.5"
+    "libQt5Widgets.so.5"
+    "libQt6Core.so.6"
+    "libQt6Gui.so.6"
+    "libQt6Widgets.so.6"
+    "libc.musl-*.so.1"
+  ];
+
   buildInputs = [
     alsa-lib
     at-spi2-atk
