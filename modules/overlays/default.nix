@@ -35,7 +35,7 @@
         if prev.stdenv.hostPlatform.isDarwin then
           final.callPackage ../../packages/codex-desktop { }
         else if prev.stdenv.hostPlatform.isLinux then
-          final.callPackage ../../packages/chatgpt-desktop-linux { }
+          final.callPackage ../../packages/codex-desktop/linux.nix { }
         else
           prev.codex-desktop or null;
     };

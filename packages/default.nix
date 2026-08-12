@@ -19,7 +19,7 @@
     if pkgs.stdenv.hostPlatform.isDarwin then
       pkgs.callPackage ./codex-desktop { }
     else if pkgs.stdenv.hostPlatform.isLinux then
-      pkgs.callPackage ./chatgpt-desktop-linux { }
+      pkgs.callPackage ./codex-desktop/linux.nix { }
     else
       null;
 

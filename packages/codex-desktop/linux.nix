@@ -18,6 +18,7 @@
   libgbm,
   libnotify,
   libusb1,
+  makeDesktopItem,
   libx11,
   libxcomposite,
   libxdamage,
@@ -46,6 +47,8 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     name = "chatgpt_${arch}.deb";
+    # Upstream intentionally exposes only a mutable "latest" URL. Keep the
+    # hash pinned for reproducible builds and refresh it with update_linux.sh.
     url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_${arch}.deb";
     hash = if isArm then arm64Hash else amd64Hash;
   };
@@ -111,6 +114,20 @@ stdenv.mkDerivation rec {
     ln -s "$out/usr/bin/chatgpt" "$out/bin/chatgpt"
     runHook postInstall
   '';
+
+  desktopItems = [
+    (makeDesktopItem {
+      name = "chatgpt";
+      desktopName = "ChatGPT";
+      genericName = "AI assistant";
+      comment = meta.description;
+      exec = "chatgpt %U";
+      categories = [ "Office" ];
+      type = "Application";
+    })
+  ];
+
+  passthru.updateScript = ./update_linux.sh;
 
   meta = {
     description = "ChatGPT desktop app by OpenAI";
