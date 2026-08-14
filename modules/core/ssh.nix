@@ -129,6 +129,11 @@
             User = "tendo";
             IdentityFile = "~/.ssh/id_ed25519";
           };
+          "server-lab-sardine.tailscale" = {
+            Hostname = "100.70.253.124";
+            User = "tendo";
+            IdentityFile = "~/.ssh/id_ed25519";
+          };
         };
       };
     };

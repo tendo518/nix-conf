@@ -5,11 +5,13 @@ let
   desktop-home-saki = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOQdSaqg4cgiYXrydHmkw636cKUshB0MxcpmEUTO8wVs";
   # desktop-lab-peace = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGvSHQz/v6pmRwkrfutwevvH5awMzB+HDqh6geOSPvSG";
   desktop-lab-peace = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMvB13iPkUSDaGornxY05I1KsHrYgXBqf3nKAuGC0I6I";
+  server-lab-sardine = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL0P3+Q2DmAtlnHq7S3gIoThnHydKHTmItOrOgudn/bd";
   host-ssh-pubkeys = [
     laptop-solar-modoka
     laptop-solar-chiyoko
     desktop-home-saki
     desktop-lab-peace
+    server-lab-sardine
   ];
   # User SSH public keys (from ~/.ssh/id_ed25519.pub)
   tendo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKLqKE9nQVet+MSWdtO0mlECDSwJz8md4ZIZgv9y09KR";
