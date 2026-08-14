@@ -109,5 +109,40 @@
       );
     };
 
+    # pr-tracker: nixpkgs#552075 target=nixos-unstable package=nanoemoji
+    # nanoemoji 0.16.0's v0.16.0 tag was force-pushed after nixpkgs pinned its
+    # src hash, so the fixed-output fetch fails with a hash mismatch. Mirror
+    # nixpkgs#552075 (gM53wlQ... -> FysyKC0...) until it reaches the channel.
+    nanoemoji =
+      final: prev:
+      let
+        fixHash = _pself: pprev: {
+          nanoemoji = pprev.nanoemoji.overrideAttrs (old: {
+            src = final.fetchFromGitHub {
+              owner = "googlefonts";
+              repo = "nanoemoji";
+              tag = "v${old.version}";
+              hash = "sha256-FysyKC01XBnRiur5RR9fcsTxQqE8x0JJHSoe3q6JtKc=";
+            };
+          });
+        };
+      in
+      {
+        # jetbrains-mono pins its font build to python313Packages, so that set is
+        # the one that actually needs the hash fix; cover python3Packages too in
+        # case the pin moves back.
+        python313Packages = prev.python313Packages.overrideScope fixHash;
+        python3Packages = prev.python3Packages.overrideScope fixHash;
+      };
+
+    # pr-tracker: nixpkgs#552212 target=nixos-unstable package=moonlight-qt
+    # moonlight-qt 6.1.0 uses AVVulkanDeviceContext::queue_family_decode_index /
+    # nb_decode_queues, which ffmpeg 9 removed, so it no longer compiles against
+    # the default ffmpeg. Pin to ffmpeg_8 (which still has the fields), matching
+    # nixpkgs#552212 until it reaches the channel.
+    moonlight-qt = final: prev: {
+      moonlight-qt = prev.moonlight-qt.override { ffmpeg = final.ffmpeg_8; };
+    };
+
   };
 }
