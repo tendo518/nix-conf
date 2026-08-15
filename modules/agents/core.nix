@@ -4,6 +4,7 @@
     {
       home.packages = with pkgs.llm-agents; [
         antigravity-cli
+        dsh
         kilocode-cli
         qoder-cli
         opencode2
