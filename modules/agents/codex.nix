@@ -55,6 +55,14 @@
       # https://docs.volcengine.com/docs/82379/2556056
       codexVolceModelsJson = ./codex-volce-models.json;
 
+      readSecret =
+        name: secret:
+        pkgs.writeShellScript "read-${name}" ''
+          [ -r "${secret.path}" ] || exit 1
+          value="$(<"${secret.path}")"
+          printf '%s' "$value"
+        '';
+
       # Base config shared by the TUI and Desktop. Provider definitions live
       # here so the separate profile files only select a model/provider/catalog.
       codexConfig = pkgs.writeText "codex-config.toml" ''
@@ -67,29 +75,32 @@
         [model_providers.opencode-go]
         name = "OpenCode Go"
         base_url = "${opencodeGoBaseUrl}"
-        env_key = "OPENCODE_GO_API_KEY"
         wire_api = "responses"
-        requires_openai_auth = false
         stream_idle_timeout_ms = 600000
         request_max_retries = 6
+
+        [model_providers.opencode-go.auth]
+        command = "${readSecret "opencode-go-api-key" opencode-go-api-key}"
 
         [model_providers.deepseek]
         name = "DeepSeek"
         base_url = "${deepseekBaseUrl}"
-        env_key = "DEEPSEEK_API_KEY"
         wire_api = "responses"
-        requires_openai_auth = false
         stream_idle_timeout_ms = 600000
         request_max_retries = 6
+
+        [model_providers.deepseek.auth]
+        command = "${readSecret "deepseek-api-key" deepseek-api-key}"
 
         [model_providers.volcengine-coding-plan]
         name = "volcengine-coding-plan"
         base_url = "${volceBaseUrl}"
-        env_key = "ARK_API_KEY"
         wire_api = "responses"
-        requires_openai_auth = false
         stream_idle_timeout_ms = 600000
         request_max_retries = 6
+
+        [model_providers.volcengine-coding-plan.auth]
+        command = "${readSecret "volcengine-codingplan-api-key" volcengine-codingplan-api-key}"
 
         [projects."${config.home.homeDirectory}"]
         trust_level = "trusted"
@@ -123,25 +134,16 @@
       # `codex`, `codex-go`, and `codex-ds` share one session store. Codex's
       # native resume picker filters by active model_provider.
       codexGo = pkgs.writeShellScriptBin "codex-go" ''
-        if [ -r "${opencode-go-api-key.path}" ]; then
-          export OPENCODE_GO_API_KEY="$(cat "${opencode-go-api-key.path}")"
-        fi
         export CODEX_HOME="${config.xdg.configHome}/codex"
         exec ${lib.getExe pkgs.llm-agents.codex} --profile codex-go "$@"
       '';
 
       codexDs = pkgs.writeShellScriptBin "codex-ds" ''
-        if [ -r "${deepseek-api-key.path}" ]; then
-          export DEEPSEEK_API_KEY="$(cat "${deepseek-api-key.path}")"
-        fi
         export CODEX_HOME="${config.xdg.configHome}/codex"
         exec ${lib.getExe pkgs.llm-agents.codex} --profile codex-ds "$@"
       '';
 
       codexVolce = pkgs.writeShellScriptBin "codex-volce" ''
-        if [ -r "${volcengine-codingplan-api-key.path}" ]; then
-          export ARK_API_KEY="$(cat "${volcengine-codingplan-api-key.path}")"
-        fi
         export CODEX_HOME="${config.xdg.configHome}/codex"
         exec ${lib.getExe pkgs.llm-agents.codex} --profile codex-volce "$@"
       '';
@@ -171,24 +173,6 @@
         install -m 0644 ${codexGoConfig} "$cfgDir/codex-go.config.toml"
         install -m 0644 ${codexDsConfig} "$cfgDir/codex-ds.config.toml"
         install -m 0644 ${codexVolceConfig} "$cfgDir/codex-volce.config.toml"
-      '';
-
-      # Desktop apps do not inherit shell exports. Keep both third-party
-      # credentials in Codex's shared environment file.
-      home.activation.setupCodexEnv = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        env="${config.xdg.configHome}/codex/.env"
-        mkdir -p "$(dirname "$env")"
-        rm -f "$env"
-        umask 077
-        if [ -r "${opencode-go-api-key.path}" ]; then
-          printf 'OPENCODE_GO_API_KEY=%s\n' "$(cat "${opencode-go-api-key.path}")" >> "$env"
-        fi
-        if [ -r "${deepseek-api-key.path}" ]; then
-          printf 'DEEPSEEK_API_KEY=%s\n' "$(cat "${deepseek-api-key.path}")" >> "$env"
-        fi
-        if [ -r "${volcengine-codingplan-api-key.path}" ]; then
-          printf 'ARK_API_KEY=%s\n' "$(cat "${volcengine-codingplan-api-key.path}")" >> "$env"
-        fi
       '';
 
       age.secrets = {
