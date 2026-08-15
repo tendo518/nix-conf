@@ -12,6 +12,7 @@
         mutableExtensionsDir = true; # install ext by vscode itself
         profiles.default = {
           userSettings = {
+            "workbench.experimental.modernUI" = true;
             # Editor
             "editor.fontFamily" =
               if pkgs.stdenv.isDarwin then
