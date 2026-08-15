@@ -203,10 +203,12 @@ stdenv.mkDerivation rec {
     # (postFixup) to actually apply GSettings/GIO/pixbuf env vars.
     wrapProgram "$out/usr/lib/chatgpt/ChatGPT" \
       "''${gappsWrapperArgs[@]}" \
-      --prefix PATH : ${lib.makeBinPath [
-        coreutils
-        xdg-utils
-      ]}
+      --prefix PATH : ${
+        lib.makeBinPath [
+          coreutils
+          xdg-utils
+        ]
+      }
   '';
 
   desktopItems = [

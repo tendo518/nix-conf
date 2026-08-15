@@ -3,7 +3,11 @@ let
   # + --operator to the profile (persists across reboots). Re-execs under sudo to
   # read the root-owned key.
   tailscaleAuth =
-    { pkgs, lib, config }:
+    {
+      pkgs,
+      lib,
+      config,
+    }:
     pkgs.writeShellScriptBin "tailscale-auth" ''
       if [ "$(id -u)" -ne 0 ]; then exec sudo -- "$0" "$@"; fi
       exec ${lib.getExe pkgs.tailscale} up --auth-key "$(cat ${config.age.secrets.tailscale-authkey.path})" ${lib.escapeShellArgs config.host.tailscale.upFlags} --operator=${config.host.user.name} "$@"
@@ -15,7 +19,12 @@ let
   # accepts advertised subnet routes; desktop-lab-peace overrides to advertise.
   # --operator is added by the script itself, not per-host.
   common =
-    { pkgs, lib, config, ... }:
+    {
+      pkgs,
+      lib,
+      config,
+      ...
+    }:
     {
       options.host.tailscale.upFlags = lib.mkOption {
         type = lib.types.listOf lib.types.str;

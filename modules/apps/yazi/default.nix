@@ -16,7 +16,11 @@
         settings = {
           mgr = {
             # Hide parent directory pane (leftmost panel)
-            ratio = [0 3 4];
+            ratio = [
+              0
+              3
+              4
+            ];
             # Show symlink targets after filenames
             show_symlink = true;
             # Show hidden files by default
@@ -45,7 +49,10 @@
             # Upscale small images to fill the preview pane
             # (the built-in image previewer only downscales)
             prepend_previewers = [
-              { mime = "image/*"; run = "image-fill"; }
+              {
+                mime = "image/*";
+                run = "image-fill";
+              }
             ];
           };
         };
@@ -57,13 +64,13 @@
             {
               # T: maximize/restore preview pane
               run = "plugin toggle-pane -- max-preview";
-              on = ["T"];
+              on = [ "T" ];
               desc = "Maximize or restore the preview pane";
             }
             {
               # <C-t>: hide/show preview pane (t is a prefix key for tabs in default keymap)
               run = "plugin toggle-pane -- min-preview";
-              on = ["<C-t>"];
+              on = [ "<C-t>" ];
               desc = "Show or hide the preview pane";
             }
           ];
