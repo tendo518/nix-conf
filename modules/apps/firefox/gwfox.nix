@@ -21,7 +21,7 @@
 
       # Firefox profile path differs between Linux and macOS
       firefoxProfilePath =
-        if stdenv.isDarwin then
+        if stdenv.hostPlatform.isDarwin then
           "Library/Application Support/Firefox/Profiles/default"
         else
           "${config.programs.firefox.configPath}/default";
@@ -38,8 +38,8 @@
           "svg.context-properties.content.enabled" = true;
 
           # Platform-specific settings
-          "widget.gtk.rounded-bottom-corners.enabled" = if stdenv.isLinux then true else false;
-          "widget.macos.native-context-menus" = if stdenv.isDarwin then false else true;
+          "widget.gtk.rounded-bottom-corners.enabled" = if stdenv.hostPlatform.isLinux then true else false;
+          "widget.macos.native-context-menus" = if stdenv.hostPlatform.isDarwin then false else true;
 
           # gwfox customizations
           "gwfox.icons" = true; # Enable menu icons

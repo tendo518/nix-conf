@@ -13,7 +13,7 @@
           # system tools
           psmisc # killall/pstree/prtstat/fuser/...
         ]
-        ++ lib.optionals pkgs.stdenv.isLinux [
+        ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
           efibootmgr
           nfs-utils
           lm_sensors # for `sensors` command

@@ -11,7 +11,7 @@
           bold_font = "auto";
           italic_font = "auto";
           bold_italic_font = "auto";
-          font_size = if pkgs.stdenv.isDarwin then 14.0 else 12.0;
+          font_size = if pkgs.stdenv.hostPlatform.isDarwin then 14.0 else 12.0;
 
           # misc
           scrollback_lines = 10000;

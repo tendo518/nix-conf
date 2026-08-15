@@ -15,7 +15,7 @@
             "workbench.experimental.modernUI" = true;
             # Editor
             "editor.fontFamily" =
-              if pkgs.stdenv.isDarwin then
+              if pkgs.stdenv.hostPlatform.isDarwin then
                 "\"Maple Mono NF CN\", monospace, \"Symbols Nerd Font\", \"等距更纱黑体 SC\", \"Noto Color Emoji\""
               else
                 "monospace, \"Symbols Nerd Font\", \"等距更纱黑体 SC\", \"Noto Color Emoji\"";
@@ -66,7 +66,7 @@
             # Window
             "window.menuStyle" = "custom";
             "window.menuBarVisibility" = "hidden";
-            "window.titleBarStyle" = if pkgs.stdenv.isDarwin then "custom" else "native";
+            "window.titleBarStyle" = if pkgs.stdenv.hostPlatform.isDarwin then "custom" else "native";
             "window.customTitleBarVisibility" = "never";
 
             # Update

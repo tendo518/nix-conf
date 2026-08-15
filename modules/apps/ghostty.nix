@@ -4,12 +4,12 @@
     {
       programs.ghostty = {
         enable = true;
-        package = if pkgs.stdenv.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
+        package = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
         enableBashIntegration = true;
         enableZshIntegration = true;
         enableFishIntegration = true;
         settings = {
-          font-size = if pkgs.stdenv.isDarwin then 14 else 12;
+          font-size = if pkgs.stdenv.hostPlatform.isDarwin then 14 else 12;
           font-family = "Maple Mono NF CN";
           theme = "Dark Modern";
           # Force dark window chrome (tabs/titlebar) instead of following system light/dark
@@ -29,7 +29,7 @@
           clipboard-trim-trailing-spaces = true;
           link-url = true;
         }
-        // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
           # macOS only
           macos-option-as-alt = true;
           window-save-state = "always";
