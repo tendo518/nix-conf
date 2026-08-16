@@ -3,7 +3,7 @@
 # This file exports all packages from the packages/ directory.
 # Add new packages by creating a subdirectory with default.nix
 # and adding it here.
-{ pkgs }:
+{ pkgs, inputs }:
 {
   # ticktick only available on darwin
   ticktick = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./ticktick { } else null;
@@ -14,12 +14,12 @@
   # deskflow only available on darwin
   deskflow = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./deskflow { } else null;
 
-  # Codex desktop package with platform-specific official artifacts
+  # Codex desktop: official artifact on macOS; llm-agents' Linux-only chatgpt on Linux
   codex-desktop =
     if pkgs.stdenv.hostPlatform.isDarwin then
       pkgs.callPackage ./codex-desktop { }
     else if pkgs.stdenv.hostPlatform.isLinux then
-      pkgs.callPackage ./codex-desktop/linux.nix { }
+      inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.chatgpt
     else
       null;
 

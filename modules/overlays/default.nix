@@ -29,13 +29,14 @@
           prev.deskflow;
     };
 
-    # Codex desktop overlay with platform-specific official artifacts
+    # Codex desktop overlay: official artifact on macOS; llm-agents' Linux-only
+    # chatgpt package on Linux
     codex-desktop = final: prev: {
       codex-desktop =
         if prev.stdenv.hostPlatform.isDarwin then
           final.callPackage ../../packages/codex-desktop { }
         else if prev.stdenv.hostPlatform.isLinux then
-          final.callPackage ../../packages/codex-desktop/linux.nix { }
+          final.llm-agents.chatgpt
         else
           prev.codex-desktop or null;
     };
