@@ -9,12 +9,12 @@ let
   isArm = stdenv.hostPlatform.isAarch64;
   arch = if isArm then "arm64" else "x64";
   # sha256 from https://github.com/Homebrew/homebrew-cask (Casks/c/chatgpt.rb)
-  armHash = "sha256-NMfmKWeK1dY6Y57GlKW4O4X04b18Ie4qvP77sEEJW5w=";
-  intelHash = "sha256-ydWhSAPDE4p3vl6JGklEwE/0IWRRUAQ90+3dC/NO2pc=";
+  armHash = "sha256-elkj2rj8zirEUd5unkf9sxT7oB4C6Dqz56IoOC9LJ78=";
+  intelHash = "sha256-i3NdhH61zuVGAnH/Z9Jm7NsD7Be5Wa5APLe2gK1d0LE=";
 in
 stdenv.mkDerivation rec {
   pname = "codex-desktop";
-  version = "26.803.81509";
+  version = "26.810.52044";
 
   src = fetchurl {
     name = "chatgpt-${version}-macos-${arch}.zip";
