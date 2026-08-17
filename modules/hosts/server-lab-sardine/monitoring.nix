@@ -4,10 +4,13 @@
 { ... }:
 {
   flake.modules.nixos."hosts/server-lab-sardine/monitoring" =
-    { ... }:
+    { pkgs, ... }:
     {
       services.netdata = {
         enable = true;
+        # The plain netdata package ships no dashboard UI in nixpkgs (the v2
+        # UI is a separate component); netdataCloud bundles it.
+        package = pkgs.netdataCloud;
         enableAnalyticsReporting = false;
       };
       services.vnstat.enable = true;

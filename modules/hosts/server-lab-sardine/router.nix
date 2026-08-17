@@ -85,9 +85,12 @@
         enable = true;
         settings = {
           interface = "lan0";
-          # Default wildcard bind lets dnsmasq start even before the LAN
-          # interface has a link/address; `interface` still restricts it to
-          # lan0 once the link comes up.
+          # Only bind the LAN interface instead of the wildcard :53 socket.
+          # systemd-resolved owns 127.0.0.53 on this host, so the wildcard
+          # bind would fail with "Address already in use".
+          bind-interfaces = true;
+          # `interface` restricts DNS/DHCP to lan0; `bind-interfaces` makes
+          # that restriction real at the socket level.
           dhcp-range = "192.168.11.100,192.168.11.199,255.255.255.0,12h";
           dhcp-option = [
             "option:router,192.168.11.1"

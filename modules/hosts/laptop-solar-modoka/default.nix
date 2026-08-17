@@ -15,6 +15,7 @@
       "desktop/input-method"
       "apps"
       "network/tailscale"
+      "network/tailnet"
     ];
     excludeModules = [
       "apps/kitty"

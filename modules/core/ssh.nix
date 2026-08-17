@@ -108,32 +108,8 @@
             Port = 22;
             IdentityFile = "~/.ssh/id_ed25519";
           };
-          # Tailscale devices
-          "desktop-home-saki.tailscale" = {
-            Hostname = "100.124.50.41";
-            User = "tendo";
-            IdentityFile = "~/.ssh/id_ed25519";
-          };
-          "desktop-lab-peace.tailscale" = {
-            Hostname = "100.66.176.74";
-            User = "pengwy";
-            IdentityFile = "~/.ssh/id_ed25519";
-          };
-          "laptop-solar-chiyoko.tailscale" = {
-            Hostname = "100.111.132.42";
-            User = "tendo";
-            IdentityFile = "~/.ssh/id_ed25519";
-          };
-          "laptop-solar-modoka.tailscale" = {
-            Hostname = "100.112.217.3";
-            User = "tendo";
-            IdentityFile = "~/.ssh/id_ed25519";
-          };
-          "server-lab-sardine.tailscale" = {
-            Hostname = "100.70.253.124";
-            User = "tendo";
-            IdentityFile = "~/.ssh/id_ed25519";
-          };
+          # Tailscale devices are generated from modules/network/tailnet.nix
+          # (network/tailnet module): <hostname>.tailscale aliases.
         };
       };
     };

@@ -20,6 +20,10 @@
           "https://localhost:9090"
           "https://100.70.253.124:9090"
           "https://192.168.11.1:9090"
+          # Browser origin when reached through the Caddy proxy.
+          "http://cockpit.lan"
+          "http://server-lab-sardine.tailscale"
+          "http://100.70.253.124"
         ];
         settings.WebService.LoginTo = false;
       };
