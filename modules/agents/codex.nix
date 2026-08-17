@@ -31,6 +31,10 @@
       # https://docs.volcengine.com/docs/82379/2556056
       volceBaseUrl = "https://ark.cn-beijing.volces.com/api/coding/v3";
 
+      # Local self-hosted GPU Responses router. Codex joins base_url to
+      # `/responses`.
+      codexGpuBaseUrl = "http://172.18.36.44:8000/v1";
+
       # One catalog per third-party provider. model_catalog_json replaces
       # codex's bundled catalog, so each binary's /model only lists that
       # provider's models and the provider is always the right one.
@@ -102,6 +106,14 @@
         [model_providers.volcengine-coding-plan.auth]
         command = "${readSecret "volcengine-codingplan-api-key" volcengine-codingplan-api-key}"
 
+        [model_providers.codex-gpu]
+        name = "Codex GPU"
+        base_url = "${codexGpuBaseUrl}"
+        experimental_bearer_token = "8b964310965445819bfd028144ba7cb34676c7f33c97c73966050fb59e903bd5"
+        wire_api = "responses"
+        stream_idle_timeout_ms = 600000
+        request_max_retries = 6
+
         [projects."${config.home.homeDirectory}"]
         trust_level = "trusted"
       '';
@@ -122,6 +134,11 @@
         model = "glm-5.2"
         model_provider = "volcengine-coding-plan"
         model_catalog_json = "${codexVolceModelsJson}"
+      '';
+
+      codexGpuConfig = pkgs.writeText "codex-gpu.config.toml" ''
+        model = "qwen3.8-27b"
+        model_provider = "codex-gpu"
       '';
 
       # Official binary: stock codex with its own CODEX_HOME.
@@ -148,6 +165,11 @@
         exec ${lib.getExe pkgs.llm-agents.codex} --profile codex-volce "$@"
       '';
 
+      codexGpu = pkgs.writeShellScriptBin "codex-gpu" ''
+        export CODEX_HOME="${config.xdg.configHome}/codex"
+        exec ${lib.getExe pkgs.llm-agents.codex} --profile codex-gpu "$@"
+      '';
+
     in
     {
       # Four binaries, one shared Codex session store:
@@ -155,11 +177,13 @@
       #   codex-go    - gpt-5.6-luna via OpenCode Go
       #   codex-ds    - deepseek-v4-flash/pro via DeepSeek
       #   codex-volce - glm-5.2 + others via Volcengine Coding Plan
+      #   codex-gpu   - qwen3.8-27b via local GPU Responses router
       home.packages = [
         codex
         codexGo
         codexDs
         codexVolce
+        codexGpu
       ];
 
       # Force the declarative base and profile templates over runtime changes.
@@ -168,11 +192,12 @@
       home.activation.setupCodexConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         cfgDir="${config.xdg.configHome}/codex"
         mkdir -p "$cfgDir"
-        rm -f "$cfgDir/config.toml" "$cfgDir/codex-go.config.toml" "$cfgDir/codex-ds.config.toml" "$cfgDir/codex-volce.config.toml"
+        rm -f "$cfgDir/config.toml" "$cfgDir/codex-go.config.toml" "$cfgDir/codex-ds.config.toml" "$cfgDir/codex-volce.config.toml" "$cfgDir/codex-gpu.config.toml"
         install -m 0644 ${codexConfig} "$cfgDir/config.toml"
         install -m 0644 ${codexGoConfig} "$cfgDir/codex-go.config.toml"
         install -m 0644 ${codexDsConfig} "$cfgDir/codex-ds.config.toml"
         install -m 0644 ${codexVolceConfig} "$cfgDir/codex-volce.config.toml"
+        install -m 0644 ${codexGpuConfig} "$cfgDir/codex-gpu.config.toml"
       '';
 
       age.secrets = {
