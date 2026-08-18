@@ -1,8 +1,8 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding agents working with code in this repository. Claude Code reads it via the `CLAUDE.md` symlink.
 
-## Behavior Guidline
+## Behavior Guideline
 
 Behavioral guidelines to reduce common LLM coding mistakes.
 
@@ -65,13 +65,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## Repository Overview
 
-Personal NixOS and macOS configuration repository using Nix Flakes with `flake-parts` for modularity and `home-manager` for user-level configurations. Uses `import-tree` for automatic module discovery.
+Personal NixOS and macOS configuration repository for 5 machines (4 NixOS hosts + 1 macOS) using Nix Flakes with `flake-parts` for modularity and `home-manager` for user-level configurations. Uses `import-tree` for automatic module discovery.
 
 Key features:
 - **Secrets management** via `agenix` (encrypted secrets for passwords, API keys)
 - **Disk management** via `disko` (declarative partitioning)
 - **Secure boot** via `lanzaboote` (NixOS only)
-- **Custom overlays** (e.g., `llm-agents` overlay, pinned macOS packages)
+- **Custom overlays** (`llm-agents` AI tools, pinned macOS app builds from `packages/`)
+- **LLM agent tooling** via `numtide/llm-agents.nix` (`modules/agents/`: Claude Code, Codex, OpenCode, ...)
 
 ## Core Architecture
 
@@ -124,6 +125,9 @@ Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `hosts` na
       "hosts/my-host"
       "hardware/nvidia"
     ];
+    excludeModules = [
+      "apps/gaming"
+    ];
     user = {
       name = "username";
       email = "user@example.com";
@@ -154,25 +158,28 @@ Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `hosts` na
 - `hosts.nix` - Defines `hosts.nixos` and `hosts.darwin` options, plus the typed `user` submodule schema
 - `nixos-configurations.nix` - Thin wrapper calling `mkHostConfigurations` with NixOS-specific params
 - `darwin-configurations.nix` - Thin wrapper calling `mkHostConfigurations` with Darwin-specific params
-- `lib.nix` - `resolveModules` for module name resolution and `mkHostConfigurations` shared builder
+- `lib.nix` - `mkHostConfigurations` shared builder (exported as `config.flake.lib.mkHostConfigurations`) and internal `resolveModuleList` for module name resolution
 
-Module name resolution (in `resolveModules`):
+Module name resolution (in `resolveModuleList`):
 - **Exact match**: `"core/nix"` → loads that specific module
-- **Prefix match**: `"core"` → loads all modules under `core/`
-- **No match**: emits a `builtins.trace` warning and returns `[ ]`
+- **Prefix match**: `"core"` → loads all modules under `core/`; `"hosts/my-host"` loads the host module and its split submodules (hardware, system, ...)
+- **Exclusions**: `excludeModules` expand the same way (exact + prefix); results are deduplicated by first occurrence
+- **No match**: the name silently resolves to no modules
 
 ### Host Options
 
 Inside each NixOS/Darwin system, these options are available:
-- `host.user` - Typed submodule (name, email, trusted, sshPubKey, shell, homeStateVersion, extraGroups, passwordSecret)
+- `host.user` - User config from the host definition (name, email, trusted, sshPubKey, shell, homeStateVersion, extraGroups, passwordSecret)
 - `host.hostname` - Hostname (defaults to hosts key name)
 
 Home Manager modules receive `userVars` containing the user config from `host.user`.
 
 ### Overlays (`modules/overlays/`)
 
-Custom overlays are defined in `modules/overlays/default.nix`:
-- `llm-agents` - AI tools overlay from `numtide/llm-agents.nix`
+Custom overlays are defined in `modules/overlays/default.nix` (exposed as `config.flake.overlays`):
+- `llm-agents` - AI tools from `numtide/llm-agents.nix`
+- `ticktick`, `skimpdf`, `deskflow`, `clash-verge-rev` - pinned local builds from `packages/` on macOS (upstream nixpkgs elsewhere)
+- `codex-desktop` - official artifact on macOS; `llm-agents.chatgpt` on Linux
 
 ## Common Commands (Justfile)
 
@@ -219,30 +226,39 @@ just nix-switch-darwin        # Raw darwin-rebuild switch
 modules/
 ├── flake/              # flake-parts config and host builders
 │   ├── default.nix     # flake-parts entry point
-│   ├── lib.nix         # Library functions (resolveModules)
+│   ├── lib.nix         # Library functions (mkHostConfigurations, resolveModuleList)
 │   ├── hosts.nix       # hosts.nixos/darwin options
 │   ├── nixos-configurations.nix
 │   ├── darwin-configurations.nix
 │   └── dev-shell.nix   # Development shell
 ├── hosts/              # Host-specific configurations
-│   ├── desktop-home-saki/
-│   │   └── default.nix + hardware.nix, filesystem.nix, lanzaboote.nix, etc.
-│   ├── laptop-solar-chiyoko/
-│   └── laptop-solar-modoka/   # Darwin (macOS) host
+│   ├── desktop-home-saki/    # default.nix + hardware.nix, system.nix (LUKS, lanzaboote, btrfs)
+│   ├── desktop-lab-peace/    # default.nix + hardware.nix, system.nix (tailscale subnet router)
+│   ├── laptop-solar-chiyoko/ # default.nix + hardware.nix, system.nix (aarch64 ThinkPad X13s)
+│   ├── laptop-solar-modoka/  # Darwin (macOS) host
+│   └── server-lab-sardine/   # default.nix + hardware, system, router, caddy, cockpit, garage, gitea, monitoring
 ├── overlays/           # Custom package overlays
-├── core/               # Core system modules (nix, ssh, users, editors, shell)
+├── core/               # Core system modules (nix, nixpkgs, ssh, users, editors, shell, xdg)
 ├── system/             # System configuration
-├── desktop/            # Desktop environment (fonts, plasma)
-├── apps/               # Applications (ghostty, kitty, mpv, vscode, fcitx5)
-├── network/            # Network configuration
+├── desktop/            # Desktop environment (fonts, plasma, input-method, niri)
+├── agents/             # LLM agent CLIs (claude-code, codex, hermes, omp, pi, reasonix)
+├── apps/               # Applications (ghostty, kitty, mpv, vscode, neovim, yazi, firefox)
+├── network/            # Network configuration (tailscale, tailnet, syncthing, tproxy)
 ├── development/        # Development tools
-├── hardware/           # Hardware-specific config (nvidia, fwupd, smartd)
+└── hardware/           # Hardware-specific config (nvidia, fwupd, smartd, lenovo-x13s)
 
 secrets/                # Agenix encrypted secrets
 └── secrets.nix         # Public keys mapping for each secret
 
-packages/               # Custom package definitions
-└── ticktick/           # TickTick app with macOS support
+packages/               # Custom package definitions (mostly pinned macOS builds)
+├── ticktick/           # TickTick app with macOS support
+├── skimpdf/            # Skim PDF with macOS support
+├── deskflow/           # Deskflow with macOS support
+├── codex-desktop/      # Codex desktop (macOS artifact)
+└── clash-verge-rev/    # Clash Verge Rev with macOS support
+
+scripts/                # Helpers (check-nixpkgs-pr-channel.py, update-tailnet-hosts.py)
+docs/                   # Runbooks and notes (agenix setup, hardware debugging)
 ```
 
 ## Development Workflow

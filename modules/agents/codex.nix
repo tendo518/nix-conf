@@ -131,7 +131,7 @@
       '';
 
       codexVolceConfig = pkgs.writeText "codex-volce.config.toml" ''
-        model = "glm-5.2"
+        model = "glm-5.3"
         model_provider = "volcengine-coding-plan"
         model_catalog_json = "${codexVolceModelsJson}"
       '';
@@ -176,7 +176,7 @@
       #   codex       - official OpenAI models (stock bundled catalog)
       #   codex-go    - gpt-5.6-luna via OpenCode Go
       #   codex-ds    - deepseek-v4-flash/pro via DeepSeek
-      #   codex-volce - glm-5.2 + others via Volcengine Coding Plan
+      #   codex-volce - glm-5.3 + others via Volcengine Coding Plan
       #   codex-gpu   - qwen3.8-27b via local GPU Responses router
       home.packages = [
         codex

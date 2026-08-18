@@ -159,9 +159,9 @@
               name = "Kimi K2.7 Code";
               contextWindow = 1048576;
             };
-            glm_5_2 = {
-              model = "glm-5.2[1m]";
-              name = "GLM 5.2";
+            glm_5_3 = {
+              model = "glm-5.3[1m]";
+              name = "GLM 5.3";
               contextWindow = 1048576;
             };
             minimax_m3 = {
@@ -198,6 +198,35 @@
                     "high"
                     "max"
                   ];
+                };
+              };
+            };
+          };
+        };
+
+        # Local self-hosted GPU - OpenAI-compatible chat/completions endpoint
+        # (omp appends `/chat/completions`). Router key is a plaintext literal
+        # (no encryption requested). Deployment supports 240k context and the
+        # default thinking effort is high.
+        gpu = {
+          baseUrl = "http://172.18.36.44:8000/v1";
+          api = "openai-completions";
+          apiKey = "8b964310965445819bfd028144ba7cb34676c7f33c97c73966050fb59e903bd5";
+          models = {
+            qwen3_8_27b = {
+              model = "qwen3.8-27b";
+              name = "Qwen3.8 27B";
+              contextWindow = 240000;
+              extra = {
+                reasoning = true;
+                thinking = {
+                  mode = "effort";
+                  efforts = [
+                    "low"
+                    "medium"
+                    "high"
+                  ];
+                  defaultLevel = "high";
                 };
               };
             };
@@ -258,7 +287,9 @@
         providers = lib.mapAttrs (_name: p: {
           baseUrl = p.baseUrl;
           api = p.api;
-          apiKey = apiKeyCommand p.apiKeyPath;
+          # Provider can supply a literal `apiKey` (no encryption needed) or
+          # an `apiKeyPath` read via a command (agenix-managed secrets).
+          apiKey = p.apiKey or (apiKeyCommand p.apiKeyPath);
           authHeader = true;
           models = lib.mapAttrsToList (
             _n: m:

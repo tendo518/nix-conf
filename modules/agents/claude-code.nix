@@ -36,7 +36,7 @@
           models = {
             kimi_k2_6.model = "kimi-k2.6";
             kimi_k2_7_code.model = "kimi-k2.7-code";
-            glm_5_2.model = "glm-5.2[1m]";
+            glm_5_3.model = "glm-5.3[1m]";
             minimax_m3.model = "minimax-m3";
             ds_v4pro.model = "deepseek-v4-pro[1m]";
             ds_v4flash.model = "deepseek-v4-flash[1m]";
