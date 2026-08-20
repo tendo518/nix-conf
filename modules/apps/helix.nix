@@ -13,7 +13,7 @@
     programs.helix = {
       enable = true;
       settings = {
-        theme = "jetbrains_dark";
+        theme = "jetbrains_dark_transparent";
 
         editor = {
           auto-format = false;
@@ -105,6 +105,15 @@
           insert = {
             j.k = "normal_mode";
           };
+        };
+      };
+
+      # jetbrains_dark with a transparent background so the terminal shows through
+      # https://github.com/helix-editor/helix/discussions/10223#discussioncomment-9032722
+      themes = {
+        jetbrains_dark_transparent = {
+          inherits = "jetbrains_dark";
+          "ui.background" = { };
         };
       };
     };
