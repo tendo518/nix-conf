@@ -64,6 +64,14 @@
           clash-verge-rev = prev.clash-verge-rev;
         };
 
+    # Tencent Meeting overlay with macOS support (Pin version)
+    tencent-meeting =
+      final: prev:
+      if prev.stdenv.hostPlatform.isDarwin then
+        { tencent-meeting = final.callPackage ../../packages/tencent-meeting { }; }
+      else
+        { };
+
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
     llm-agents = final: _prev: {

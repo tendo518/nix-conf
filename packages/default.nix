@@ -26,4 +26,8 @@
   # clash-verge-rev only available on darwin
   clash-verge-rev =
     if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./clash-verge-rev { } else null;
+
+  # tencent-meeting only available on darwin
+  tencent-meeting =
+    if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./tencent-meeting { } else null;
 }

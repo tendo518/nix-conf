@@ -1,4 +1,3 @@
-# MacBook Pro for development
 # Host configuration and module registrations
 { inputs, ... }:
 {
@@ -52,15 +51,13 @@
         deskflow
         codex-desktop
         spotify
-        # zed-editor  # broken again and again in macos
-
         ticktick
 
         wechat
         qq
+        tencent-meeting
 
-        stats
-        # ghostty-bin
+        # stats
 
         moonlight-qt
         clash-verge-rev
@@ -79,21 +76,10 @@
       imports = [ ];
 
       # Texlive for Chinese/English writing with IEEE templates
-
       home.packages = [
         pkgs.texliveFull
         pkgs.pdf2svg
         pkgs.ghostscript
-        # (pkgs.texlive.combine {
-        #   inherit (pkgs.texlive)
-        #     scheme-medium
-        #     collection-langchinese
-        #     latexmk
-        #     ieeetran
-        #     biblatex
-        #     biber
-        #     ;
-        # })
       ];
 
       xdg = {
