@@ -13,7 +13,7 @@ let
   intelHash = "sha256-i3NdhH61zuVGAnH/Z9Jm7NsD7Be5Wa5APLe2gK1d0LE=";
 in
 stdenv.mkDerivation rec {
-  pname = "codex-desktop";
+  pname = "chatgpt-desktop";
   version = "26.810.52044";
 
   src = fetchurl {

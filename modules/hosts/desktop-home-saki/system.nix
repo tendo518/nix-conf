@@ -26,7 +26,8 @@
         # Office & Productivity
         spotify
         obsidian
-        codex-desktop
+        chatgpt-desktop
+        llm-agents.hermes-desktop
         yt-dlp # upstream deno build fail
         qq
         obs-studio

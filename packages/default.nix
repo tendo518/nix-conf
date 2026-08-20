@@ -14,10 +14,10 @@
   # deskflow only available on darwin
   deskflow = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./deskflow { } else null;
 
-  # Codex desktop: official artifact on macOS; llm-agents' Linux-only chatgpt on Linux
-  codex-desktop =
+  # ChatGPT desktop: official artifact on macOS; llm-agents' Linux-only chatgpt on Linux
+  chatgpt-desktop =
     if pkgs.stdenv.hostPlatform.isDarwin then
-      pkgs.callPackage ./codex-desktop { }
+      pkgs.callPackage ./chatgpt-desktop { }
     else if pkgs.stdenv.hostPlatform.isLinux then
       inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.chatgpt
     else

@@ -29,7 +29,7 @@
         zathura
         telegram-desktop
         chromium
-        codex-desktop
+        chatgpt-desktop
 
         darktable
         moonlight-qt

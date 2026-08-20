@@ -12,7 +12,8 @@
         # yt-dlp  # upstream deno build fail
         qq
         deskflow
-        codex-desktop
+        chatgpt-desktop
+        llm-agents.hermes-desktop
         obs-studio
         calibre
         zathura

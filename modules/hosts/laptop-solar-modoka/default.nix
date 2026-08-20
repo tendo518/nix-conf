@@ -49,7 +49,8 @@
         obsidian
         skimpdf
         deskflow
-        codex-desktop
+        chatgpt-desktop
+        llm-agents.hermes-desktop
         spotify
         ticktick
 

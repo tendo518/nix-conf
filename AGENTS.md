@@ -179,7 +179,7 @@ Home Manager modules receive `userVars` containing the user config from `host.us
 Custom overlays are defined in `modules/overlays/default.nix` (exposed as `config.flake.overlays`):
 - `llm-agents` - AI tools from `numtide/llm-agents.nix`
 - `ticktick`, `skimpdf`, `deskflow`, `clash-verge-rev` - pinned local builds from `packages/` on macOS (upstream nixpkgs elsewhere)
-- `codex-desktop` - official artifact on macOS; `llm-agents.chatgpt` on Linux
+- `chatgpt-desktop` - official artifact on macOS; `llm-agents.chatgpt` on Linux
 
 ## Common Commands (Justfile)
 
@@ -254,7 +254,7 @@ packages/               # Custom package definitions (mostly pinned macOS builds
 ├── ticktick/           # TickTick app with macOS support
 ├── skimpdf/            # Skim PDF with macOS support
 ├── deskflow/           # Deskflow with macOS support
-├── codex-desktop/      # Codex desktop (macOS artifact)
+├── chatgpt-desktop/     # ChatGPT desktop (macOS artifact)
 └── clash-verge-rev/    # Clash Verge Rev with macOS support
 
 scripts/                # Helpers (check-nixpkgs-pr-channel.py, update-tailnet-hosts.py)

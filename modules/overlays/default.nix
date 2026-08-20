@@ -29,16 +29,16 @@
           prev.deskflow;
     };
 
-    # Codex desktop overlay: official artifact on macOS; llm-agents' Linux-only
+    # ChatGPT desktop overlay: official artifact on macOS; llm-agents' Linux-only
     # chatgpt package on Linux
-    codex-desktop = final: prev: {
-      codex-desktop =
+    chatgpt-desktop = final: prev: {
+      chatgpt-desktop =
         if prev.stdenv.hostPlatform.isDarwin then
-          final.callPackage ../../packages/codex-desktop { }
+          final.callPackage ../../packages/chatgpt-desktop { }
         else if prev.stdenv.hostPlatform.isLinux then
           final.llm-agents.chatgpt
         else
-          prev.codex-desktop or null;
+          prev.chatgpt-desktop or null;
     };
 
     # Clash Verge Rev overlay with macOS support (Pin version)
