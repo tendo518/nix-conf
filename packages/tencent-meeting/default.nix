@@ -1,11 +1,12 @@
 {
-  stdenv,
+  stdenvNoCC,
   lib,
   fetchurl,
+  _7zz,
 }:
 
 let
-  isArm = stdenv.hostPlatform.isAarch64;
+  isArm = stdenvNoCC.hostPlatform.isAarch64;
   arch = if isArm then "arm64" else "x86_64";
   # build tokens + sha256 from https://formulae.brew.sh/cask/tencent-meeting
   version = "3.45.2.404";
@@ -15,7 +16,7 @@ let
   intelHash = "sha256-sqRoboknCCD/DQMeuHAi+TaLHKmUzvx1nlEyXEEGCQY=";
   token = if isArm then armToken else intelToken;
 in
-stdenv.mkDerivation rec {
+stdenvNoCC.mkDerivation rec {
   pname = "tencent-meeting";
   inherit version;
 
@@ -25,20 +26,13 @@ stdenv.mkDerivation rec {
     hash = if isArm then armHash else intelHash;
   };
 
-  # undmg (libdmg) silently drops files from this DMG, leaving a broken,
-  # invalidly-signed bundle. Extract with macOS's native hdiutil instead,
-  # which produces a byte-perfect copy that keeps its original signature.
-  # dontFixup keeps the Tencent code signature intact (the darwin fixup phase
-  # would otherwise re-sign all Mach-O binaries ad-hoc, breaking the app).
-  dontFixup = true;
+  # Extract with 7zz like the nixpkgs wechat package: undmg (libdmg) silently
+  # drops files from this DMG, and hdiutil+ditto copies get flagged as damaged
+  # by macOS at launch. stdenvNoCC keeps Tencent's original signature intact.
+  nativeBuildInputs = [ _7zz ];
 
-  unpackPhase = ''
-    runHook preUnpack
-    mkdir -p "$TMPDIR/tm-dmg"
-    /usr/bin/hdiutil attach "$src" -nobrowse -readonly -mountpoint "$TMPDIR/tm-dmg"
-    /usr/bin/ditto "$TMPDIR/tm-dmg/TencentMeeting.app" "$PWD/TencentMeeting.app"
-    /usr/bin/hdiutil detach "$TMPDIR/tm-dmg"
-    runHook postUnpack
+  unpackCmd = ''
+    7zz x -snld "$curSrc"
   '';
 
   sourceRoot = ".";
@@ -46,7 +40,7 @@ stdenv.mkDerivation rec {
   installPhase = ''
     runHook preInstall
     mkdir -p $out/Applications
-    /usr/bin/ditto TencentMeeting.app $out/Applications/TencentMeeting.app
+    cp -a TencentMeeting_*/TencentMeeting.app $out/Applications/
     runHook postInstall
   '';
 
