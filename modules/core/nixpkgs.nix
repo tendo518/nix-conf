@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, framework, ... }:
 let
   overlays = builtins.attrValues (config.flake.overlays or { });
   nixpkgsConfig = {
@@ -7,7 +7,4 @@ let
     nixpkgs.overlays = overlays;
   };
 in
-{
-  flake.modules.nixos."core/nixpkgs" = nixpkgsConfig;
-  flake.modules.darwin."core/nixpkgs" = nixpkgsConfig;
-}
+framework.osModule "core/nixpkgs" nixpkgsConfig

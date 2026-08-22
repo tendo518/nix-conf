@@ -7,10 +7,11 @@ let
       pkgs,
       lib,
       config,
+      hostContext,
     }:
     pkgs.writeShellScriptBin "tailscale-auth" ''
       if [ "$(id -u)" -ne 0 ]; then exec sudo -- "$0" "$@"; fi
-      exec ${lib.getExe pkgs.tailscale} up --auth-key "$(cat ${config.age.secrets.tailscale-authkey.path})" ${lib.escapeShellArgs config.host.tailscale.upFlags} --operator=${config.host.user.name} "$@"
+      exec ${lib.getExe pkgs.tailscale} up --auth-key "$(cat ${config.age.secrets.tailscale-authkey.path})" ${lib.escapeShellArgs config.host.tailscale.upFlags} --operator=${hostContext.user.name} "$@"
     '';
 
   # Shared by NixOS and Darwin: the upFlags option + the tailscale-auth command.
@@ -23,6 +24,7 @@ let
       pkgs,
       lib,
       config,
+      hostContext,
       ...
     }:
     {
@@ -33,7 +35,14 @@ let
       };
       config.environment.systemPackages = [
         pkgs.tailscale
-        (tailscaleAuth { inherit pkgs lib config; })
+        (tailscaleAuth {
+          inherit
+            pkgs
+            lib
+            config
+            hostContext
+            ;
+        })
       ];
     };
 in

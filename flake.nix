@@ -63,5 +63,12 @@
     };
   };
 
-  outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
+  outputs =
+    inputs:
+    inputs.flake-parts.lib.mkFlake {
+      inherit inputs;
+      specialArgs = {
+        framework = import ./lib { lib = inputs.nixpkgs.lib; };
+      };
+    } (inputs.import-tree ./modules);
 }

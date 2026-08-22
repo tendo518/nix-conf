@@ -1,8 +1,8 @@
 {
   flake.modules.nixos."network/networkmanager" =
-    { config, lib, ... }:
+    { hostContext, lib, ... }:
     {
-      users.users.${config.host.user.name}.extraGroups = [ "networkmanager" ];
+      users.users.${hostContext.user.name}.extraGroups = [ "networkmanager" ];
 
       networking.networkmanager = {
         enable = true;

@@ -9,7 +9,6 @@
         libinput
         wayland-utils
         wl-clipboard
-        libinput
         pavucontrol
         xlsclients
         libnotify # for notify-send command in path

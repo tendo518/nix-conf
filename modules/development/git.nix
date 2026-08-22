@@ -3,12 +3,12 @@
     {
       lib,
       config,
-      userVars,
+      userContext,
       ...
     }:
     let
       username = config.home.username;
-      useremail = userVars.email;
+      useremail = userContext.email;
     in
     {
       # `programs.git` will generate the config file: ~/.config/git/config

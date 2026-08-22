@@ -2,7 +2,7 @@
 { inputs, lib, ... }:
 {
   flake.modules.nixos."hosts/desktop-lab-peace/system" =
-    { pkgs, config, ... }:
+    { pkgs, hostContext, ... }:
     {
       environment.systemPackages = with pkgs; [
         wechat
@@ -55,7 +55,7 @@
       # SDDM autologin
       services.displayManager.autoLogin = {
         enable = true;
-        user = config.host.user.name;
+        user = hostContext.user.name;
       };
 
       # Network
@@ -77,7 +77,7 @@
       users.groups.hqlab = {
         gid = 110000;
       };
-      users.users.${config.host.user.name}.extraGroups = [ "hqlab" ];
+      users.users.${hostContext.user.name}.extraGroups = [ "hqlab" ];
 
       system = {
         # etc.overlay = {

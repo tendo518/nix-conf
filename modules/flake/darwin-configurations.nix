@@ -6,7 +6,7 @@
   ...
 }:
 {
-  config.flake.darwinConfigurations = config.flake.lib.mkHostConfigurations inputs {
+  config.flake.darwinConfigurations = config.hostBuilder inputs {
     builder = inputs.nix-darwin.lib.darwinSystem;
     agenixModule = inputs.agenix.darwinModules.default;
     hmModule = inputs.home-manager.darwinModules.home-manager;

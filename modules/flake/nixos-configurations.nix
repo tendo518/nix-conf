@@ -6,7 +6,7 @@
   ...
 }:
 {
-  config.flake.nixosConfigurations = config.flake.lib.mkHostConfigurations inputs {
+  config.flake.nixosConfigurations = config.hostBuilder inputs {
     builder = inputs.nixpkgs.lib.nixosSystem;
     agenixModule = inputs.agenix.nixosModules.default;
     hmModule = inputs.home-manager.nixosModules.home-manager;

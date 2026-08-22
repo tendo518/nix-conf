@@ -2,12 +2,13 @@
   flake.modules.nixos."core/users" =
     {
       config,
+      hostContext,
       lib,
       pkgs,
       ...
     }:
     let
-      user = config.host.user;
+      user = hostContext.user;
       username = user.name;
     in
     {
@@ -52,7 +53,7 @@
 
   flake.modules.darwin."core/users" =
     {
-      config,
+      hostContext,
       lib,
       pkgs,
       ...
@@ -60,7 +61,7 @@
     {
       users.users =
         let
-          user = config.host.user;
+          user = hostContext.user;
           username = user.name;
         in
         {

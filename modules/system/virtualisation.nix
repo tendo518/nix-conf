@@ -1,6 +1,6 @@
 {
   flake.modules.nixos."system/virtualisation" =
-    { pkgs, config, ... }:
+    { pkgs, hostContext, ... }:
     {
       virtualisation.libvirtd = {
         enable = true;
@@ -15,15 +15,9 @@
 
       programs.virt-manager.enable = true;
 
-      users.users =
-        let
-          user = config.host.user.name;
-        in
-        {
-          "${user}".extraGroups = [
-            "libvirtd"
-            "kvm"
-          ];
-        };
+      users.users.${hostContext.user.name}.extraGroups = [
+        "libvirtd"
+        "kvm"
+      ];
     };
 }

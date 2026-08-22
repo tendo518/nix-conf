@@ -2,7 +2,7 @@
   flake.modules.darwin."system/macos" =
     {
       pkgs,
-      config,
+      hostContext,
       lib,
       inputs,
       ...
@@ -14,7 +14,7 @@
     # ###################################################################################
     {
       system = {
-        primaryUser = config.host.user.name;
+        primaryUser = hostContext.user.name;
 
         defaults = {
           # customize dock

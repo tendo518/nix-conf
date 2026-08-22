@@ -2,7 +2,7 @@
   flake.modules.nixos."desktop/niri" =
     {
       pkgs,
-      config,
+      hostContext,
       ...
     }:
     {
@@ -42,7 +42,7 @@
       };
 
       # niri is NixOS-only, set home-manager options directly instead of a homeManager module
-      home-manager.users.${config.host.user.name} = {
+      home-manager.users.${hostContext.user.name} = {
         xdg.configFile."niri/config.kdl".source = ./config.kdl;
       };
     };

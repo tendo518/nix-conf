@@ -180,6 +180,4 @@
         libqalculate
       ];
     };
-  flake.modules.nixos."core/shell" = { };
-  flake.modules.darwin."core/shell" = { };
 }

@@ -21,8 +21,4 @@
     {
       environment.systemPackages = [ pkgs.syncthing ];
     };
-
-  flake.modules.home."network/syncthing" = {
-
-  };
 }

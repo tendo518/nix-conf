@@ -1,4 +1,6 @@
 let
+  nixMirrors = import ./_nix-mirrors.nix;
+
   # Common nix settings shared between NixOS and Darwin
   commonSettings = {
     use-xdg-base-directories = true;
@@ -8,27 +10,15 @@ let
     fallback = true;
     builders-use-substitutes = true;
 
-    # --- Substituters ---
-    # 国内镜像（均为官方 cache.nixos.org 的 store 镜像，使用默认公钥即可）
-    substituters = [
-      "https://mirrors.ustc.edu.cn/nix-channels/store"
-      "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
-      "https://mirror.sjtu.edu.cn/nix-channels/store"
-      "https://mirror.nju.edu.cn/nix-channels/store"
-      "https://cache.nixos.org"
-      "https://nix-community.cachix.org"
-      "https://cache.numtide.com"
-    ];
-
-    extra-trusted-public-keys = [
-      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-      "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
-    ];
-
     # --- Disk Space Management ---
     min-free = (5 * 1024 * 1024 * 1024); # 5GB
     max-free = (25 * 1024 * 1024 * 1024); # 25GB
-  };
+  }
+  // nixMirrors;
+
+  trustedUsers =
+    lib: user: adminGroup:
+    lib.optional user.trusted user.name ++ [ "root" ] ++ [ adminGroup ];
 
   # Common module settings
   commonModule =
@@ -43,7 +33,7 @@ let
 in
 {
   flake.modules.nixos."core/nix" =
-    { config, lib, ... }:
+    { hostContext, lib, ... }:
     {
       imports = [ commonModule ];
 
@@ -58,11 +48,7 @@ in
         auto-allocate-uids = true;
         use-cgroups = true;
         # --- Trusted Users ---
-        trusted-users =
-          let
-            user = config.host.user;
-          in
-          lib.optional user.trusted user.name ++ [ "root" ] ++ [ "@wheel" ];
+        trusted-users = trustedUsers lib hostContext.user "@wheel";
       };
 
       systemd.slices."nix-daemon".sliceConfig = {
@@ -81,7 +67,7 @@ in
     };
 
   flake.modules.darwin."core/nix" =
-    { config, lib, ... }:
+    { hostContext, lib, ... }:
     {
       imports = [ commonModule ];
 
@@ -92,11 +78,7 @@ in
           "flakes"
         ];
         # --- Trusted Users ---
-        trusted-users =
-          let
-            user = config.host.user;
-          in
-          lib.optional user.trusted user.name ++ [ "root" ] ++ [ "@admin" ];
+        trusted-users = trustedUsers lib hostContext.user "@admin";
       };
 
     };

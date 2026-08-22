@@ -1,6 +1,6 @@
 {
   flake.modules.nixos."apps/sunshine" =
-    { pkgs, config, ... }:
+    { pkgs, hostContext, ... }:
     {
       services.sunshine = {
         enable = true;
@@ -11,6 +11,6 @@
       # fix upstream: https://github.com/NixOS/nixpkgs/issues/455737
       hardware.uinput.enable = true;
 
-      users.users.${config.host.user.name}.extraGroups = [ "uinput" ];
+      users.users.${hostContext.user.name}.extraGroups = [ "uinput" ];
     };
 }

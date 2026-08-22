@@ -81,11 +81,15 @@ Key features:
 **`flake.nix`** - Main flake file:
 - Defines all inputs (nixpkgs, flake-parts, home-manager, nix-darwin, etc.)
 - Uses `import-tree` to auto-load all modules from `./modules`
+- Injects the `framework` special arg (from `./lib`) into the flake-parts module system
 
 **`modules/`** - All modules loaded via `import-tree`:
 - `modules/flake/` - flake-parts configuration, library functions, and host builders
 - `modules/hosts/` - Host-specific configurations
 - `modules/core/`, `modules/system/`, etc. - Shared modules by function
+
+**`lib/`** - Reusable module framework, independent of the flake:
+- `lib/default.nix` - module-name resolution/validation, `mkHostConfigurations`, `osModule`/`userModule` helpers
 
 ### Module System
 
@@ -103,6 +107,13 @@ Modules live in `modules/` organized by function. Each module registers itself i
 ```
 
 A single file can define modules for multiple platforms (see `modules/core/nix.nix` for example).
+Every module receives a `framework` module arg (injected by `flake.nix`) with the pure
+framework helpers; business modules do not `import ../../lib` themselves:
+
+```nix
+{ framework, ... }:
+framework.osModule "category/name" { ... }
+```
 
 Module loading uses `import-tree` which auto-imports all `.nix` files from `modules/` subdirectories.
 
@@ -148,7 +159,7 @@ Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `hosts` na
   };
 
   flake.modules.home."hosts/my-host" = { ... }: {
-    # home manager config - receives `userVars` from host.user
+    # home manager config - receives `userContext` / `hostContext` via extraSpecialArgs
   };
 };
 ```
@@ -156,23 +167,23 @@ Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `hosts` na
 ### Host Builders (`modules/flake/`)
 
 - `hosts.nix` - Defines `hosts.nixos` and `hosts.darwin` options, plus the typed `user` submodule schema
-- `nixos-configurations.nix` - Thin wrapper calling `mkHostConfigurations` with NixOS-specific params
-- `darwin-configurations.nix` - Thin wrapper calling `mkHostConfigurations` with Darwin-specific params
-- `lib.nix` - `mkHostConfigurations` shared builder (exported as `config.flake.lib.mkHostConfigurations`) and internal `resolveModuleList` for module name resolution
+- `nixos-configurations.nix` - Thin wrapper calling `config.hostBuilder` with NixOS-specific params
+- `darwin-configurations.nix` - Thin wrapper calling `config.hostBuilder` with Darwin-specific params
+- `lib.nix` - Thin flake-parts adapter exposing `config.hostBuilder` (implementation lives in `lib/default.nix`)
 
-Module name resolution (in `resolveModuleList`):
+Module name resolution (in `lib/default.nix`):
 - **Exact match**: `"core/nix"` → loads that specific module
 - **Prefix match**: `"core"` → loads all modules under `core/`; `"hosts/my-host"` loads the host module and its split submodules (hardware, system, ...)
 - **Exclusions**: `excludeModules` expand the same way (exact + prefix); results are deduplicated by first occurrence
-- **No match**: the name silently resolves to no modules
+- **Validation**: names are checked against the union of the system/home/homeNixOS/homeDarwin registries; unknown names throw at eval time (no silent no-op)
 
 ### Host Options
 
-Inside each NixOS/Darwin system, these options are available:
-- `host.user` - User config from the host definition (name, email, trusted, sshPubKey, shell, homeStateVersion, extraGroups, passwordSecret)
-- `host.hostname` - Hostname (defaults to hosts key name)
+Host/user context is computed before module evaluation and injected via `specialArgs`:
+- NixOS/Darwin modules receive `hostContext = { hostname, user }` (e.g. `{ hostContext, ... }:`), where `user` is the typed user config
+- Home Manager modules receive both `hostContext` and `userContext` (the user config) via `extraSpecialArgs`
 
-Home Manager modules receive `userVars` containing the user config from `host.user`.
+Use `hostContext.user.name` instead of the old `config.host.user.name` path.
 
 ### Overlays (`modules/overlays/`)
 
@@ -219,14 +230,18 @@ just nix-switch-darwin        # Raw darwin-rebuild switch
 3. **Prefix Expansion**: Use short prefixes (`"core"`) instead of listing submodules
 4. **Secrets**: Store in `secrets/`, reference via `passwordSecret`, edit with `just edit-password`
 5. **Cross-Platform Modules**: Single file can define modules for multiple platforms (nixos/darwin/home/homeNixOS/homeDarwin)
+6. **Framework in `lib/`**: Reusable module machinery lives in `lib/`; `modules/` only registers business/feature config and receives helpers via the `framework` arg
 
 ## Directory Structure
 
 ```
+lib/                    # Reusable module framework (os/user helpers, host builder, module resolution)
+└── default.nix
+
 modules/
 ├── flake/              # flake-parts config and host builders
 │   ├── default.nix     # flake-parts entry point
-│   ├── lib.nix         # Library functions (mkHostConfigurations, resolveModuleList)
+│   ├── lib.nix         # Thin adapter exposing config.hostBuilder
 │   ├── hosts.nix       # hosts.nixos/darwin options
 │   ├── nixos-configurations.nix
 │   ├── darwin-configurations.nix
@@ -283,6 +298,10 @@ docs/                   # Runbooks and notes (agenix setup, hardware debugging)
    - `flake.modules.homeNixOS` - Home Manager modules (NixOS only)
    - `flake.modules.homeDarwin` - Home Manager modules (Darwin only)
 3. Reference in host configs by key or prefix
+4. Use the `framework` module arg for cross-platform or user-scoped registration:
+   - `framework.osModule "name" module` - register the same module for NixOS + Darwin
+   - `framework.userModule "name" { nixos = ...; darwin = ...; homeManager = ...; }` - root OS config at `users.users.<userName>`; missing classes are not registered
+   - Unknown module names now fail eval, so `just check` catches typos instead of silently skipping modules
 
 ### Editing Secrets
 
