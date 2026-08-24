@@ -72,6 +72,14 @@
       else
         { };
 
+    # KeepingYouAwake overlay with macOS support (Pin version)
+    keepingyouawake =
+      final: prev:
+      if prev.stdenv.hostPlatform.isDarwin then
+        { keepingyouawake = final.callPackage ../../packages/keepingyouawake { }; }
+      else
+        { };
+
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
     llm-agents = final: _prev: {

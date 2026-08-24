@@ -30,4 +30,8 @@
   # tencent-meeting only available on darwin
   tencent-meeting =
     if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./tencent-meeting { } else null;
+
+  # keepingyouawake only available on darwin
+  keepingyouawake =
+    if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./keepingyouawake { } else null;
 }
