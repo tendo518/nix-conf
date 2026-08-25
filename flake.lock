@@ -190,22 +190,6 @@
         "type": "github"
       }
     },
-    "gwfox": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1786199037,
-        "narHash": "sha256-8xJ70UscbR0wxhPOmmPS68VIzDN4WiRCapszCoz1tXQ=",
-        "owner": "akkva",
-        "repo": "gwfox",
-        "rev": "f0760b9be419a932fb6b7dd0666fd0144bc03e72",
-        "type": "github"
-      },
-      "original": {
-        "owner": "akkva",
-        "repo": "gwfox",
-        "type": "github"
-      }
-    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -433,7 +417,6 @@
         "agenix": "agenix",
         "disko": "disko",
         "flake-parts": "flake-parts",
-        "gwfox": "gwfox",
         "home-manager": "home-manager_2",
         "import-tree": "import-tree",
         "lanzaboote": "lanzaboote",

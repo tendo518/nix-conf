@@ -57,10 +57,6 @@
       flake = false;
     };
 
-    gwfox = {
-      url = "github:akkva/gwfox";
-      flake = false;
-    };
   };
 
   outputs =
