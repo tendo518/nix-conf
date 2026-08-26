@@ -192,6 +192,13 @@
       home.activation.setupCodexConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         cfgDir="${config.xdg.configHome}/codex"
         mkdir -p "$cfgDir"
+        # ChatGPT Desktop's bundled Codex defaults to ~/.codex; point it at the
+        # shared XDG dir so desktop and CLI share config/sessions. Move any real
+        # directory aside rather than deleting it.
+        if [ -e "$HOME/.codex" ] && [ ! -L "$HOME/.codex" ]; then
+          mv "$HOME/.codex" "$HOME/.codex.bak.$(date +%s)"
+        fi
+        ln -sfn "$cfgDir" "$HOME/.codex"
         rm -f "$cfgDir/config.toml" "$cfgDir/codex-go.config.toml" "$cfgDir/codex-ds.config.toml" "$cfgDir/codex-volce.config.toml" "$cfgDir/codex-gpu.config.toml"
         install -m 0644 ${codexConfig} "$cfgDir/config.toml"
         install -m 0644 ${codexGoConfig} "$cfgDir/codex-go.config.toml"
