@@ -48,25 +48,60 @@ in
     };
 
   flake.modules.darwin."network/tailnet" =
-    { lib, ... }:
     {
-      # System-level /etc/hosts on macOS too, so the whole OS (browser, curl,
-      # ...) resolves <host>.tailscale. Same source table as NixOS; no
-      # per-application host config. Keeps the stock macOS entries.
-      environment.etc."hosts".text = ''
-        ##
-        # Host Database
-        #
-        # localhost is used to configure the loopback interface
-        # when the system is booting.  Do not change this entry.
-        ##
-        127.0.0.1	localhost
-        255.255.255.255	broadcasthost
-        ::1             localhost
-
-        # Tailscale hosts (single source: tailnet.nix)
-        ${lib.concatStringsSep "\n" (map (h: "${h.ip} ${h.name}.tailscale") tailnetHosts)}
-      '';
+      pkgs,
+      lib,
+      ...
+    }:
+    {
+      # Keep /etc/hosts a real, writable file: append the tailnet host table
+      # between `# BEGIN/END Nix-managed` markers via an activation script
+      # (approach from nix-darwin#1831) instead of the `environment.etc`
+      # symlink, which some tools choke on. Non-Nix lines are preserved;
+      # macOS resolver / MagicDNS are untouched.
+      #
+      # Hook into nix-darwin's `extraActivation` (not a newly-created step,
+      # which nix-darwin wouldn't pull into the activation chain).
+      system.activationScripts.extraActivation.text =
+        let
+          awk = lib.getExe pkgs.gawk;
+          tailnetLines = lib.concatStringsSep "\n" (
+            map (h: "${h.ip} ${h.name}.tailscale") tailnetHosts
+          );
+        in
+        ''
+          printf >&2 'setting up /etc/hosts...\n'
+          hostsOriginal=""
+          if [[ -f /etc/hosts ]]; then
+            hostsOriginal="$(${awk} '
+              /^# BEGIN Nix-managed$/ {
+                inManaged=1
+                managed=$0 ORS
+                next
+              }
+              inManaged {
+                managed=managed $0 ORS
+                if (/^# END Nix-managed$/) {
+                  inManaged=0
+                  managed=""
+                }
+                next
+              }
+              { print }
+              END {
+                if (inManaged) printf "%s", managed
+              }
+            ' /etc/hosts)"
+          fi
+          {
+            if [[ -n "$hostsOriginal" ]]; then
+              printf '%s\n' "$hostsOriginal"
+            fi
+            printf '# BEGIN Nix-managed\n'
+            printf '%s\n' '${tailnetLines}'
+            printf '# END Nix-managed\n'
+          } > /etc/hosts
+        '';
     };
 
   flake.modules.home."network/tailnet" =
