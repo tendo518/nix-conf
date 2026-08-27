@@ -120,7 +120,9 @@
             "browser.display.auto_quality_min_font_size" = 0;
             "browser.quitShortcut.disabled" = true;
             "general.autoScroll" = true;
+            "sidebar.verticalTabs" = true;
             "toolkit.tabbox.switchByScrolling" = true;
+            "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
 
             # Browser Behavior
             "browser.tabs.insertAfterCurrent" = true;
@@ -227,6 +229,17 @@
 
           userChrome = ''
             @import url("chrome/userChrome.css");
+
+            #sidebar-main[sidebar-launcher-expanded],
+            #sidebar-container[sidebar-launcher-expanded] {
+              width: 210px !important;
+              min-width: 210px !important;
+              max-width: 210px !important;
+            }
+
+            #sidebar-launcher-splitter {
+              display: none !important;
+            }
           '';
           userContent = ''
             @import url("chrome/userContent.css");
