@@ -232,6 +232,30 @@ just nix-switch-darwin        # Raw darwin-rebuild switch
 5. **Cross-Platform Modules**: Single file can define modules for multiple platforms (nixos/darwin/home/homeNixOS/homeDarwin)
 6. **Framework in `lib/`**: Reusable module machinery lives in `lib/`; `modules/` only registers business/feature config and receives helpers via the `framework` arg
 
+## Gotchas / Operational Notes
+
+### disko does not format by itself; nixos-anywhere does
+
+- `disko.devices` only describes the target layout. The `disko` CLI's default
+  mode is `mount` (non-destructive); it only wipes when you explicitly run
+  `destroy`/`destroy,format,mount`.
+- `nixos-anywhere` is a reinstall tool, not an update tool. Its default
+  `--disko-mode disko` phase unmounts and destroys the filesystems on the
+  configured disks before creating/formatting them again.
+- After kexec, the installer is **not** on the tailnet, so `<host>.tailscale`
+  becomes unreachable. Do not run nixos-anywhere against a box you cannot
+  reach physically/IPMI/LAN — you can strand it in the kexec installer.
+- To update an already-running host, use `nixos-rebuild switch --target-host`
+  or `nh` instead of nixos-anywhere.
+
+### New files must be `git add`-ed before flake evaluation
+
+- Nix flakes only read git-tracked files. A brand-new module file is invisible
+  to `nix flake check` / `nix build` / `import-tree` until it is `git add`-ed,
+  so a missing module can look like a silent no-op.
+- After adding a new `.nix` module, run `git add <file>` first, then evaluate.
+  Modified (already-tracked) files are picked up even when the tree is dirty.
+
 ## Directory Structure
 
 ```
