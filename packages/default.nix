@@ -34,4 +34,7 @@
   # keepingyouawake only available on darwin
   keepingyouawake =
     if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./keepingyouawake { } else null;
+
+  # zotero: official universal DMG on darwin
+  zotero = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./zotero { } else null;
 }

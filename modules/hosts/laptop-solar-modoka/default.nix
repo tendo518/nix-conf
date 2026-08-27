@@ -63,6 +63,7 @@
         moonlight-qt
         clash-verge-rev
         keepingyouawake
+        zotero
 
       ];
     };

@@ -80,6 +80,15 @@
       else
         { };
 
+    # Zotero overlay: official universal DMG on macOS, upstream source build elsewhere
+    zotero = final: prev: {
+      zotero =
+        if prev.stdenv.hostPlatform.isDarwin then
+          final.callPackage ../../packages/zotero { }
+        else
+          prev.zotero;
+    };
+
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
     llm-agents = final: _prev: {
