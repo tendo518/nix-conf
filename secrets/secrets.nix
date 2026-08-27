@@ -5,7 +5,7 @@ let
   desktop-home-saki = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOQdSaqg4cgiYXrydHmkw636cKUshB0MxcpmEUTO8wVs";
   # desktop-lab-peace = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGvSHQz/v6pmRwkrfutwevvH5awMzB+HDqh6geOSPvSG";
   desktop-lab-peace = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMvB13iPkUSDaGornxY05I1KsHrYgXBqf3nKAuGC0I6I";
-  server-lab-sardine = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL0P3+Q2DmAtlnHq7S3gIoThnHydKHTmItOrOgudn/bd";
+  server-lab-sardine = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF1JuJVebbQQWkbTKzWfwgGtWxAcUpzAy2WQldp8sYsj";
   host-ssh-pubkeys = [
     laptop-solar-modoka
     laptop-solar-chiyoko
@@ -25,7 +25,6 @@ in
   "tendo-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "pengwy-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "root-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
-  "syncthing-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "telegram-hermes-bot-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "telegram-userid.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "tailscale-authkey.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;

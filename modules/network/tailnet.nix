@@ -29,7 +29,7 @@ let
     }
     {
       name = "server-lab-sardine";
-      ip = "100.70.253.124";
+      ip = "100.81.243.74";
       sshUser = "tendo";
     }
   ];
@@ -45,6 +45,28 @@ in
           value = [ "${h.name}.tailscale" ];
         }) tailnetHosts
       );
+    };
+
+  flake.modules.darwin."network/tailnet" =
+    { lib, ... }:
+    {
+      # System-level /etc/hosts on macOS too, so the whole OS (browser, curl,
+      # ...) resolves <host>.tailscale. Same source table as NixOS; no
+      # per-application host config. Keeps the stock macOS entries.
+      environment.etc."hosts".text = ''
+        ##
+        # Host Database
+        #
+        # localhost is used to configure the loopback interface
+        # when the system is booting.  Do not change this entry.
+        ##
+        127.0.0.1	localhost
+        255.255.255.255	broadcasthost
+        ::1             localhost
+
+        # Tailscale hosts (single source: tailnet.nix)
+        ${lib.concatStringsSep "\n" (map (h: "${h.ip} ${h.name}.tailscale") tailnetHosts)}
+      '';
     };
 
   flake.modules.home."network/tailnet" =

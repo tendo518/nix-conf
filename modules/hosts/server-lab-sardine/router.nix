@@ -67,8 +67,14 @@
         internalInterfaces = [ "lan0" ];
       };
 
-      # Advertise the LAN subnet through Tailscale and act as a subnet router.
-      host.tailscale.upFlags = [ "--advertise-routes=192.168.11.0/24" ];
+      # Advertise the LAN and lab subnets through Tailscale and act as the
+      # single subnet router. The lab subnets (172.18.36.0/23, 172.18.34.0/23,
+      # 10.16.0.0/17) were previously advertised by desktop-lab-peace; the
+      # server sits directly on 10.16.0.0/17 and reaches 172.18.x via the
+      # default gateway, so routing is consolidated here.
+      host.tailscale.upFlags = [
+        "--advertise-routes=192.168.11.0/24,172.18.36.0/23,172.18.34.0/23,10.16.0.0/17"
+      ];
       services.tailscale.useRoutingFeatures = "server";
 
       # LAN clients reach the router for DNS and DHCP.
