@@ -28,10 +28,12 @@ in
       # 全部通道，而 X13s 实际只有 HLOS 可用的通道 0-1（DSDT 显示 0x3）。
       # raid456/async_tx 等公共 DMA 消费者触发遍历非法通道 → 偶发固件级硬复位
       # （表现为重启要进两次 systemd-boot）。驱动侧修复（DMA_PRIVATE）已合入 v7.2，
-      # DT 掩码系列仍在评审。等 7.2 即可；若需本地覆写，hardware.deviceTree.overlays
-      # 是天然落点。
+      # 但 v7.2 在本机仍无法稳定启动（多次硬复位，只能退回 7.1.x）。DT 掩码系列
+      # 仍在评审。若需本地覆写，hardware.deviceTree.overlays 是天然落点。
 
       boot = {
+        # 7.2 在 X13s 上无法稳定启动，钉在 7.1 分支直到上游修复可用。
+        kernelPackages = pkgs.linuxPackages_7_1;
         # hardware.deviceTree 会让 systemd-boot 加载内核自带的 DTB
         # （启动项里的 `devicetree /EFI/nixos/*-dtbs-filtered-*`），因此不需要 dtb= 参数。
         # 固件通过 UEFI configuration table 提供的 DT 只在未指定 DTB 时才会被使用。
