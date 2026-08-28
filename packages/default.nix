@@ -1,8 +1,9 @@
-# Aggregate all custom packages
+# Aggregate all custom packages.
 #
 # This file exports all packages from the packages/ directory.
 # Add new packages by creating a subdirectory with default.nix
-# and adding it here.
+# and adding it here. Platform-specific packages should return null
+# on unsupported host platforms.
 { pkgs, inputs }:
 {
   # ticktick only available on darwin

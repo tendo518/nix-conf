@@ -71,7 +71,7 @@ Key features:
 - **Secrets management** via `agenix` (encrypted secrets for passwords, API keys)
 - **Disk management** via `disko` (declarative partitioning)
 - **Secure boot** via `lanzaboote` (NixOS only)
-- **Custom overlays** (`llm-agents` AI tools, pinned macOS app builds from `packages/`)
+- **Custom overlays** (`llm-agents` AI tools, pinned package builds from `packages/`)
 - **LLM agent tooling** via `numtide/llm-agents.nix` (`modules/agents/`: Claude Code, Codex, OpenCode, ...)
 
 ## Core Architecture
@@ -189,7 +189,7 @@ Use `hostContext.user.name` instead of the old `config.host.user.name` path.
 
 Custom overlays are defined in `modules/overlays/default.nix` (exposed as `config.flake.overlays`):
 - `llm-agents` - AI tools from `numtide/llm-agents.nix`
-- `ticktick`, `skimpdf`, `deskflow`, `clash-verge-rev` - pinned local builds from `packages/` on macOS (upstream nixpkgs elsewhere)
+- `ticktick`, `skimpdf`, `deskflow`, `clash-verge-rev` - pinned local builds from `packages/` (platform guards per package)
 - `chatgpt-desktop` - official artifact on macOS; `llm-agents.chatgpt` on Linux
 
 ## Common Commands (Justfile)
@@ -289,7 +289,7 @@ modules/
 secrets/                # Agenix encrypted secrets
 └── secrets.nix         # Public keys mapping for each secret
 
-packages/               # Custom package definitions (mostly pinned macOS builds)
+packages/               # Custom package definitions; platform guards per package where needed
 ├── ticktick/           # TickTick app with macOS support
 ├── skimpdf/            # Skim PDF with macOS support
 ├── deskflow/           # Deskflow with macOS support
@@ -329,8 +329,9 @@ docs/                   # Runbooks and notes (agenix setup, hardware debugging)
 
 ### Adding a New Pinned Package
 
-Packages under `packages/` are mostly pinned macOS app builds. Each package
-has two parts:
+Packages under `packages/` are custom pinned packages and can target one or
+more platforms. Platform guards belong in `packages/default.nix` or in the
+package derivation itself. Each package has two parts:
 
 - `packages/<name>/default.nix` - the Nix derivation with version/hash metadata
 - `packages/<name>/update.sh` - a small script that fetches the latest metadata
@@ -341,9 +342,10 @@ discovers update scripts by globbing `packages/*/update.sh`, so adding a new
 package does not require editing `.github/workflows/update-packages.yml`.
 
 1. Create `packages/<name>/default.nix` as a normal `callPackage`-compatible
-   derivation. Keep the fields the updater needs as simple literal bindings:
-   `version`, `hash` or `armHash`/`intelHash`, and any optional `url`/token
-   fields. Use `fetchurl` for the artifact.
+   derivation for the intended platform(s). Keep the fields the updater needs
+   as simple literal bindings: `version`, `hash` or
+   `armHash`/`intelHash`, and any optional `url`/token fields. Use `fetchurl`
+   for the artifact.
 
 2. Create executable `packages/<name>/update.sh`. Source the shared helpers,
    fetch the newest metadata, then rewrite the matching fields:
@@ -373,7 +375,14 @@ package does not require editing `.github/workflows/update-packages.yml`.
    hashing a downloaded artifact, and `sed_inplace` for portable in-place
    edits. Keep each script scoped to metadata replacement only.
 
-3. Register the package in `packages/default.nix`:
+3. Register the package in `packages/default.nix`. For a package that builds
+   on all configured systems, use the direct form:
+
+   ```nix
+   name = pkgs.callPackage ./name { };
+   ```
+
+   For a platform-specific package, guard it by host platform:
 
    ```nix
    name = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./name { } else null;
@@ -386,7 +395,7 @@ package does not require editing `.github/workflows/update-packages.yml`.
    git add packages/<name>
    ```
 
-5. Verify locally on macOS:
+5. Verify locally on a system that matches the package's platform:
 
    ```bash
    nix build .#<name>
