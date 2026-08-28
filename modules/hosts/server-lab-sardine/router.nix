@@ -74,6 +74,7 @@
       # default gateway, so routing is consolidated here.
       host.tailscale.upFlags = [
         "--advertise-routes=192.168.11.0/24,172.18.36.0/23,172.18.34.0/23,10.16.0.0/17"
+        "--accept-dns"
       ];
       services.tailscale.useRoutingFeatures = "server";
 
@@ -91,12 +92,11 @@
         enable = true;
         settings = {
           interface = "lan0";
-          # Only bind the LAN interface instead of the wildcard :53 socket.
-          # systemd-resolved owns 127.0.0.53 on this host, so the wildcard
-          # bind would fail with "Address already in use".
-          bind-interfaces = true;
-          # `interface` restricts DNS/DHCP to lan0; `bind-interfaces` makes
-          # that restriction real at the socket level.
+          # Serve DNS on the LAN and on the tailnet IP, so this dnsmasq can
+          # act as a Tailscale "restricted nameserver" for the tailnet.
+          # systemd-resolved owns 127.0.0.53, so avoid the wildcard :53 bind.
+          bind-dynamic = true;
+          listen-address = "192.168.11.1,100.81.243.74";
           dhcp-range = "192.168.11.100,192.168.11.199,255.255.255.0,12h";
           dhcp-option = [
             "option:router,192.168.11.1"

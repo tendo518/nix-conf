@@ -15,10 +15,9 @@
 
         settings = {
           server = {
-            # Canonical URL reachable from both LAN and tailnet (see caddy.nix).
-            DOMAIN = "server-lab-sardine.tailscale";
-            # Served through Caddy on :80, so drop the :3000 suffix.
-            ROOT_URL = "http://server-lab-sardine.tailscale/gitea/";
+            # Served by Caddy on its own subdomain (see caddy.nix).
+            DOMAIN = "gitea.server-lab-sardine.tailscale";
+            ROOT_URL = "http://gitea.server-lab-sardine.tailscale/";
             # Loopback only; Caddy proxies /gitea -> 127.0.0.1:3000.
             HTTP_ADDR = "127.0.0.1";
             HTTP_PORT = 3000;

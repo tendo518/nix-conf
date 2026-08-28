@@ -9,6 +9,12 @@
 {
   flake.modules.nixos."hosts/server-lab-sardine/selfhost/caddy" =
     { ... }:
+    let
+      # One subdomain per service, resolved from the shared tailnet host table
+      # (networking.hosts / darwin /etc/hosts). The root hostname is a plain
+      # navigation index.
+      base = "server-lab-sardine.tailscale";
+    in
     {
       services.caddy = {
         enable = true;
@@ -20,59 +26,45 @@
         '';
 
         virtualHosts = {
-          # Tailnet entry point: single hostname, one path per service.
-          # Clients resolve server-lab-sardine.tailscale via /etc/hosts (modules/network/tailnet.nix).
-          # No per-service *.lan aliases, no raw-IP vhost.
-          "http://server-lab-sardine.tailscale" = {
+          "http://${base}" = {
             extraConfig = ''
-              # Gitea routes live at the root of :3000; ROOT_URL's /gitea path
-              # only affects generated links, so strip the prefix here.
-              handle /gitea {
-                redir /gitea/ 301
-              }
-              handle_path /gitea/* {
-                reverse_proxy 127.0.0.1:3000
-              }
-              handle_path /s3/* {
-                reverse_proxy 127.0.0.1:3900
-              }
-              handle /s3 {
-                redir /s3/ 301
-              }
-              # Garage admin REST API (bound to loopback; exposes management
-              # only over the tailnet through Caddy).
-              handle_path /s3admin/* {
-                reverse_proxy 127.0.0.1:3903
-              }
-              handle /cockpit {
-                redir /cockpit/login 301
-              }
-              handle /cockpit* {
-                reverse_proxy https://127.0.0.1:9090 {
-                  transport http {
-                    tls_insecure_skip_verify
-                  }
+              respond `<html><body style="font-family:sans-serif"><h1>server-lab-sardine</h1><ul><li><a href="http://gitea.${base}">Gitea</a></li><li><a href="http://s3.${base}">Garage (S3)</a></li><li><a href="http://netdata.${base}">Netdata</a></li><li><a href="http://cockpit.${base}">Cockpit</a></li></ul></body></html>` 200
+            '';
+          };
+          "http://gitea.${base}" = {
+            extraConfig = "reverse_proxy 127.0.0.1:3000";
+          };
+          "http://s3.${base}" = {
+            extraConfig = "reverse_proxy 127.0.0.1:3900";
+          };
+          "http://s3admin.${base}" = {
+            extraConfig = "reverse_proxy 127.0.0.1:3903";
+          };
+          "http://cockpit.${base}" = {
+            extraConfig = ''
+              reverse_proxy https://127.0.0.1:9090 {
+                transport http {
+                  tls_insecure_skip_verify
                 }
-              }
-              handle {
-                reverse_proxy 127.0.0.1:19999
               }
             '';
           };
+          "http://netdata.${base}" = {
+            extraConfig = "reverse_proxy 127.0.0.1:19999";
+          };
           "http://router.lan, http://192.168.11.1" = {
             extraConfig = ''
-              respond `<html><body style="font-family:sans-serif"><h1>server-lab-sardine</h1><ul><li><a href="http://server-lab-sardine.tailscale/gitea">Gitea</a></li><li><a href="http://server-lab-sardine.tailscale/s3">Garage (S3)</a></li><li><a href="http://server-lab-sardine.tailscale/">Netdata</a></li><li><a href="http://server-lab-sardine.tailscale/cockpit">Cockpit</a></li></ul></body></html>` 200
+              respond `<html><body style="font-family:sans-serif"><h1>server-lab-sardine</h1><ul><li><a href="http://gitea.${base}">Gitea</a></li><li><a href="http://s3.${base}">Garage (S3)</a></li><li><a href="http://netdata.${base}">Netdata</a></li><li><a href="http://cockpit.${base}">Cockpit</a></li></ul></body></html>` 200
             '';
           };
         };
       };
 
-      # LAN-only aliases resolve to the router's LAN address. Services are all
-      # reached via the canonical hostname below; router.lan is just the index.
+      # LAN-only aliases resolve to the router's LAN address. The single
+      # address=/server-lab-sardine.tailscale wildcard covers every subdomain
+      # (gitea/s3/netdata/...), so LAN clients resolve the same URLs as tailnet.
       services.dnsmasq.settings.address = [
         "/router.lan/192.168.11.1"
-        # Canonical tailnet hostname; LAN clients resolve it to the router so
-        # the same URLs work from LAN and tailnet.
         "/server-lab-sardine.tailscale/192.168.11.1"
       ];
 

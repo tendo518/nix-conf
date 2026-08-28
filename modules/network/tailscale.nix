@@ -30,7 +30,10 @@ let
     {
       options.host.tailscale.upFlags = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "--accept-routes" ];
+        default = [
+          "--accept-routes"
+          "--accept-dns" # MagicDNS resolves *.tailscale; no manual /etc/hosts
+        ];
         description = "Route flags passed to `tailscale up` by tailscale-auth (--operator is added automatically).";
       };
       config.environment.systemPackages = [
