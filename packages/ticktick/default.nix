@@ -11,11 +11,11 @@ let
 in
 stdenv.mkDerivation {
   pname = "ticktick";
-  version = "8.0.80";
+  version = "8.0.81";
 
   src = fetchurl {
-    url = "https://download.ticktick.app/download/mac/TickTick_8.0.80_496.dmg";
-    hash = "sha256-KBDbu4o+nwD9b4Iac9RtqYnrKsGlEygQS4DlRF2KMro=";
+    url = "https://download.ticktick.app/download/mac/TickTick_8.0.81_914.dmg";
+    hash = "sha256-c6EIhy1QknF9uTaDmEejGlbEoET6GjSQ4r17UAlffI4=";
   };
 
   sourceRoot = "${appname}/${appname}.app";
