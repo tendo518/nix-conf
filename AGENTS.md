@@ -327,6 +327,76 @@ docs/                   # Runbooks and notes (agenix setup, hardware debugging)
    - `framework.userModule "name" { nixos = ...; darwin = ...; homeManager = ...; }` - root OS config at `users.users.<userName>`; missing classes are not registered
    - Unknown module names now fail eval, so `just check` catches typos instead of silently skipping modules
 
+### Adding a New Pinned Package
+
+Packages under `packages/` are mostly pinned macOS app builds. Each package
+has two parts:
+
+- `packages/<name>/default.nix` - the Nix derivation with version/hash metadata
+- `packages/<name>/update.sh` - a small script that fetches the latest metadata
+  from Homebrew/upstream and rewrites the pinned fields
+
+The shared helpers live in `packages/update-lib.sh`, and the scheduled workflow
+discovers update scripts by globbing `packages/*/update.sh`, so adding a new
+package does not require editing `.github/workflows/update-packages.yml`.
+
+1. Create `packages/<name>/default.nix` as a normal `callPackage`-compatible
+   derivation. Keep the fields the updater needs as simple literal bindings:
+   `version`, `hash` or `armHash`/`intelHash`, and any optional `url`/token
+   fields. Use `fetchurl` for the artifact.
+
+2. Create executable `packages/<name>/update.sh`. Source the shared helpers,
+   fetch the newest metadata, then rewrite the matching fields:
+
+   ```bash
+   #!/usr/bin/env bash
+   set -euo pipefail
+
+   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+   source "$SCRIPT_DIR/../update-lib.sh"
+
+   NIX_FILE="$SCRIPT_DIR/default.nix"
+
+   # Fetch from Homebrew API, a cask file, GitHub releases, etc.
+   JSON=$(curl -sS 'https://formulae.brew.sh/api/cask/<name>.json')
+
+   VERSION=$(echo "$JSON" | jq -r '.version')
+   SHA_HEX=$(echo "$JSON" | jq -r '.sha256')
+   HASH=$(to_sri "$SHA_HEX")
+
+   sed_inplace "$NIX_FILE" \
+     -e "s|version = \".*\";|version = \"$VERSION\";|" \
+     -e "s|hash = \".*\";|hash = \"$HASH\";|"
+   ```
+
+   Use `to_sri` for hexadecimal Homebrew-style sha256 values, `hash_file` for
+   hashing a downloaded artifact, and `sed_inplace` for portable in-place
+   edits. Keep each script scoped to metadata replacement only.
+
+3. Register the package in `packages/default.nix`:
+
+   ```nix
+   name = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./name { } else null;
+   ```
+
+4. Make the updater executable and stage the new files before evaluating:
+
+   ```bash
+   chmod +x packages/<name>/update.sh
+   git add packages/<name>
+   ```
+
+5. Verify locally on macOS:
+
+   ```bash
+   nix build .#<name>
+   bash packages/update.sh <name>
+   git diff -- packages/<name>/default.nix
+   ```
+
+The scheduled workflow (`update-packages.yml`) then picks the new package up
+automatically and includes it in the next update PR.
+
 ### Editing Secrets
 
 ```bash
