@@ -51,7 +51,7 @@ let
 in
 {
   flake.modules.nixos."network/tailscale" =
-    { lib, ... }:
+    { pkgs, lib, config, hostContext, ... }:
     {
       imports = [ common ];
       config = {
@@ -71,6 +71,27 @@ in
           # Hosts that advertise routes override host.tailscale.upFlags and set
           # useRoutingFeatures = "server"; the mkDefault lets that override win.
           useRoutingFeatures = lib.mkDefault "client";
+        };
+
+        # Authenticate once per boot without becoming part of the boot ordering:
+        # WantedBy starts the unit, but no `before`/`requiredBy` makes anything
+        # wait for it. It only waits for tailscaled itself.
+        systemd.services.tailscale-auth = {
+          description = "Tailscale authentication";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "tailscaled.service" ];
+          wants = [ "tailscaled.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = lib.getExe (tailscaleAuth {
+              inherit
+                pkgs
+                lib
+                config
+                hostContext
+                ;
+            });
+          };
         };
       };
     };
