@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../update-lib.sh"
 NIX_FILE="$SCRIPT_DIR/default.nix"
 CASK_URL="https://raw.githubusercontent.com/Homebrew/homebrew-cask/master/Casks/z/zotero.rb"
 
@@ -19,23 +20,13 @@ fi
 echo "Version: $VERSION"
 echo "Computing SRI hash..."
 
-HASH=$(nix hash convert --hash-algo sha256 --to sri "$SHA_HEX" 2>/dev/null \
-  || nix hash to-sri --type sha256 "$SHA_HEX")
-[ -n "$HASH" ] || HASH="sha256-$(printf '%s' "$SHA_HEX" | xxd -r -p | base64)"
+HASH=$(to_sri "$SHA_HEX")
 
 echo "Hash: $HASH"
 
 echo "Updating $NIX_FILE..."
-if sed --version >/dev/null 2>&1; then
-  sed -i \
-    -e "s|version = \".*\";|version = \"$VERSION\";|" \
-    -e "s|hash = \"sha256-[A-Za-z0-9+/=]*\";|hash = \"$HASH\";|" \
-    "$NIX_FILE"
-else
-  sed -i '' \
-    -e "s|version = \".*\";|version = \"$VERSION\";|" \
-    -e "s|hash = \"sha256-[A-Za-z0-9+/=]*\";|hash = \"$HASH\";|" \
-    "$NIX_FILE"
-fi
+sed_inplace "$NIX_FILE" \
+  -e "s|version = \".*\";|version = \"$VERSION\";|" \
+  -e "s|hash = \"sha256-[A-Za-z0-9+/=]*\";|hash = \"$HASH\";|"
 
 echo "Done. Zotero updated to $VERSION"

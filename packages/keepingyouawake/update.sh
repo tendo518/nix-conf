@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../update-lib.sh"
 NIX_FILE="$SCRIPT_DIR/default.nix"
 
 echo "Fetching latest KeepingYouAwake version from Homebrew API..."
@@ -13,22 +14,13 @@ SHA_HEX=$(echo "$JSON" | jq -r '.sha256')
 echo "Version: $VERSION"
 echo "Computing SRI hash..."
 
-HASH=$(nix hash convert --hash-algo sha256 --to sri "$SHA_HEX" 2>/dev/null \
-  || nix hash to-sri --type sha256 "$SHA_HEX")
+HASH=$(to_sri "$SHA_HEX")
 
 echo "Hash: $HASH"
 
 echo "Updating $NIX_FILE..."
-if sed --version >/dev/null 2>&1; then
-  sed -i \
-    -e "s|version = \".*\";|version = \"$VERSION\";|" \
-    -e "s|hash = \".*\";|hash = \"$HASH\";|" \
-    "$NIX_FILE"
-else
-  sed -i '' \
-    -e "s|version = \".*\";|version = \"$VERSION\";|" \
-    -e "s|hash = \".*\";|hash = \"$HASH\";|" \
-    "$NIX_FILE"
-fi
+sed_inplace "$NIX_FILE" \
+  -e "s|version = \".*\";|version = \"$VERSION\";|" \
+  -e "s|hash = \".*\";|hash = \"$HASH\";|"
 
 echo "Done. KeepingYouAwake updated to $VERSION"

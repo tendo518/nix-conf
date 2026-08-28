@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../update-lib.sh"
 NIX_FILE="$SCRIPT_DIR/default.nix"
 
 echo "Fetching latest Clash Verge Rev version from Homebrew API..."
@@ -15,19 +16,16 @@ INTEL_SHA_HEX=$(echo "$JSON" | jq -r '[.variations[].sha256][0]')
 echo "Version: $VERSION"
 echo "Computing SRI hashes..."
 
-ARM_HASH=$(nix hash convert --hash-algo sha256 --to sri "$ARM_SHA_HEX" 2>/dev/null \
-  || nix hash to-sri --type sha256 "$ARM_SHA_HEX")
-INTEL_HASH=$(nix hash convert --hash-algo sha256 --to sri "$INTEL_SHA_HEX" 2>/dev/null \
-  || nix hash to-sri --type sha256 "$INTEL_SHA_HEX")
+ARM_HASH=$(to_sri "$ARM_SHA_HEX")
+INTEL_HASH=$(to_sri "$INTEL_SHA_HEX")
 
 echo "arm:   $ARM_HASH"
 echo "intel: $INTEL_HASH"
 
 echo "Updating $NIX_FILE..."
-sed -i \
+sed_inplace "$NIX_FILE" \
   -e "s|version = \".*\";|version = \"$VERSION\";|" \
   -e "s|armHash = \".*\";|armHash = \"$ARM_HASH\";|" \
-  -e "s|intelHash = \".*\";|intelHash = \"$INTEL_HASH\";|" \
-  "$NIX_FILE"
+  -e "s|intelHash = \".*\";|intelHash = \"$INTEL_HASH\";|"
 
 echo "Done. Clash Verge Rev updated to $VERSION"
