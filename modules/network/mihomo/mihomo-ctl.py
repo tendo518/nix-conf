@@ -96,6 +96,8 @@ def api(path: str, method: str = "GET", payload: dict | None = None) -> object:
         raise MihomoError(
             f"Mihomo controller request failed: {path}: {error}"
         ) from error
+    if not raw.strip():
+        return {}
     try:
         return json.loads(raw)
     except json.JSONDecodeError as error:
@@ -484,12 +486,21 @@ def doctor() -> None:
         check("provider node count (controller unavailable)", False)
 
     rules = command_output("ip", "-4", "rule", "show")
-    table_routes = command_output("ip", "-4", "route", "show", "table", TABLE)
+    table_result = command(
+        "ip", "-4", "route", "show", "table", TABLE,
+        check=False,
+        capture=True,
+    )
+    table_routes = table_result.stdout
+    table_exists = table_result.returncode == 0
+    if not table_exists:
+        print(f"INFO  Mihomo routing table {TABLE} is unavailable")
     catchall = re.search(r"^\s*\d+:.*lookup 2023$", rules, re.MULTILINE)
     check(
         "table 2023 contains Mihomo default route",
         bool(
-            catchall
+            table_exists
+            and catchall
             and re.search(r"^default dev mihomo", table_routes, re.MULTILINE)
         ),
     )
