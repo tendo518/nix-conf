@@ -10,6 +10,7 @@
       mihomo = lib.getExe pkgs.mihomo;
       configTemplate = pkgs.writeText "mihomo-config-template.yaml" (builtins.readFile ./mihomo-config.yaml);
       mihomoCtl = pkgs.writers.writePython3Bin "mihomo-ctl" {
+        libraries = [ pkgs.python3Packages.rich ];
         # The generated template path is a store path and may exceed 79 chars.
         flakeIgnore = [ "E501" "W503" ];
       } (

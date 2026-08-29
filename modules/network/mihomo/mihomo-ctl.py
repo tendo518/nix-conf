@@ -22,6 +22,12 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from rich.console import Console
+from rich.panel import Panel
+from rich.prompt import Prompt
+from rich.table import Table
+from rich.text import Text
+
 
 CONFIG_DIR = Path("/etc/mihomo")
 CONFIG_PATH = CONFIG_DIR / "config.yaml"
@@ -33,10 +39,27 @@ TABLE = "2023"
 TUN = "mihomo"
 SUDO = "/run/wrappers/bin/sudo"
 TEMPLATE_PATH = "@MIHOMO_TEMPLATE_PATH@"
+console = Console()
 
 
 class MihomoError(RuntimeError):
     """A user-facing command failure."""
+
+
+def success(message: str) -> None:
+    console.print(f"[bold green]✓[/] {message}")
+
+
+def info(message: str) -> None:
+    console.print(f"[cyan]•[/] {message}")
+
+
+def warning(message: str) -> None:
+    console.print(f"[yellow]![/] {message}")
+
+
+def service_state(active: bool) -> Text:
+    return Text("active" if active else "inactive", style="green" if active else "red")
 
 
 def command(
@@ -166,11 +189,11 @@ def init_runtime(template: str) -> None:
         temporary_path.unlink(missing_ok=True)
 
     cleanup("tun")
-    print(
-        f"Runtime config created at {CONFIG_PATH}; "
-        "restarting mihomo.service."
-    )
     command("systemctl", "restart", "mihomo.service")
+    success(
+        f"Runtime config created at {CONFIG_PATH}; "
+        "mihomo.service restarted."
+    )
 
 
 def rule_priorities(family: int, predicate) -> list[int]:
@@ -331,16 +354,32 @@ def node(name: str | None) -> None:
     if name is None:
         if not nodes:
             raise MihomoError("No nodes are available in PROXY")
+        table = Table(title="PROXY nodes", header_style="bold cyan")
+        table.add_column("#", justify="right", style="cyan", no_wrap=True)
+        table.add_column("Node", min_width=24)
+        table.add_column("Selected", justify="center")
         for index, item in enumerate(nodes, 1):
-            print(f"{index:3}: {item}")
-        answer = input("Select node (Enter to cancel): ").strip()
-        if not answer:
+            selected = Text("●", style="bold green") if item == old else Text()
+            table.add_row(str(index), Text(str(item)), selected)
+        console.print(table)
+        answer = Prompt.ask(
+            "Select node ([dim]q to cancel[/])",
+            choices=[*(str(index) for index in range(1, len(nodes) + 1)), "q"],
+            default="q",
+            show_choices=False,
+        )
+        if answer == "q":
+            info("Node selection cancelled")
             return
-        if not answer.isdigit() or not 1 <= int(answer) <= len(nodes):
-            raise MihomoError("Invalid node selection")
         name = str(nodes[int(answer) - 1])
     api("/proxies/PROXY", "PUT", {"name": name})
-    print(f"{old} -> {name}")
+    console.print(
+        Text.assemble(
+            (old, "dim"),
+            (" → ", "cyan"),
+            (name, "bold green"),
+        )
+    )
 
 
 def update(provider: str | None, update_all: bool) -> None:
@@ -349,19 +388,21 @@ def update(provider: str | None, update_all: bool) -> None:
         proxy_provider_names() if update_all else [provider or "subscription"]
     )
     for item in providers:
-        print(f"Updating provider: {item}")
+        info(f"Updating provider: {item}")
         api(f"/providers/proxies/{urllib.parse.quote(item, safe='')}", "PUT")
+    success("Proxy provider update complete")
 
 
 def update_rules() -> None:
     controller_check()
     providers = rule_provider_names()
     if not providers:
-        print("No rule providers configured.")
+        warning("No rule providers configured")
         return
     for provider in providers:
-        print(f"Updating rule provider: {provider}")
+        info(f"Updating rule provider: {provider}")
         api(f"/providers/rules/{urllib.parse.quote(provider, safe='')}", "PUT")
+    success("Rule provider update complete")
 
 
 def test_providers() -> None:
@@ -370,7 +411,7 @@ def test_providers() -> None:
     if not providers:
         raise MihomoError("No proxy providers configured")
     for provider in providers:
-        print(f"Running health check: {provider}", file=sys.stderr)
+        info(f"Running health check: {provider}")
         api(
             f"/providers/proxies/{urllib.parse.quote(provider, safe='')}"
             "/healthcheck"
@@ -387,19 +428,32 @@ def test_providers() -> None:
             results.append(
                 (delay, proxy.get("alive", False), proxy.get("name", ""))
             )
+    table = Table(title="Proxy health", header_style="bold cyan")
+    table.add_column("Delay", justify="right")
+    table.add_column("Status", justify="center")
+    table.add_column("Node", min_width=24)
     for delay, alive, name in sorted(results):
-        print(f"{delay:<8} {str(alive).lower():<6} {name}")
+        delay_text = "—" if delay >= 999999 else f"{delay} ms"
+        status = Text("UP", style="bold green") if alive else Text(
+            "DOWN", style="bold red"
+        )
+        table.add_row(delay_text, status, Text(str(name)))
+    console.print(table)
 
 
 def status() -> None:
-    daemon = command_output(
-        "systemctl", "is-active", "mihomo.service", check=False
-    ).strip()
-    routing = command_output(
-        "systemctl", "is-active", "mihomo-routing.service", check=False
-    ).strip()
-    print(f"mihomo.service: {daemon}")
-    print(f"mihomo-routing.service: {routing}")
+    daemon_active = command(
+        "systemctl", "is-active", "--quiet", "mihomo.service", check=False
+    ).returncode == 0
+    routing_active = command(
+        "systemctl", "is-active", "--quiet", "mihomo-routing.service",
+        check=False,
+    ).returncode == 0
+    table = Table.grid(padding=(0, 2))
+    table.add_column(style="bold")
+    table.add_column()
+    table.add_row("mihomo.service", service_state(daemon_active))
+    table.add_row("mihomo-routing.service", service_state(routing_active))
     try:
         controller_check()
         config = api("/configs")
@@ -408,30 +462,42 @@ def status() -> None:
             if isinstance(config, dict)
             else "unknown"
         )
-        print(f"controller: reachable ({CONTROLLER})")
-        print(f"mode: {mode}")
-        print(f"selected: {selected_node()}")
-        print(f"providers: {len(proxy_provider_names())}")
+        table.add_row("controller", Text("reachable", style="green"))
+        table.add_row("mode", Text(str(mode), style="cyan"))
+        table.add_row("selected", Text(selected_node(), style="bold green"))
+        table.add_row("providers", str(len(proxy_provider_names())))
     except MihomoError:
-        print(f"controller: unreachable ({CONTROLLER})")
+        table.add_row("controller", Text("unreachable", style="red"))
+    console.print(Panel(table, title="Mihomo status", border_style="cyan"))
 
 
 def routes() -> None:
-    print("IPv4 policy rules:")
-    print(command_output("ip", "-4", "rule", "show"), end="")
-    print("\nIPv4 Mihomo table (2023):")
-    print(command_output("ip", "-4", "route", "show", "table", TABLE), end="")
-    print("\nIPv4 all routes:")
-    print(command_output("ip", "-4", "route", "show", "table", "all"), end="")
+    sections = (
+        ("IPv4 policy rules", ("ip", "-4", "rule", "show")),
+        (f"IPv4 Mihomo table ({TABLE})", ("ip", "-4", "route", "show", "table", TABLE)),
+        ("IPv4 all routes", ("ip", "-4", "route", "show", "table", "all")),
+    )
+    for title, args in sections:
+        result = command(*args, check=False, capture=True)
+        output = (result.stdout or result.stderr).strip() or "(empty)"
+        console.print(
+            Panel(
+                Text(output),
+                title=title,
+                border_style="cyan" if result.returncode == 0 else "yellow",
+            )
+        )
 
 
 def doctor() -> None:
     as_root()
     failures = 0
+    checks: list[tuple[str, bool]] = []
+    notes: list[str] = []
 
     def check(label: str, passed: bool) -> None:
         nonlocal failures
-        print(f"{'PASS' if passed else 'FAIL':5} {label}")
+        checks.append((label, passed))
         if not passed:
             failures += 1
 
@@ -456,7 +522,11 @@ def doctor() -> None:
     check("controller reachable", controller_ok)
     check(
         "TUN interface exists",
-        command("ip", "link", "show", "dev", TUN, check=False).returncode == 0,
+        command(
+            "ip", "link", "show", "dev", TUN,
+            check=False,
+            capture=True,
+        ).returncode == 0,
     )
     check(
         "config exists outside /nix/store",
@@ -481,7 +551,7 @@ def doctor() -> None:
             for value in providers.get("providers", {}).values()
         )
         check(f"provider node count > 0 ({count})", count > 0)
-        print(f"INFO  selected node: {selected_node()}")
+        notes.append(f"Selected node: {selected_node()}")
     else:
         check("provider node count (controller unavailable)", False)
 
@@ -494,7 +564,7 @@ def doctor() -> None:
     table_routes = table_result.stdout
     table_exists = table_result.returncode == 0
     if not table_exists:
-        print(f"INFO  Mihomo routing table {TABLE} is unavailable")
+        notes.append(f"Mihomo routing table {TABLE} is unavailable")
     catchall = re.search(r"^\s*\d+:.*lookup 2023$", rules, re.MULTILINE)
     check(
         "table 2023 contains Mihomo default route",
@@ -532,7 +602,7 @@ def doctor() -> None:
                 max(tailscale) < catchall_priority,
             )
         else:
-            print("INFO  no recognizable Tailscale policy rules found")
+            notes.append("No recognizable Tailscale policy rules found")
     else:
         check("Mihomo catch-all policy rule exists", False)
     check(
@@ -545,6 +615,18 @@ def doctor() -> None:
         "Mihomo is not listening on port 53",
         not re.search(r"mihomo.*:53|:53.*mihomo", listeners),
     )
+
+    table = Table(title="Mihomo doctor", header_style="bold cyan")
+    table.add_column("Result", justify="center", no_wrap=True)
+    table.add_column("Check")
+    for label, passed in checks:
+        result = Text("PASS", style="bold green") if passed else Text(
+            "FAIL", style="bold red"
+        )
+        table.add_row(result, label)
+    console.print(table)
+    for note in notes:
+        info(note)
 
     for variable in (
         "MIHOMO_TEST_TS_IP",
@@ -564,7 +646,7 @@ def set_mode(mode: str | None) -> None:
     controller_check()
     if mode is None:
         config = api("/configs")
-        print(
+        console.print(
             config.get("mode", "unknown")
             if isinstance(config, dict)
             else "unknown"
@@ -573,7 +655,7 @@ def set_mode(mode: str | None) -> None:
     if mode not in {"rule", "global", "direct", "script"}:
         raise MihomoError("Mode must be one of: rule, global, direct, script")
     api("/configs", "PUT", {"mode": mode})
-    print(f"Mihomo mode: {mode}")
+    success(f"Mihomo mode: {mode}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -628,30 +710,36 @@ def main() -> int:
         routes()
     elif args.command == "connections":
         controller_check()
-        print(json.dumps(api("/connections"), indent=2, ensure_ascii=False))
+        console.print(
+            Panel(
+                Text(json.dumps(api("/connections"), indent=2, ensure_ascii=False)),
+                title="Mihomo connections",
+                border_style="cyan",
+            )
+        )
     elif args.command == "close":
         controller_check()
         api("/connections", "DELETE")
-        print("Mihomo connections closed.")
+        success("Mihomo connections closed")
     elif args.command == "on":
         as_root()
         require_config()
         command("systemctl", "start", "mihomo.service")
         command("systemctl", "start", "mihomo-routing.service")
-        print("Mihomo transparent routing enabled.")
+        success("Mihomo transparent routing enabled")
     elif args.command == "off":
         as_root()
         command("systemctl", "stop", "mihomo-routing.service")
-        print(
+        success(
             "Mihomo transparent routing disabled; "
             "mihomo.service remains running."
         )
     elif args.command == "reload":
         as_root()
         require_config()
-        print("Validating Mihomo configuration...")
+        info("Validating Mihomo configuration")
         command("mihomo", "-t", "-d", str(STATE_DIR), "-f", str(CONFIG_PATH))
-        print("Reloading Mihomo through the local controller...")
+        info("Reloading Mihomo through the local controller")
         api(
             "/configs?force=true",
             "PUT",
@@ -665,20 +753,21 @@ def main() -> int:
         )
     elif args.command == "config":
         as_root()
-        print(f"Runtime config: {CONFIG_PATH}")
+        table = Table.grid(padding=(0, 2))
+        table.add_column(style="bold")
+        table.add_column()
+        table.add_row("Runtime config", str(CONFIG_PATH))
         if CONFIG_PATH.exists():
             stat = CONFIG_PATH.stat()
-            print(
-                f"{pwd.getpwuid(stat.st_uid).pw_name} "
-                f"{grp.getgrgid(stat.st_gid).gr_name} "
-                f"{stat.st_mode & 0o777:o} {CONFIG_PATH}"
-            )
+            table.add_row("Owner", pwd.getpwuid(stat.st_uid).pw_name)
+            table.add_row("Group", grp.getgrgid(stat.st_gid).gr_name)
+            table.add_row("Mode", f"{stat.st_mode & 0o777:04o}")
         else:
-            print("(not created)")
-        print(
-            "Contents intentionally not printed because this file contains "
-            "the subscription URL."
+            table.add_row("Status", Text("not created", style="yellow"))
+        console.print(
+            Panel(table, title="Mihomo runtime config", border_style="cyan")
         )
+        info("Contents are not printed because this file contains the subscription URL")
     elif args.command == "doctor":
         doctor()
     elif args.command == "mode":
@@ -694,5 +783,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except MihomoError as error:
-        print(f"mihomo-ctl: {error}", file=sys.stderr)
+        console.print(f"[bold red]mihomo-ctl:[/] {error}")
         raise SystemExit(1)
