@@ -1,10 +1,7 @@
-# Host-local Mihomo deployment.
-#
-# The module is deliberately self-contained so it can be moved to
-# modules/network/mihomo.nix later without changing the runtime contract.
+# Shared Mihomo deployment.
 { ... }:
 {
-  flake.modules.nixos."hosts/desktop-home-saki/mihomo" =
+  flake.modules.nixos."network/mihomo" =
     { lib, pkgs, ... }:
     let
       configDir = "/etc/mihomo";

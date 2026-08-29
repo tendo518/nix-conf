@@ -19,6 +19,7 @@
     excludeModules = [
       "apps/kitty"
       "apps/mpv"
+      "network/mihomo"
     ];
     user = {
       name = "tendo";

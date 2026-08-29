@@ -31,6 +31,9 @@
 
       "hosts/server-lab-sardine"
     ];
+    excludeModules = [
+      "network/mihomo"
+    ];
     user = {
       name = "tendo";
       email = "pengwyuan@gmail.com";

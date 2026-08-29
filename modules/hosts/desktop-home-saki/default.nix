@@ -14,6 +14,7 @@
       "desktop"
       "hosts/desktop-home-saki"
       "hardware"
+      "network/mihomo"
     ];
     excludeModules = [
       "desktop/niri"

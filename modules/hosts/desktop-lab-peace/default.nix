@@ -18,6 +18,7 @@
     excludeModules = [
       "apps/gaming"
       "desktop/niri"
+      "network/mihomo"
       "hardware/lenovo-x13s"
     ];
     user = {

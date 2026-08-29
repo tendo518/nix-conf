@@ -13,6 +13,7 @@
       "hosts/laptop-solar-chiyoko"
       "network/tailscale"
       "network/tailnet"
+      "network/mihomo"
       "hardware"
     ];
     excludeModules = [
