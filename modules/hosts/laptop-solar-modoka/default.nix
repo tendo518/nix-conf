@@ -60,7 +60,7 @@
         tencent-meeting
 
         # stats
-
+        drawio
         moonlight-qt
         clash-verge-rev
         keepingyouawake

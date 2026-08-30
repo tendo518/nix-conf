@@ -9,30 +9,28 @@ in
 {
   perSystem =
     { system, ... }:
+    let
+      pkgs = import inputs.nixpkgs {
+        inherit system overlays;
+        config.allowUnfree = true;
+      };
+    in
     {
-      devShells.default =
-        let
-          pkgs = import inputs.nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-            inherit overlays;
-          };
-        in
-        pkgs.mkShellNoCC {
-          packages = with pkgs; [
-            deadnix
-            just
-            nixd
-            nixfmt
-            statix
-            nixos-anywhere
-            git
-            nh
-            nixfmt-tree
-            direnv
-            nix-direnv
-            age
-          ];
-        };
+      devShells.default = pkgs.mkShellNoCC {
+        packages = with pkgs; [
+          deadnix
+          just
+          nixd
+          nixfmt
+          statix
+          nixos-anywhere
+          git
+          nh
+          nixfmt-tree
+          direnv
+          nix-direnv
+          age
+        ];
+      };
     };
 }

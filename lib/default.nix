@@ -77,7 +77,7 @@ let
     };
 
   mkHostConfigurations =
-    config: inputs:
+    { moduleRegistries, inputs }:
     {
       builder,
       agenixModule,
@@ -87,10 +87,14 @@ let
     }:
     cfg: target:
     let
-      systemModules = config.flake.modules.${target};
-      homeModules = config.flake.modules.home or { };
-      homeNixOSModules = config.flake.modules.homeNixOS or { };
-      homeDarwinModules = config.flake.modules.homeDarwin or { };
+      systemModules = moduleRegistries.${target} or { };
+      homeModules = moduleRegistries.home or { };
+      homeNixOSModules = moduleRegistries.homeNixOS or { };
+      homeDarwinModules = moduleRegistries.homeDarwin or { };
+      allSystemModules = [
+        (moduleRegistries.nixos or { })
+        (moduleRegistries.darwin or { })
+      ];
     in
     builtins.mapAttrs (
       name: hostCfg:
@@ -99,12 +103,21 @@ let
           hostname = name;
           user = hostCfg.user;
         };
-        moduleValidation = validateModuleNames "host ${name}" [
+        activeModuleValidation = validateModuleNames "host ${name}" [
           systemModules
           homeModules
           homeNixOSModules
           homeDarwinModules
-        ] (hostCfg.modules ++ hostCfg.excludeModules);
+        ] hostCfg.modules;
+        exclusionValidation = validateModuleNames "host ${name}" (
+          allSystemModules
+          ++ [
+            homeModules
+            homeNixOSModules
+            homeDarwinModules
+          ]
+        ) hostCfg.excludeModules;
+        moduleValidation = builtins.seq activeModuleValidation exclusionValidation;
       in
       builtins.seq moduleValidation builder {
         modules = [

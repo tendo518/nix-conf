@@ -167,15 +167,14 @@ Hosts are defined in `modules/hosts/<hostname>/default.nix` using the `hosts` na
 ### Host Builders (`modules/flake/`)
 
 - `hosts.nix` - Defines `hosts.nixos` and `hosts.darwin` options, plus the typed `user` submodule schema
-- `nixos-configurations.nix` - Thin wrapper calling `config.hostBuilder` with NixOS-specific params
-- `darwin-configurations.nix` - Thin wrapper calling `config.hostBuilder` with Darwin-specific params
-- `lib.nix` - Thin flake-parts adapter exposing `config.hostBuilder` (implementation lives in `lib/default.nix`)
+- `nixos-configurations.nix` - Directly exports NixOS configurations from `hosts.nixos`
+- `darwin-configurations.nix` - Directly exports Darwin configurations from `hosts.darwin`
 
 Module name resolution (in `lib/default.nix`):
 - **Exact match**: `"core/nix"` → loads that specific module
 - **Prefix match**: `"core"` → loads all modules under `core/`; `"hosts/my-host"` loads the host module and its split submodules (hardware, system, ...)
 - **Exclusions**: `excludeModules` expand the same way (exact + prefix); results are deduplicated by first occurrence
-- **Validation**: names are checked against the union of the system/home/homeNixOS/homeDarwin registries; unknown names throw at eval time (no silent no-op)
+- **Validation**: included names must exist for the current platform; exclusions may target any registered platform module, while unknown names still throw at eval time
 
 ### Host Options
 
@@ -265,7 +264,6 @@ lib/                    # Reusable module framework (os/user helpers, host build
 modules/
 ├── flake/              # flake-parts config and host builders
 │   ├── default.nix     # flake-parts entry point
-│   ├── lib.nix         # Thin adapter exposing config.hostBuilder
 │   ├── hosts.nix       # hosts.nixos/darwin options
 │   ├── nixos-configurations.nix
 │   ├── darwin-configurations.nix
