@@ -9,8 +9,6 @@
       "network"
       "desktop"
       "hosts/laptop-solar-chiyoko"
-      "network/tailscale"
-      "network/mihomo"
       "hardware"
     ];
     excludeModules = [
@@ -21,6 +19,7 @@
       "system/disable-sleep"
       "hardware/nvidia"
       "development/virtualisation"
+      # "network/mihomo" # Keep the shared network stack without Mihomo.
     ];
     user = {
       name = "tendo";

@@ -15,6 +15,7 @@
       "apps/gaming"
       "desktop/niri"
       "hardware/lenovo-x13s"
+      # "network/mihomo" # Keep the shared network stack without Mihomo.
     ];
     user = {
       name = "pengwy";

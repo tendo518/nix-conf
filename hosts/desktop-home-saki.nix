@@ -10,11 +10,11 @@
       "desktop"
       "hosts/desktop-home-saki"
       "hardware"
-      "network/mihomo"
     ];
     excludeModules = [
       "desktop/niri"
       "hardware/lenovo-x13s"
+      # "network/mihomo" # Keep the shared network stack without Mihomo.
     ];
     user = {
       name = "tendo";

@@ -27,19 +27,6 @@ _: {
           );
     in
     {
-      # Mihomo owns the only transparent-routing path on this host. Keep the
-      # GUI applications available, but do not let them create competing TUNs.
-      programs.clash-verge.tunMode = lib.mkForce false;
-      programs.clash-verge.serviceMode = lib.mkForce false;
-      programs.throne.tunMode.enable = lib.mkForce false;
-
-      # Keep Tailscale routes, while leaving systemd-resolved/NetworkManager
-      # in charge of DNS. Other hosts retain the shared module default.
-      host.tailscale.upFlags = lib.mkForce [
-        "--accept-routes"
-        "--accept-dns=false"
-      ];
-
       # Mihomo hands transparent TCP/UDP off through the local TUN interface.
       # The NixOS firewall must accept those packets back into INPUT, otherwise
       # the internal listener never completes the handshake (silent DROP).

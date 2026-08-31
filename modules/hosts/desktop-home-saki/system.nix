@@ -55,13 +55,6 @@
         };
       };
 
-      # Network
-      programs.clash-verge = {
-        enable = true;
-        tunMode = true;
-        serviceMode = true;
-      };
-
       # User management
       users.mutableUsers = false;
       services.userborn.enable = true;

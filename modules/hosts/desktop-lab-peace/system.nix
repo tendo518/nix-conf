@@ -63,12 +63,6 @@
         "net.ipv4.ip_forward" = 1;
         "net.ipv6.conf.all.forwarding" = 1;
       };
-      programs.clash-verge = {
-        enable = true;
-        tunMode = true;
-        serviceMode = true;
-      };
-
       # User management
       users.mutableUsers = false;
       services.userborn.enable = true;
