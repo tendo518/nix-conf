@@ -1,6 +1,4 @@
 let
-  nixMirrors = import ./_nix-mirrors.nix;
-
   # Common nix settings shared between NixOS and Darwin
   commonSettings = {
     use-xdg-base-directories = true;
@@ -13,8 +11,20 @@ let
     # --- Disk Space Management ---
     min-free = 5 * 1024 * 1024 * 1024; # 5GB
     max-free = 25 * 1024 * 1024 * 1024; # 25GB
-  }
-  // nixMirrors;
+    substituters = [
+      "https://mirrors.ustc.edu.cn/nix-channels/store"
+      "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
+      "https://mirror.sjtu.edu.cn/nix-channels/store"
+      "https://mirror.nju.edu.cn/nix-channels/store"
+      "https://cache.nixos.org"
+      "https://nix-community.cachix.org"
+      "https://cache.numtide.com"
+    ];
+    extra-trusted-public-keys = [
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
+    ];
+  };
 
   trustedUsers =
     lib: user: adminGroup:

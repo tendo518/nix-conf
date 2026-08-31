@@ -2,7 +2,7 @@
   description = "Nix flake for NixOS/macOS configuration";
 
   nixConfig = {
-    # Mirrors are intentionally duplicated in modules/core/_nix-mirrors.nix:
+    # Mirrors are intentionally duplicated in modules/core/nix.nix:
     # the flake schema requires a literal nixConfig attribute set.
     substituters = [
       "https://mirrors.ustc.edu.cn/nix-channels/store"
@@ -46,6 +46,8 @@
 
     import-tree.url = "github:vic/import-tree";
 
+    # Keep its upstream nixpkgs pin: cache.numtide.com publishes agent builds
+    # against it, so following the root nixpkgs would reduce cache hits.
     llm-agents.url = "github:numtide/llm-agents.nix";
 
     disko = {
