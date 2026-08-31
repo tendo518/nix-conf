@@ -2,24 +2,25 @@
 
 Living reference for how the machines, the tailnet, subnet routing, and the
 server's services interconnect. Keep this in sync when the config changes.
-Single sources of truth are referenced inline: **`modules/network/tailnet.nix`**
-(host table), **`modules/network/tailscale.nix`** (subnet-router defaults),
+Single sources of truth are referenced inline: **`modules/network/tailscale.nix`**
+(subnet-router defaults and dynamic host completion),
 **`modules/hosts/server-lab-sardine/*`** (server services).
 
 ---
 
 ## 1. Machines & Tailnet
 
-Mesh overlay via **Tailscale** (no MagicDNS; `<host>.tailscale` names come from
-`/etc/hosts` + ssh aliases generated in `tailnet.nix`).
+Mesh overlay via **Tailscale MagicDNS**. Fish completes live peer DNS names from
+`tailscale status --json`; selected `<host>.tailscale` names resolve through
+MagicDNS without a static host/IP table.
 
-| host | OS | tailnet IP | ssh user | syncthing ID |
-|------|----|-----------|----------|--------------|
-| `desktop-home-saki` | NixOS | `100.124.50.41` | tendo | *(null, pending)* |
-| `desktop-lab-peace` | NixOS | `100.66.176.74` | pengwy | *(null, pending)* |
-| `laptop-solar-chiyoko` | NixOS | `100.111.132.42` | tendo | — |
-| `laptop-solar-modoka` | **Darwin** | `100.112.217.3` | tendo | `NQFLFYJ-EXJP…-HZKPNAO` |
-| `server-lab-sardine` | NixOS | `100.81.243.74` | tendo | `3VSZ4AJ-5QFK…-GLSTLQR` |
+| host | OS | ssh user |
+|------|----|----------|
+| `desktop-home-saki` | NixOS | tendo |
+| `desktop-lab-peace` | NixOS | pengwy |
+| `laptop-solar-chiyoko` | NixOS | tendo |
+| `laptop-solar-modoka` | **Darwin** | tendo |
+| `server-lab-sardine` | NixOS | tendo |
 
 ---
 

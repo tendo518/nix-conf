@@ -288,7 +288,7 @@ packages/               # Custom package definitions; platform guards per packag
 ├── chatgpt-desktop/     # ChatGPT desktop (macOS artifact)
 └── clash-verge-rev/    # Clash Verge Rev with macOS support
 
-scripts/                # Helpers (check-nixpkgs-pr-channel.py, update-tailnet-hosts.py)
+scripts/                # Helpers (check-nixpkgs-pr-channel.py)
 docs/                   # Runbooks and notes (agenix setup, hardware debugging)
 ```
 

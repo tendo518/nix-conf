@@ -142,4 +142,20 @@ in
         };
       };
     };
+
+  flake.modules.home."network/tailscale" =
+    { pkgs, ... }:
+    {
+      # Complete Tailscale host names from the live daemon state. MagicDNS
+      # resolves the selected name, so no static host/IP list is needed.
+      programs.fish.functions.__fish_tailscale_ssh_hosts = ''
+        if not set -q __tailscale_ssh_hosts
+            set -g __tailscale_ssh_hosts (tailscale status --json | ${pkgs.jq}/bin/jq -r '.Peer[]?.DNSName')
+        end
+        printf '%s\n' $__tailscale_ssh_hosts
+      '';
+      programs.fish.interactiveShellInit = ''
+        complete -c ssh -k -f -a '(__fish_tailscale_ssh_hosts)'
+      '';
+    };
 }

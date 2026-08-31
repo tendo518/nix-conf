@@ -21,7 +21,6 @@
       "apps/yazi"
 
       "network/tailscale"
-      "network/tailnet"
 
       "hosts/server-lab-sardine"
     ];

@@ -106,8 +106,7 @@
           Port = 22;
           IdentityFile = "~/.ssh/id_ed25519";
         };
-        # Tailscale devices are generated from modules/network/tailnet.nix
-        # (network/tailnet module): <hostname>.tailscale aliases.
+        # Tailscale host completion is configured by network/tailscale.
       };
     };
   };

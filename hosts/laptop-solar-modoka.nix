@@ -12,7 +12,6 @@
       "desktop/default-apps-darwin"
       "apps"
       "network/tailscale"
-      "network/tailnet"
     ];
     excludeModules = [
       "apps/kitty"
