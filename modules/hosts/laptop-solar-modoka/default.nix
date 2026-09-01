@@ -30,6 +30,7 @@ _: {
         clash-verge-rev
         keepingyouawake
         zotero
+        imagemagick
 
       ];
     };

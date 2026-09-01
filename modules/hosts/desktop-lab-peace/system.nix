@@ -24,6 +24,7 @@
         chromium
 
         darktable
+        imagemagick
         gcc
         clang
         realesrgan-ncnn-vulkan

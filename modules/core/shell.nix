@@ -155,9 +155,6 @@
         tokei # Displays statistics about your code
         bat # A cat(1) clone with wings
 
-        # --- Documentation & Typesetting ---
-        glow # Render markdown on the CLI
-        typst # A modern typesetting system
         tealdeer # A very fast implementation of tldr in Rust
 
         # --- Miscellaneous ---
@@ -165,8 +162,6 @@
         zellij # Another terminal workspace with batteries included
         nb # in terminal note taking
 
-        imagemagick
-        pandoc
         dysk
         rlwrap
         # easy to use tui calculator

@@ -9,10 +9,6 @@
         enable = true;
         enableFishIntegration = true;
         shellWrapperName = "y";
-        # magick (ImageMagick) for the image-fill previewer; on PATH on both
-        # macOS and NixOS so image upscaling works cross-platform.
-        extraPackages = [ pkgs.imagemagick ];
-
         settings = {
           mgr = {
             # Hide parent directory pane (leftmost panel)

@@ -32,6 +32,7 @@
         chatgpt-desktop
 
         darktable
+        imagemagick
         moonlight-qt
         ghostty
         maple-mono.NF-CN

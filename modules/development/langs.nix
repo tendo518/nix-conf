@@ -16,12 +16,8 @@ let
         clang
         clang-tools
         cmake
-        neocmakelsp
         lldb
         meson
-
-        # LaTeX
-        tectonic
 
         # Nix
         nixd
@@ -41,10 +37,6 @@ let
         rustup
         cargo-binstall
 
-        # Typst
-        typst
-        tinymist
-        typstyle
       ];
     };
 in
