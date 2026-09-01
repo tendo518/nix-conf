@@ -10,10 +10,13 @@ _: {
       configTemplate = pkgs.writeText "mihomo-config-template.yaml" (
         builtins.readFile ./mihomo-config.yaml
       );
-      mihomoCtl =
+      mihomoCtlBase =
         pkgs.writers.writePython3Bin "mihomo-ctl"
           {
-            libraries = [ pkgs.python3Packages.rich ];
+            libraries = with pkgs.python3Packages; [
+              rich
+              typer
+            ];
             # The generated template path is a store path and may exceed 79 chars.
             flakeIgnore = [
               "E501"
@@ -21,10 +24,17 @@ _: {
             ];
           }
           (
-            builtins.replaceStrings [ "@MIHOMO_TEMPLATE_PATH@" ] [ (toString configTemplate) ] (
-              builtins.readFile ./mihomo-ctl.py
-            )
+            builtins.replaceStrings
+              [ "@MIHOMO_TEMPLATE_PATH@" "@SYSTEMD_CREDS@" ]
+              [ (toString configTemplate) (lib.getExe' pkgs.systemd "systemd-creds") ]
+              (builtins.readFile ./mihomo-ctl.py)
           );
+      mihomoCtl = pkgs.runCommand "mihomo-ctl-with-fish-completion" { } ''
+        mkdir -p "$out/bin" "$out/share/fish/vendor_completions.d"
+        ln -s ${mihomoCtlBase}/bin/mihomo-ctl "$out/bin/mihomo-ctl"
+        _MIHOMO_CTL_COMPLETE=source_fish "$out/bin/mihomo-ctl" \
+          > "$out/share/fish/vendor_completions.d/mihomo-ctl.fish"
+      '';
     in
     {
       # Mihomo hands transparent TCP/UDP off through the local TUN interface.

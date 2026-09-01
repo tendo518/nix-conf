@@ -1,4 +1,4 @@
-# Mihomo runtime config template. mihomo-ctl init replaces $URL at runtime.
+# Mihomo runtime config template. mihomo-ctl subscription init replaces $URL at runtime.
 # Never put a real subscription URL in this file.
 
 mixed-port: 7890

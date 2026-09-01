@@ -1,13 +1,11 @@
 """Small Mihomo controller and policy-routing CLI.
 
-The runtime subscription URL is accepted only by ``init`` via a hidden
-prompt.  This program never prints the runtime configuration.
+The subscription URL is kept in a host-bound systemd credential. ``init``
+only accepts it via a hidden prompt and never prints the runtime config.
 """
 
 from __future__ import annotations
 
-import argparse
-import getpass
 import json
 import os
 import pwd
@@ -21,17 +19,21 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from typing import Annotated
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
+import typer
 
 
 CONFIG_DIR = Path("/etc/mihomo")
 CONFIG_PATH = CONFIG_DIR / "config.yaml"
 STATE_DIR = Path("/var/lib/mihomo")
+SUBSCRIPTIONS_DIR = STATE_DIR / "subscriptions"
+ACTIVE_SUBSCRIPTION_PATH = STATE_DIR / "active-subscription"
 ROUTING_STATE_DIR = Path("/run/mihomo-routing")
 ROUTING_STATE_FILE = ROUTING_STATE_DIR / "rules"
 CONTROLLER = "http://127.0.0.1:9090"
@@ -39,7 +41,21 @@ TABLE = "2023"
 TUN = "mihomo"
 SUDO = "/run/wrappers/bin/sudo"
 TEMPLATE_PATH = "@MIHOMO_TEMPLATE_PATH@"
+SYSTEMD_CREDS = "@SYSTEMD_CREDS@"
 console = Console()
+app = typer.Typer(
+    name="mihomo-ctl",
+    help="Control Mihomo and its host-local subscriptions.",
+    no_args_is_help=True,
+)
+subscription_app = typer.Typer(
+    help="Manage encrypted Mihomo subscriptions.", no_args_is_help=True
+)
+proxy_app = typer.Typer(help="Manage Mihomo proxies.", no_args_is_help=True)
+routing_app = typer.Typer(help="Manage transparent routing.", no_args_is_help=True)
+app.add_typer(subscription_app, name="subscription")
+app.add_typer(proxy_app, name="proxy")
+app.add_typer(routing_app, name="routing")
 
 
 class MihomoError(RuntimeError):
@@ -99,7 +115,7 @@ def require_config() -> None:
     if not CONFIG_PATH.is_file() or CONFIG_PATH.stat().st_size == 0:
         raise MihomoError(
             f"Mihomo config is missing: {CONFIG_PATH}\n"
-            "Run: sudo mihomo-ctl init"
+            "Run: sudo mihomo-ctl subscription init"
         )
 
 
@@ -154,28 +170,120 @@ def selected_node(group: str = "PROXY") -> str:
     )
 
 
-def init_runtime(template: str) -> None:
-    as_root()
-    if sys.argv[2:]:
-        raise MihomoError(
-            "Usage: mihomo-ctl init\n"
-            "Enter the subscription URL at the prompt; "
-            "do not pass it as an argument."
-        )
-
-    CONFIG_DIR.mkdir(mode=0o750, parents=True, exist_ok=True)
-    os.chown(CONFIG_DIR, 0, grp.getgrnam("mihomo").gr_gid)
-    os.chmod(CONFIG_DIR, 0o750)
-
-    url = getpass.getpass("Subscription URL: ")
-    print(file=sys.stderr)
+def validate_subscription_url(url: str) -> None:
     if not re.match(r"^https?://", url):
-        raise MihomoError(
-            "Subscription URL must start with http:// or https://"
-        )
+        raise MihomoError("Subscription URL must start with http:// or https://")
     if any(character.isspace() for character in url):
         raise MihomoError("Subscription URL must not contain whitespace")
 
+
+def credential_command(*args: str, input_text: str | None = None) -> str:
+    try:
+        result = subprocess.run(
+            [SYSTEMD_CREDS, *args],
+            check=True,
+            text=True,
+            input=input_text,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as error:
+        detail = (error.stderr or error.stdout or "").strip()
+        suffix = f": {detail}" if detail else ""
+        raise MihomoError(f"Could not access saved subscription{suffix}") from error
+    return result.stdout
+
+
+def validate_subscription_name(name: str) -> None:
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", name):
+        raise MihomoError(
+            "Subscription name must use only letters, digits, dot, underscore, "
+            "or hyphen (maximum 64 characters)"
+        )
+
+
+def subscription_credential(name: str) -> Path:
+    validate_subscription_name(name)
+    return SUBSCRIPTIONS_DIR / f"{name}.cred"
+
+
+def credential_name(name: str) -> str:
+    return f"mihomo-subscription-{name}"
+
+
+def save_subscription(name: str, url: str) -> None:
+    SUBSCRIPTIONS_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+    credential_path = subscription_credential(name)
+    fd, temporary = tempfile.mkstemp(
+        prefix=f"{name}.", suffix=".cred", dir=SUBSCRIPTIONS_DIR
+    )
+    os.close(fd)
+    temporary_path = Path(temporary)
+    try:
+        credential_command(
+            "encrypt",
+            "--with-key=host",
+            f"--name={credential_name(name)}",
+            "-",
+            str(temporary_path),
+            input_text=f"{url}\n",
+        )
+        os.chown(temporary_path, 0, 0)
+        os.chmod(temporary_path, 0o600)
+        os.replace(temporary_path, credential_path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def load_subscription(name: str) -> str:
+    credential_path = subscription_credential(name)
+    if not credential_path.is_file():
+        raise MihomoError(f"Subscription does not exist: {name}")
+    url = credential_command(
+        "decrypt",
+        f"--name={credential_name(name)}",
+        str(credential_path),
+        "-",
+    ).strip()
+    validate_subscription_url(url)
+    return url
+
+
+def active_subscription() -> str | None:
+    if not ACTIVE_SUBSCRIPTION_PATH.is_file():
+        return None
+    name = ACTIVE_SUBSCRIPTION_PATH.read_text().strip()
+    validate_subscription_name(name)
+    if not subscription_credential(name).is_file():
+        raise MihomoError(f"Active subscription does not exist: {name}")
+    return name
+
+
+def set_active_subscription(name: str) -> None:
+    subscription_credential(name)
+    STATE_DIR.mkdir(mode=0o750, parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix="active-subscription.", dir=STATE_DIR)
+    temporary_path = Path(temporary)
+    try:
+        with os.fdopen(fd, "w") as output:
+            output.write(f"{name}\n")
+        os.chown(temporary_path, 0, 0)
+        os.chmod(temporary_path, 0o600)
+        os.replace(temporary_path, ACTIVE_SUBSCRIPTION_PATH)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def subscription_names() -> list[str]:
+    if not SUBSCRIPTIONS_DIR.is_dir():
+        return []
+    return sorted(
+        path.stem
+        for path in SUBSCRIPTIONS_DIR.glob("*.cred")
+        if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", path.stem)
+    )
+
+
+def write_config(template: str, url: str) -> None:
     rendered = template.replace("$URL", url)
     fd, temporary = tempfile.mkstemp(prefix="config.yaml.", dir=CONFIG_DIR)
     temporary_path = Path(temporary)
@@ -188,12 +296,115 @@ def init_runtime(template: str) -> None:
     finally:
         temporary_path.unlink(missing_ok=True)
 
-    cleanup("tun")
+
+def apply_subscription(template: str, name: str) -> None:
+    url = load_subscription(name)
+    set_active_subscription(name)
+    write_config(template, url)
+    routing_active = (
+        command(
+            "systemctl",
+            "is-active",
+            "--quiet",
+            "mihomo-routing.service",
+            check=False,
+        ).returncode
+        == 0
+    )
+    cleanup_runtime("tun")
     command("systemctl", "restart", "mihomo.service")
+    if routing_active:
+        command("systemctl", "restart", "mihomo-routing.service")
+
+
+def init_runtime(template: str) -> None:
+    as_root()
+    CONFIG_DIR.mkdir(mode=0o750, parents=True, exist_ok=True)
+    os.chown(CONFIG_DIR, 0, grp.getgrnam("mihomo").gr_gid)
+    os.chmod(CONFIG_DIR, 0o750)
+
+    name = active_subscription()
+    if name is None:
+        name = typer.prompt("Subscription name", default="default")
+        validate_subscription_name(name)
+        url = typer.prompt("Subscription URL", hide_input=True)
+        validate_subscription_url(url)
+        save_subscription(name, url)
+    else:
+        if typer.confirm(f"Replace saved subscription URL for '{name}'?", default=False):
+            url = typer.prompt("Subscription URL", hide_input=True)
+            validate_subscription_url(url)
+            save_subscription(name, url)
+        else:
+            info(f"Keeping saved subscription '{name}'")
+
+    apply_subscription(template, name)
     success(
         f"Runtime config created at {CONFIG_PATH}; "
         "mihomo.service restarted."
     )
+
+
+def add_subscription(name: str) -> None:
+    as_root()
+    credential_path = subscription_credential(name)
+    if credential_path.exists():
+        raise MihomoError(f"Subscription already exists: {name}; use 'subscription edit'")
+    url = typer.prompt("Subscription URL", hide_input=True)
+    validate_subscription_url(url)
+    save_subscription(name, url)
+    success(f"Saved encrypted subscription '{name}'")
+
+
+def edit_subscription(template: str, name: str) -> None:
+    as_root()
+    if not subscription_credential(name).is_file():
+        raise MihomoError(f"Subscription does not exist: {name}")
+    url = typer.prompt("Subscription URL", hide_input=True)
+    validate_subscription_url(url)
+    save_subscription(name, url)
+    if active_subscription() == name:
+        apply_subscription(template, name)
+        success(f"Updated and applied subscription '{name}'")
+    else:
+        success(f"Updated encrypted subscription '{name}'")
+
+
+def remove_subscription(name: str) -> None:
+    as_root()
+    credential_path = subscription_credential(name)
+    if not credential_path.is_file():
+        raise MihomoError(f"Subscription does not exist: {name}")
+    if active_subscription() == name:
+        raise MihomoError(
+            f"Cannot remove active subscription '{name}'; switch subscriptions first"
+        )
+    if not typer.confirm(f"Remove saved subscription '{name}'?", default=False):
+        info("Subscription unchanged")
+        return
+    credential_path.unlink()
+    success(f"Removed encrypted subscription '{name}'")
+
+
+def switch_subscription(template: str, name: str) -> None:
+    as_root()
+    apply_subscription(template, name)
+    success(f"Switched to subscription '{name}'")
+
+
+def list_subscriptions() -> None:
+    as_root()
+    active = active_subscription()
+    names = subscription_names()
+    if not names:
+        warning("No saved subscriptions; run: sudo mihomo-ctl subscription add <name>")
+        return
+    table = Table(title="Mihomo subscriptions", header_style="bold cyan")
+    table.add_column("Name")
+    table.add_column("Active", justify="center")
+    for name in names:
+        table.add_row(name, Text("●", style="bold green") if name == active else Text())
+    console.print(table)
 
 
 def rule_priorities(family: int, predicate) -> list[int]:
@@ -248,10 +459,10 @@ def cleanup_foreign_rules() -> None:
         )
 
 
-def cleanup(kind: str = "rules") -> None:
+def cleanup_runtime(kind: str = "rules") -> None:
     as_root()
     if kind not in {"rules", "tun"}:
-        raise MihomoError("Usage: mihomo-ctl cleanup {rules|tun}")
+        raise MihomoError("Usage: mihomo-ctl routing purge {rules|tun}")
     if kind == "tun":
         active = command(
             "systemctl", "is-active", "--quiet", "mihomo.service", check=False
@@ -346,7 +557,7 @@ def routing_cleanup() -> None:
     cleanup_owned_rules()
 
 
-def node(name: str | None) -> None:
+def select_node(name: str | None) -> None:
     controller_check()
     old = selected_node()
     data = api("/proxies/PROXY")
@@ -382,7 +593,14 @@ def node(name: str | None) -> None:
     )
 
 
-def update(provider: str | None, update_all: bool) -> None:
+def update_providers(template: str, provider: str | None, update_all: bool) -> None:
+    as_root()
+    name = active_subscription()
+    if name is None:
+        raise MihomoError(
+            "No active subscription; run: sudo mihomo-ctl subscription init"
+        )
+    apply_subscription(template, name)
     controller_check()
     providers = (
         proxy_provider_names() if update_all else [provider or "subscription"]
@@ -441,7 +659,7 @@ def test_providers() -> None:
     console.print(table)
 
 
-def status() -> None:
+def show_status() -> None:
     daemon_active = command(
         "systemctl", "is-active", "--quiet", "mihomo.service", check=False
     ).returncode == 0
@@ -471,7 +689,7 @@ def status() -> None:
     console.print(Panel(table, title="Mihomo status", border_style="cyan"))
 
 
-def routes() -> None:
+def show_routes() -> None:
     sections = (
         ("IPv4 policy rules", ("ip", "-4", "rule", "show")),
         (f"IPv4 Mihomo table ({TABLE})", ("ip", "-4", "route", "show", "table", TABLE)),
@@ -489,7 +707,81 @@ def routes() -> None:
         )
 
 
-def doctor() -> None:
+def format_bytes(value: object) -> str:
+    if not isinstance(value, (int, float)):
+        return "—"
+    units = ("B", "KiB", "MiB", "GiB", "TiB")
+    amount = float(value)
+    for unit in units:
+        if amount < 1024 or unit == units[-1]:
+            return f"{amount:.1f} {unit}" if unit != "B" else f"{amount:.0f} B"
+        amount /= 1024
+    return "—"
+
+
+def show_connections() -> None:
+    controller_check()
+    data = api("/connections")
+    if not isinstance(data, dict):
+        raise MihomoError("Mihomo controller returned an invalid connection snapshot")
+    connections = data.get("connections", [])
+    if not isinstance(connections, list):
+        raise MihomoError("Mihomo controller returned an invalid connection list")
+    table = Table(title="Mihomo connections", header_style="bold cyan")
+    table.add_column("Protocol", no_wrap=True)
+    table.add_column("Source", no_wrap=True)
+    table.add_column("Destination", min_width=24, max_width=36, overflow="ellipsis")
+    table.add_column("Process", max_width=20, overflow="ellipsis")
+    table.add_column("Rule", min_width=14, max_width=24, overflow="ellipsis")
+    table.add_column("Proxy", min_width=14, max_width=24, overflow="ellipsis")
+    table.add_column("Down", justify="right")
+    table.add_column("Up", justify="right")
+    for connection in connections:
+        if not isinstance(connection, dict):
+            continue
+        metadata = connection.get("metadata", {})
+        metadata = metadata if isinstance(metadata, dict) else {}
+        source = ":".join(
+            str(part)
+            for part in (metadata.get("sourceIP"), metadata.get("sourcePort"))
+            if part not in (None, "")
+        )
+        destination_host = metadata.get("host") or metadata.get("destinationIP") or "—"
+        destination_port = metadata.get("destinationPort")
+        destination = f"{destination_host}:{destination_port}" if destination_port else str(destination_host)
+        rule = " ".join(
+            str(part)
+            for part in (connection.get("rule"), connection.get("rulePayload"))
+            if part
+        ) or "—"
+        chains = connection.get("chains", [])
+        proxy = str(chains[-1]) if isinstance(chains, list) and chains else "—"
+        process_path = metadata.get("processPath")
+        process = Path(str(process_path)).name if process_path else "—"
+        table.add_row(
+            str(metadata.get("network") or metadata.get("type") or "—"),
+            source or "—",
+            destination,
+            process,
+            rule,
+            proxy,
+            format_bytes(connection.get("download")),
+            format_bytes(connection.get("upload")),
+        )
+    console.print(table)
+    info(
+        f"{len(connections)} active; total down {format_bytes(data.get('downloadTotal'))}, "
+        f"up {format_bytes(data.get('uploadTotal'))}"
+    )
+
+
+def close_connections() -> None:
+    controller_check()
+    api("/connections", "DELETE")
+    success("Closed all Mihomo connections")
+
+
+def run_doctor() -> None:
     as_root()
     failures = 0
     checks: list[tuple[str, bool]] = []
@@ -658,130 +950,188 @@ def set_mode(mode: str | None) -> None:
     success(f"Mihomo mode: {mode}")
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="mihomo-ctl")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser("init")
-    node_parser = subparsers.add_parser("node")
-    node_parser.add_argument("name", nargs="?")
-    update_parser = subparsers.add_parser("update")
-    update_parser.add_argument("provider", nargs="?")
-    update_parser.add_argument("--all", action="store_true")
-    subparsers.add_parser("update-rules")
-    subparsers.add_parser("test")
-    for name in (
-        "status", "routes", "connections", "close", "on", "off", "reload",
-        "config", "doctor",
-    ):
-        subparsers.add_parser(name)
-    log_parser = subparsers.add_parser("log")
-    log_parser.add_argument("args", nargs=argparse.REMAINDER)
-    mode_parser = subparsers.add_parser("mode")
-    mode_parser.add_argument(
-        "mode", nargs="?", choices=("rule", "global", "direct", "script")
-    )
-    routing_parser = subparsers.add_parser("routing")
-    routing_parser.add_argument("action", choices=("start", "cleanup"))
-    cleanup_parser = subparsers.add_parser("cleanup")
-    cleanup_parser.add_argument(
-        "kind", choices=("rules", "tun"), nargs="?", default="rules"
-    )
-    return parser
+def template() -> str:
+    return Path(os.environ.get("MIHOMO_TEMPLATE_PATH", TEMPLATE_PATH)).read_text()
 
 
-def main() -> int:
-    args = build_parser().parse_args()
-    if args.command == "init":
-        template_path = Path(
-            os.environ.get("MIHOMO_TEMPLATE_PATH", TEMPLATE_PATH)
-        )
-        init_runtime(template_path.read_text())
-    elif args.command == "node":
-        node(args.name)
-    elif args.command == "update":
-        update(args.provider, args.all)
-    elif args.command == "update-rules":
-        update_rules()
-    elif args.command == "test":
-        test_providers()
-    elif args.command == "status":
-        status()
-    elif args.command == "routes":
-        routes()
-    elif args.command == "connections":
-        controller_check()
-        console.print(
-            Panel(
-                Text(json.dumps(api("/connections"), indent=2, ensure_ascii=False)),
-                title="Mihomo connections",
-                border_style="cyan",
-            )
-        )
-    elif args.command == "close":
-        controller_check()
-        api("/connections", "DELETE")
-        success("Mihomo connections closed")
-    elif args.command == "on":
-        as_root()
-        require_config()
-        command("systemctl", "start", "mihomo.service")
-        command("systemctl", "start", "mihomo-routing.service")
-        success("Mihomo transparent routing enabled")
-    elif args.command == "off":
-        as_root()
-        command("systemctl", "stop", "mihomo-routing.service")
-        success(
-            "Mihomo transparent routing disabled; "
-            "mihomo.service remains running."
-        )
-    elif args.command == "reload":
-        as_root()
-        require_config()
-        info("Validating Mihomo configuration")
-        command("mihomo", "-t", "-d", str(STATE_DIR), "-f", str(CONFIG_PATH))
-        info("Reloading Mihomo through the local controller")
-        api(
-            "/configs?force=true",
-            "PUT",
-            {"path": str(CONFIG_PATH), "payload": ""},
-        )
-        command("systemctl", "restart", "mihomo-routing.service")
-        doctor()
-    elif args.command == "log":
-        os.execvp(
-            "journalctl", ["journalctl", "-u", "mihomo.service", *args.args]
-        )
-    elif args.command == "config":
-        as_root()
-        table = Table.grid(padding=(0, 2))
-        table.add_column(style="bold")
-        table.add_column()
-        table.add_row("Runtime config", str(CONFIG_PATH))
-        if CONFIG_PATH.exists():
-            stat = CONFIG_PATH.stat()
-            table.add_row("Owner", pwd.getpwuid(stat.st_uid).pw_name)
-            table.add_row("Group", grp.getgrgid(stat.st_gid).gr_name)
-            table.add_row("Mode", f"{stat.st_mode & 0o777:04o}")
-        else:
-            table.add_row("Status", Text("not created", style="yellow"))
-        console.print(
-            Panel(table, title="Mihomo runtime config", border_style="cyan")
-        )
-        info("Contents are not printed because this file contains the subscription URL")
-    elif args.command == "doctor":
-        doctor()
-    elif args.command == "mode":
-        set_mode(args.mode)
-    elif args.command == "routing":
-        routing_start() if args.action == "start" else routing_cleanup()
-    elif args.command == "cleanup":
-        cleanup(args.kind)
-    return 0
+@subscription_app.command()
+def init() -> None:
+    """Create the runtime config from the active encrypted subscription."""
+    init_runtime(template())
+
+
+@proxy_app.command()
+def node(name: Annotated[str | None, typer.Argument()] = None) -> None:
+    """Show proxy nodes or select NAME."""
+    select_node(name)
+
+
+@subscription_app.command()
+def update(
+    provider: Annotated[str | None, typer.Argument()] = None,
+    update_all: Annotated[bool, typer.Option("--all")] = False,
+) -> None:
+    """Rebuild from the active subscription and refresh proxy providers."""
+    update_providers(template(), provider, update_all)
+
+
+@proxy_app.command("update-rules")
+def update_rules_command() -> None:
+    """Refresh all rule providers."""
+    update_rules()
+
+
+@proxy_app.command("test")
+def test_command() -> None:
+    """Run proxy-provider health checks."""
+    test_providers()
+
+
+@app.command()
+def status() -> None:
+    """Show Mihomo and routing status."""
+    show_status()
+
+
+@routing_app.command()
+def routes() -> None:
+    """Show policy-routing tables and rules."""
+    show_routes()
+
+
+@proxy_app.command()
+def connections() -> None:
+    """List active connections."""
+    show_connections()
+
+
+@proxy_app.command("close-connections")
+def close_connections_command() -> None:
+    """Close all active Mihomo connections."""
+    close_connections()
+
+
+@routing_app.command("enable")
+def routing_enable() -> None:
+    """Enable transparent routing."""
+    as_root()
+    require_config()
+    command("systemctl", "start", "mihomo.service")
+    command("systemctl", "start", "mihomo-routing.service")
+    success("Mihomo transparent routing enabled")
+
+
+@routing_app.command("disable")
+def routing_disable() -> None:
+    """Disable transparent routing while keeping Mihomo running."""
+    as_root()
+    command("systemctl", "stop", "mihomo-routing.service")
+    success("Mihomo transparent routing disabled; mihomo.service remains running.")
+
+
+@app.command()
+def reload() -> None:
+    """Validate and reload the current runtime configuration."""
+    as_root()
+    require_config()
+    info("Validating Mihomo configuration")
+    command("mihomo", "-t", "-d", str(STATE_DIR), "-f", str(CONFIG_PATH))
+    info("Reloading Mihomo through the local controller")
+    api("/configs?force=true", "PUT", {"path": str(CONFIG_PATH), "payload": ""})
+    command("systemctl", "restart", "mihomo-routing.service")
+    run_doctor()
+
+
+@app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)
+def log(ctx: typer.Context) -> None:
+    """Follow Mihomo logs; remaining arguments are passed to journalctl."""
+    os.execvp("journalctl", ["journalctl", "-u", "mihomo.service", *ctx.args])
+
+
+@app.command()
+def config() -> None:
+    """Show runtime-config metadata without exposing its contents."""
+    as_root()
+    table = Table.grid(padding=(0, 2))
+    table.add_column(style="bold")
+    table.add_column()
+    table.add_row("Runtime config", str(CONFIG_PATH))
+    if CONFIG_PATH.exists():
+        stat = CONFIG_PATH.stat()
+        table.add_row("Owner", pwd.getpwuid(stat.st_uid).pw_name)
+        table.add_row("Group", grp.getgrgid(stat.st_gid).gr_name)
+        table.add_row("Mode", f"{stat.st_mode & 0o777:04o}")
+    else:
+        table.add_row("Status", Text("not created", style="yellow"))
+    console.print(Panel(table, title="Mihomo runtime config", border_style="cyan"))
+    info("Contents are not printed because this file contains the subscription URL")
+
+
+@app.command()
+def doctor() -> None:
+    """Check Mihomo configuration, service, and routing health."""
+    run_doctor()
+
+
+@proxy_app.command()
+def mode(value: Annotated[str | None, typer.Argument()] = None) -> None:
+    """Show or set the Mihomo mode."""
+    set_mode(value)
+
+
+@routing_app.command("start")
+def routing_start_command() -> None:
+    """Install Mihomo policy routes (used by systemd)."""
+    routing_start()
+
+
+@routing_app.command("cleanup")
+def routing_cleanup_command() -> None:
+    """Remove Mihomo policy routes (used by systemd)."""
+    routing_cleanup()
+
+
+@routing_app.command("purge")
+def routing_purge_command(kind: Annotated[str, typer.Argument()] = "rules") -> None:
+    """Remove stale legacy policy rules or a stale TUN device."""
+    cleanup_runtime(kind)
+
+
+@subscription_app.command("add")
+def subscription_add(name: Annotated[str, typer.Argument()]) -> None:
+    """Create or replace a named encrypted subscription."""
+    add_subscription(name)
+
+
+@subscription_app.command("switch")
+def subscription_switch(name: Annotated[str, typer.Argument()]) -> None:
+    """Activate NAME and restart Mihomo with it."""
+    switch_subscription(template(), name)
+
+
+@subscription_app.command("edit")
+def subscription_edit(name: Annotated[str, typer.Argument()]) -> None:
+    """Replace NAME's URL; apply it immediately when it is active."""
+    edit_subscription(template(), name)
+
+
+@subscription_app.command("remove")
+def subscription_remove(name: Annotated[str, typer.Argument()]) -> None:
+    """Remove a non-active encrypted subscription after confirmation."""
+    remove_subscription(name)
+
+
+@subscription_app.command("list")
+def subscription_list() -> None:
+    """List saved subscription names without exposing URLs."""
+    list_subscriptions()
 
 
 if __name__ == "__main__":
     try:
-        raise SystemExit(main())
+        app(prog_name="mihomo-ctl")
     except MihomoError as error:
         console.print(f"[bold red]mihomo-ctl:[/] {error}")
         raise SystemExit(1)
