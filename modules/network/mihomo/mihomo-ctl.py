@@ -421,8 +421,16 @@ def delete_rules(family: int, priorities: list[int]) -> None:
     for priority in priorities:
         command(
             "ip", f"-{family}", "rule", "del", "priority", str(priority),
-            check=False,
+            check=False, capture=True,
         )
+
+
+def flush_route_table(family: int, table: str) -> None:
+    """Flush a route table when present without exposing an absent-table error."""
+    command(
+        "ip", f"-{family}", "route", "flush", "table", table,
+        check=False, capture=True,
+    )
 
 
 def cleanup_owned_rules() -> None:
@@ -439,7 +447,7 @@ def cleanup_owned_rules() -> None:
         )
 
     delete_rules(4, rule_priorities(4, owned))
-    command("ip", "-4", "route", "flush", "table", TABLE, check=False)
+    flush_route_table(4, TABLE)
     ROUTING_STATE_FILE.unlink(missing_ok=True)
 
 
@@ -453,10 +461,7 @@ def cleanup_foreign_rules() -> None:
 
     for family in (4, 6):
         delete_rules(family, rule_priorities(family, foreign))
-        command(
-            "ip", f"-{family}", "route", "flush", "table", "2022",
-            check=False,
-        )
+        flush_route_table(family, "2022")
 
 
 def cleanup_runtime(kind: str = "rules") -> None:
@@ -468,15 +473,21 @@ def cleanup_runtime(kind: str = "rules") -> None:
             "systemctl", "is-active", "--quiet", "mihomo.service", check=False
         ).returncode == 0
         if not active:
-            command("ip", "link", "delete", "dev", "Mihomo", check=False)
-            command("ip", "link", "delete", "dev", "mihomo", check=False)
+            command(
+                "ip", "link", "delete", "dev", "Mihomo",
+                check=False, capture=True,
+            )
+            command(
+                "ip", "link", "delete", "dev", "mihomo",
+                check=False, capture=True,
+            )
     cleanup_foreign_rules()
 
 
 def wait_for_tun() -> None:
     for _ in range(30):
         if command(
-            "ip", "link", "show", "dev", TUN, check=False
+            "ip", "link", "show", "dev", TUN, check=False, capture=True
         ).returncode == 0:
             return
         time.sleep(1)
@@ -950,6 +961,73 @@ def set_mode(mode: str | None) -> None:
     success(f"Mihomo mode: {mode}")
 
 
+def service_invocation_id() -> str:
+    result = command_output(
+        "systemctl", "show", "--property=InvocationID", "--value",
+        "mihomo.service",
+    ).strip()
+    if not result:
+        raise MihomoError(
+            "Mihomo service is not running; no current invocation logs exist"
+        )
+    return result
+
+
+def show_log(ctx: typer.Context) -> None:
+    invocation_id = service_invocation_id()
+    process = subprocess.Popen(
+        [
+            "journalctl",
+            "--unit=mihomo.service",
+            "--no-pager",
+            *ctx.args,
+            "--output=json",
+            f"_SYSTEMD_INVOCATION_ID={invocation_id}",
+        ],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert process.stdout is not None
+    try:
+        for line in process.stdout:
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            timestamp = record.get("__REALTIME_TIMESTAMP")
+            if isinstance(timestamp, str) and timestamp.isdigit():
+                seconds = int(timestamp) / 1_000_000
+                time_text = time.strftime("%H:%M:%S", time.localtime(seconds))
+            else:
+                time_text = "—"
+            priority = str(record.get("PRIORITY", "6"))
+            level, style = {
+                "0": ("EMERG", "bold red"),
+                "1": ("ALERT", "bold red"),
+                "2": ("CRIT", "bold red"),
+                "3": ("ERROR", "red"),
+                "4": ("WARN", "yellow"),
+                "5": ("NOTICE", "cyan"),
+                "6": ("INFO", "green"),
+                "7": ("DEBUG", "dim"),
+            }.get(priority, ("LOG", "white"))
+            source = str(record.get("SYSLOG_IDENTIFIER", "mihomo"))
+            message = str(record.get("MESSAGE", ""))
+            console.print(
+                Text.assemble(
+                    (f"{time_text} ", "dim"),
+                    (f"{level:<6} ", style),
+                    (f"{source}: ", "cyan"),
+                    message,
+                )
+            )
+    except KeyboardInterrupt:
+        process.terminate()
+    stderr = process.stderr.read() if process.stderr is not None else ""
+    if process.wait() and stderr.strip():
+        raise MihomoError(f"Could not read Mihomo logs: {stderr.strip()}")
+
+
 def template() -> str:
     return Path(os.environ.get("MIHOMO_TEMPLATE_PATH", TEMPLATE_PATH)).read_text()
 
@@ -1046,8 +1124,8 @@ def reload() -> None:
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
 )
 def log(ctx: typer.Context) -> None:
-    """Follow Mihomo logs; remaining arguments are passed to journalctl."""
-    os.execvp("journalctl", ["journalctl", "-u", "mihomo.service", *ctx.args])
+    """Show the current Mihomo service invocation; pass options to journalctl."""
+    show_log(ctx)
 
 
 @app.command()
