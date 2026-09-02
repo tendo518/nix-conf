@@ -442,6 +442,10 @@ def cleanup_owned_rules() -> None:
                 r"ipproto (udp|tcp) dport 53 lookup main$", line
             ) is not None
             or re.search(
+                r"to (224\.0\.0\.0/4|255\.255\.255\.255(/32)?|169\.254\.0\.0/16) lookup main$",
+                line,
+            ) is not None
+            or re.search(
                 r"lookup main suppress_prefixlength 0$", line
             ) is not None
         )
@@ -548,6 +552,21 @@ def routing_start() -> None:
         command(
             "ip", "-4", "rule", "add", "priority", str(base + 101),
             "ipproto", "tcp", "dport", "53", "lookup", "main",
+        )
+        # Never route these address families through the TUN: multicast
+        # (mDNS/SSDP/UPnP), the limited broadcast (DHCP, LAN broadcasts) and
+        # link-local traffic are LAN-only and must stay on a real interface.
+        command(
+            "ip", "-4", "rule", "add", "priority", str(base + 120),
+            "to", "224.0.0.0/4", "lookup", "main",
+        )
+        command(
+            "ip", "-4", "rule", "add", "priority", str(base + 121),
+            "to", "255.255.255.255", "lookup", "main",
+        )
+        command(
+            "ip", "-4", "rule", "add", "priority", str(base + 122),
+            "to", "169.254.0.0/16", "lookup", "main",
         )
         command(
             "ip", "-4", "rule", "add", "priority", str(base + 200),
