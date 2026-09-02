@@ -7,7 +7,6 @@
       environment.systemPackages = with pkgs; [
         wechat
         # Office & Productivity
-        spotify
         obsidian
         # yt-dlp  # upstream deno build fail
         qq

@@ -24,7 +24,6 @@
         tpm2-tss
 
         # Office & Productivity
-        spotify
         obsidian
         chatgpt-desktop
         llm-agents.hermes-desktop
