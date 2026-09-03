@@ -31,6 +31,8 @@
         enable = true;
         shellInit = ''
           set -gx GPG_TTY (tty)
+          # Suppress the default welcome banner on every interactive start.
+          set -g fish_greeting
         '';
         shellAbbrs = {
           sctl = "sudo systemctl";
