@@ -184,7 +184,7 @@ let
         };
         ds_v4flash_vision_exp = {
           id = "deepseek-v4-flash-vision-exp";
-          anthropicId = "deepseek-v4-flash-vision-exp";
+          anthropicId = "deepseek-v4-flash-vision-exp[1m]";
           displayName = "DeepSeek-V4-Flash-Vision";
           description = "Latest frontier agentic coding model with image input.";
           priority = 3;

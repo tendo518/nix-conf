@@ -96,9 +96,13 @@ or guessed capabilities.
 For Codex, the generic catalog fields are loaded from
 `codex/_model-baseline.json`. `codex/default.nix` overlays model-specific IDs,
 limits, modalities, image-detail capability, reasoning levels, descriptions,
-and priorities. Do not copy provider catalog `base_instructions` or
-`model_messages` into the baseline: they are Codex runtime instructions rather
-than provider capability metadata.
+and priorities. The baseline also carries the shared Codex runtime instructions
+(`base_instructions` and `model_messages.instructions_template`), because the
+Codex CLI requires every catalog model to define at least one of them. These
+are the same across all providers — they set the Codex agent's behavior, not a
+provider's capabilities — so they belong in the baseline rather than being
+repeated per model. Do not add provider-specific instruction overrides to the
+baseline.
 
 ## Adding or changing a model
 
