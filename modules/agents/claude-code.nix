@@ -1,78 +1,15 @@
 {
   flake.modules.home."agents/claude-code" =
     {
-      pkgs,
       config,
+      pkgs,
       lib,
       ...
     }:
     let
-      # --- Credentials & Secrets ---
-      inherit (config.age.secrets)
-        deepseek-api-key
-        aliyun-codingplan-api-key
-        volcengine-codingplan-api-key
-        opencode-go-api-key
-        ;
+      providers = import ./_providers.nix { inherit config lib; };
+      selected = providers.selectProviders "claudeCode";
 
-      providers = {
-        aliyun = {
-          enable = false;
-          baseUrl = "https://coding.dashscope.aliyuncs.com/apps/anthropic";
-          apiKeyPath = aliyun-codingplan-api-key.path;
-          smallModel = "qwen3_5_plus";
-          models = {
-            qwen3_max.model = "qwen3-max-2026-01-23";
-            qwen3_6_plus.model = "qwen3.6-plus";
-            kimi_k2_5.model = "kimi-k2.5";
-            glm_5.model = "glm-5";
-          };
-        };
-        volces = {
-          enable = true;
-          baseUrl = "https://ark.cn-beijing.volces.com/api/coding";
-          apiKeyPath = volcengine-codingplan-api-key.path;
-          smallModel = "ds_v4flash";
-          models = {
-            kimi_k2_6.model = "kimi-k2.6";
-            kimi_k2_7_code.model = "kimi-k2.7-code";
-            glm_5_3.model = "glm-5.3[1m]";
-            minimax_m3.model = "minimax-m3";
-            ds_v4pro.model = "deepseek-v4-pro[1m]";
-            ds_v4flash.model = "deepseek-v4-flash[1m]";
-          };
-        };
-        deepseek = {
-          enable = true;
-          baseUrl = "https://api.deepseek.com/anthropic";
-          apiKeyPath = deepseek-api-key.path;
-          smallModel = "ds_v4flash";
-          models = {
-            ds_v4flash = {
-              model = "deepseek-v4-flash[1m]";
-              effortLevel = "max";
-            };
-            ds_v4pro = {
-              model = "deepseek-v4-pro[1m]";
-              effortLevel = "max";
-            };
-          };
-        };
-        # OpenCode Go's Anthropic-compatible endpoint. Claude Code appends
-        # `/v1/messages` to ANTHROPIC_BASE_URL, so the base is the `/zen/go`
-        # prefix (docs: opencode.ai/docs/zh-cn/go).
-        opencode-go = {
-          enable = true;
-          baseUrl = "https://opencode.ai/zen/go";
-          apiKeyPath = opencode-go-api-key.path;
-          smallModel = "qwen3_8_max";
-          models = {
-            qwen3_8_max.model = "qwen3.8-max";
-          };
-        };
-      };
-
-      # --- Claude Code Helpers ---
       mkClaudecodeWrapper =
         baseUrl: model: smallModel: apiKeyPath: name: effortLevel:
         pkgs.writeShellScriptBin name ''
@@ -94,29 +31,23 @@
       mkClaudecodeWrappers =
         providerName: provider:
         let
-          smallModelId = provider.models.${provider.smallModel}.model;
+          agentConfig = provider.agents.claudeCode;
+          smallModelId =
+            provider.models.${agentConfig.smallModel}.anthropicId
+              or provider.models.${agentConfig.smallModel}.id;
         in
         lib.mapAttrsToList (
-          name: m:
-          mkClaudecodeWrapper provider.baseUrl m.model smallModelId provider.apiKeyPath
-            "cc-${providerName}-${name}"
-            (m.effortLevel or "")
+          modelName: model:
+          mkClaudecodeWrapper provider.endpoints.anthropic (model.anthropicId or model.id) smallModelId
+            provider.secret.path
+            "cc-${providerName}-${modelName}"
+            (agentConfig.effortLevel or "")
         ) provider.models;
 
-      claudecodeWrappers = lib.concatLists (
-        lib.mapAttrsToList mkClaudecodeWrappers (lib.filterAttrs (_: p: p.enable) providers)
-      );
-
+      claudecodeWrappers = lib.concatLists (lib.mapAttrsToList mkClaudecodeWrappers selected);
     in
     {
-      home.packages =
-        with pkgs.llm-agents;
-        [
-          claude-code
-          # cc-switch-cli
-          # ccusage
-        ]
-        ++ claudecodeWrappers;
+      home.packages = [ pkgs.llm-agents.claude-code ] ++ claudecodeWrappers;
 
       home.activation.setupClaudeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         mkdir -p "$HOME/.claude"
@@ -136,11 +67,6 @@
         chmod u+w "$HOME/.claude/settings.json"
       '';
 
-      age.secrets = {
-        deepseek-api-key.file = ../../secrets/deepseek-api-key.age;
-        aliyun-codingplan-api-key.file = ../../secrets/aliyun-codingplan-api-key.age;
-        volcengine-codingplan-api-key.file = ../../secrets/volcengine-codingplan-api-key.age;
-        opencode-go-api-key.file = ../../secrets/opencode-go-api-key.age;
-      };
+      age.secrets = providers.ageSecrets selected;
     };
 }
