@@ -11,6 +11,13 @@
       selected = providers.selectProviders "codex";
       baseline = builtins.fromJSON (builtins.readFile ./_model-baseline.json);
 
+      reasoningLevelDescriptions = {
+        low = "Fast responses with lighter reasoning";
+        medium = "Moderate reasoning depth for balanced speed and accuracy";
+        high = "Extra high reasoning depth for complex problems";
+        max = "Maximum reasoning depth for the hardest problems";
+      };
+
       mkCatalogModel =
         provider: model:
         let
@@ -28,7 +35,7 @@
           default_reasoning_level = thinking.default;
           supported_reasoning_levels = map (effort: {
             inherit effort;
-            description = effort;
+            description = reasoningLevelDescriptions.${effort} or effort;
           }) thinking.efforts;
           input_modalities = model.input or [ "text" ];
           supports_image_detail_original =
@@ -104,7 +111,7 @@
           model_provider = "${agentConfig.providerName}"
           model_catalog_json = "${catalogConfigs.${_name}}"
           ${lib.optionalString (agentConfig.reasoningSummaries or false) ''
-            model_supports_reasoning_summaries = true
+            model_reasoning_summary = "auto"
             model_reasoning_effort = "${defaultModel.thinking.default}"
           ''}
         ''

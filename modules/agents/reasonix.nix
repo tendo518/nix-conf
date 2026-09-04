@@ -56,7 +56,7 @@
           lib.concatMapStringsSep ", " (model: ''"${model.id}"'') (lib.attrValues deepseek.models)
         }]
         default     = "${deepseek.models.${agentConfig.defaultModel}.id}"
-        api_key_env = "${deepseek.apiKeyEnv}"
+        api_key_env = "${agentConfig.apiKeyEnv}"
         balance_url = "${deepseek.endpoints.balance}"
         effort      = "${defaultModel.thinking.default}"
         context_window = ${toString defaultModel.contextWindow}

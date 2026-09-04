@@ -31,7 +31,113 @@ let
         };
       };
     };
-
+    senseaudio = {
+      name = "SenseAudio Token Plan";
+      secret = {
+        name = "senseaudio-tokenplan-api-key";
+        file = ../../secrets/senseaudio-tokenplan-api-key.age;
+        path = config.age.secrets.senseaudio-tokenplan-api-key.path;
+      };
+      endpoints = {
+        anthropic = "https://api.senseaudio.cn";
+        responses = "https://api.senseaudio.cn/v1";
+      };
+      agents = {
+        claudeCode = {
+          enable = true;
+          smallModel = "ds_v4flash";
+        };
+        codex = {
+          enable = true;
+          profile = "codex-senseaudio";
+          providerName = "senseaudio-token-plan";
+          defaultModel = "ds_v4flash";
+        };
+        omp = {
+          enable = true;
+          api = "anthropic-messages";
+          endpoint = "anthropic";
+          defaultModel = "ds_v4flash";
+        };
+        pi = {
+          enable = true;
+          api = "anthropic-messages";
+          endpoint = "anthropic";
+          defaultModel = "ds_v4flash";
+        };
+      };
+      models = {
+        qwen3_8_27b = {
+          id = "qwen3.8-27b";
+          anthropicId = "qwen3.8-27b[1m]";
+          displayName = "Qwen3.8-27B";
+          description = "Qwen 3.8 27B Dense Model.";
+          contextWindow = 1048576;
+          input = [
+            "text"
+            "image"
+          ];
+          thinking = {
+            efforts = [
+              "low"
+              "high"
+              "xhigh"
+            ];
+            default = "high";
+          };
+        };
+        ds_v4flash = {
+          id = "deepseek-v4-flash-0731";
+          anthropicId = "deepseek-v4-flash-0731[1m]";
+          displayName = "DeepSeek-V4-Flash";
+          description = "Latest frontier agentic coding model.";
+          contextWindow = 1048576;
+          input = [ "text" ];
+          thinking = {
+            efforts = [
+              "low"
+              "high"
+              "max"
+            ];
+            default = "max";
+          };
+        };
+        glm_5_2 = {
+          id = "glm-5.2";
+          anthropicId = "glm-5.2[1m]";
+          displayName = "GLM 5.2";
+          contextWindow = 1048576;
+          input = [ "text" ];
+          thinking = {
+            efforts = [
+              "low"
+              "medium"
+              "high"
+            ];
+            default = "medium";
+          };
+        };
+        glm_5_3_flash = {
+          id = "glm-5.3-flash";
+          anthropicId = "glm-5.3-flash[1m]";
+          displayName = "GLM 5.3 Flash";
+          contextWindow = 1048576;
+          input = [
+            "text"
+            "image"
+          ];
+          supportsImageDetailOriginal = true;
+          thinking = {
+            efforts = [
+              "low"
+              "medium"
+              "high"
+            ];
+            default = "high";
+          };
+        };
+      };
+    };
     volces = {
       name = "Volcengine Coding Plan";
       secret = {
@@ -39,7 +145,6 @@ let
         file = ../../secrets/volcengine-codingplan-api-key.age;
         path = config.age.secrets.volcengine-codingplan-api-key.path;
       };
-      apiKeyEnv = "VOLCENGINE_API_KEY";
       endpoints = {
         anthropic = "https://ark.cn-beijing.volces.com/api/coding";
         responses = "https://ark.cn-beijing.volces.com/api/coding/v3";
@@ -114,7 +219,6 @@ let
         file = ../../secrets/deepseek-api-key.age;
         path = config.age.secrets.deepseek-api-key.path;
       };
-      apiKeyEnv = "DEEPSEEK_API_KEY";
       endpoints = {
         openai = "https://api.deepseek.com";
         responses = "https://api.deepseek.com/";
@@ -141,6 +245,7 @@ let
         pi.enable = false;
         reasonix = {
           enable = true;
+          apiKeyEnv = "DEEPSEEK_API_KEY";
           providerName = "deepseek-flash";
           defaultModel = "ds_v4flash";
         };
@@ -152,7 +257,7 @@ let
           displayName = "DeepSeek-V4-Flash";
           description = "Latest frontier agentic coding model.";
           priority = 1;
-          contextWindow = 1000000;
+          contextWindow = 1048576;
           input = [ "text" ];
           maxOutputTokens = 384000;
           thinking = {
@@ -170,7 +275,7 @@ let
           displayName = "DeepSeek-V4-Pro";
           description = "Most capable frontier agentic coding model.";
           priority = 2;
-          contextWindow = 1000000;
+          contextWindow = 1048576;
           input = [ "text" ];
           maxOutputTokens = 384000;
           thinking = {
@@ -188,7 +293,7 @@ let
           displayName = "DeepSeek-V4-Flash-Vision";
           description = "Latest frontier agentic coding model with image input.";
           priority = 3;
-          contextWindow = 1000000;
+          contextWindow = 1048576;
           input = [
             "text"
             "image"
