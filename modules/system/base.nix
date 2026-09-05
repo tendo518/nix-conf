@@ -17,10 +17,10 @@
         DefaultLimitNOFILE = "524288:524288";
       };
 
-      services.journald.extraConfig = ''
-        SystemMaxUse=100M
-        MaxFileSec=3day
-      '';
+      services.journald.settings.Journal = {
+        SystemMaxUse = "100M";
+        MaxFileSec = "3day";
+      };
 
       # speedup dns
       services.nscd.enableNsncd = true;
