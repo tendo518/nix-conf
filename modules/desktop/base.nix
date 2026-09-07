@@ -22,11 +22,16 @@
       # stack through nix-ld instead of requiring an FHS environment.
       programs.nix-ld.libraries = with pkgs; [
         libGL
+        vulkan-loader
         wayland
         libxkbcommon
         libdrm
         mesa
         libinput
+        libx11
+        libxcursor
+        libxi
+        libxrandr
       ];
 
       # Enable Wayland for electron apps packaged by Nix
