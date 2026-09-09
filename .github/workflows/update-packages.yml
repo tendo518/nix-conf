@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v16
@@ -52,7 +54,7 @@ jobs:
         with:
           token: ${{ github.token }}
           commit-message: "chore(packages): update pinned packages"
-          branch: chore/update-packages
+          branch: chore/update-packages/${{ github.run_id }}
           delete-branch: true
           title: "chore(packages): update pinned packages"
           body: |
