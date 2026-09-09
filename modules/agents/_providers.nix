@@ -309,12 +309,38 @@ let
             default = "high";
           };
         };
+        ds_v41flash_exp_0910 = {
+          id = "deepseek-v4.1-flash-expires-on-0910";
+          anthropicId = "deepseek-v4.1-flash-expires-on-0910[1m]";
+          displayName = "DeepSeek-V4.1-Flash";
+          description = "DeepSeek V4.1 Flash model expiring on 2026-09-10.";
+          priority = 4;
+          contextWindow = 1048576;
+          input = [
+            "text"
+            "image"
+          ];
+          supportsImageDetailOriginal = true;
+          maxOutputTokens = 384000;
+          thinking = {
+            efforts = [
+              "low"
+              "high"
+              "max"
+            ];
+            default = "high";
+          };
+        };
       };
     };
 
     gpu = {
       name = "GPU";
-      apiKey = "8b964310965445819bfd028144ba7cb34676c7f33c97c73966050fb59e903bd5";
+      secret = {
+        name = "gpu-api-key";
+        file = ../../secrets/gpu-api-key.age;
+        path = config.age.secrets.gpu-api-key.path;
+      };
       endpoints = {
         openai = "http://172.18.36.44:8000/v1";
         responses = "http://172.18.36.44:8000/v1";

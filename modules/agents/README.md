@@ -34,7 +34,6 @@ provider = {
     file = ../../secrets/agenix-secret-name.age;
     path = config.age.secrets.agenix-secret-name.path;
   };
-  # Or, for a non-agenix provider: apiKey = "...";
 
   endpoints = {
     responses = "https://...";
@@ -63,9 +62,9 @@ provider = {
 };
 ```
 
-Only define the endpoints required by enabled agents. `secret` providers are
-registered as agenix secrets by each consuming module; `apiKey` is for the
-local GPU-style provider that does not use agenix.
+Only define the endpoints required by enabled agents. Providers are
+authenticated with agenix secrets; each consuming module registers the
+provider's `secret` via `age.secrets`.
 
 Model fields are capability declarations, not inferred defaults:
 

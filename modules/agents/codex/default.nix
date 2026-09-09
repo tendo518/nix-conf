@@ -78,9 +78,6 @@
               printf '%s' "$value"
             ''}"
           ''
-          + lib.optionalString (provider ? apiKey) ''
-            experimental_bearer_token = "${provider.apiKey}"
-          ''
         ) selected
       );
 
@@ -90,11 +87,17 @@
         approval_policy = "on-request"
         approvals_reviewer = "auto_review"
         sandbox_mode = "workspace-write"
+        check_for_update_on_startup = false
+        analytics.enabled = false
         ${providerBlocks}
+
+        [features]
+        context_management.experimental_mode = true
 
         [tui]
         status_line = ["model-with-reasoning", "project-name", "run-state", "context-used", "weekly-limit"]
         status_line_use_colors = true
+        notifications = true
 
         [projects."${config.home.homeDirectory}"]
         trust_level = "trusted"
@@ -114,6 +117,15 @@
             model_reasoning_summary = "auto"
             model_reasoning_effort = "${defaultModel.thinking.default}"
           ''}
+
+          [features]
+          # Experimental context management is only for the official OpenAI
+          # provider; keep it disabled in third-party profiles.
+          context_management.experimental_mode = false
+
+          [tui]
+          status_line = ["model-with-reasoning", "project-name", "run-state", "context-used"]
+          status_line_use_colors = true
         ''
       ) selected;
 
