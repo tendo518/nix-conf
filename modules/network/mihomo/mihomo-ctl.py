@@ -149,15 +149,25 @@ def controller_check() -> None:
     api("/version")
 
 
+def as_dict(value: object) -> dict:
+    """Mihomo encodes empty Go maps as null; treat those as empty."""
+    return value if isinstance(value, dict) else {}
+
+
+def as_list(value: object) -> list:
+    """Mihomo encodes empty Go slices as null; treat those as empty."""
+    return value if isinstance(value, list) else []
+
+
 def proxy_provider_names() -> list[str]:
     data = api("/providers/proxies")
-    providers = data.get("providers", {}) if isinstance(data, dict) else {}
+    providers = as_dict(as_dict(data).get("providers"))
     return sorted(providers)
 
 
 def rule_provider_names() -> list[str]:
     data = api("/providers/rules")
-    providers = data.get("providers", {}) if isinstance(data, dict) else {}
+    providers = as_dict(as_dict(data).get("providers"))
     return sorted(providers)
 
 
@@ -591,7 +601,7 @@ def select_node(name: str | None) -> None:
     controller_check()
     old = selected_node()
     data = api("/proxies/PROXY")
-    nodes = data.get("all", []) if isinstance(data, dict) else []
+    nodes = as_list(as_dict(data).get("all"))
     if name is None:
         if not nodes:
             raise MihomoError("No nodes are available in PROXY")
@@ -670,7 +680,9 @@ def test_providers() -> None:
         data = api(
             f"/providers/proxies/{urllib.parse.quote(provider, safe='')}"
         )
-        for proxy in data.get("proxies", []) if isinstance(data, dict) else []:
+        for proxy in as_list(as_dict(data).get("proxies")):
+            if not isinstance(proxy, dict):
+                continue
             history = proxy.get("history", [])
             delay = history[-1].get("delay", 999999) if history else 999999
             results.append(
@@ -754,7 +766,7 @@ def show_connections() -> None:
     data = api("/connections")
     if not isinstance(data, dict):
         raise MihomoError("Mihomo controller returned an invalid connection snapshot")
-    connections = data.get("connections", [])
+    connections = data.get("connections") or []
     if not isinstance(connections, list):
         raise MihomoError("Mihomo controller returned an invalid connection list")
     table = Table(title="Mihomo connections", header_style="bold cyan")
@@ -867,10 +879,10 @@ def run_doctor() -> None:
         check("config permissions are root:mihomo 0640", False)
 
     if controller_ok:
-        providers = api("/providers/proxies")
+        providers = as_dict(as_dict(api("/providers/proxies")).get("providers"))
         count = sum(
-            len(value.get("proxies", []))
-            for value in providers.get("providers", {}).values()
+            len(as_list(as_dict(value).get("proxies")))
+            for value in providers.values()
         )
         check(f"provider node count > 0 ({count})", count > 0)
         notes.append(f"Selected node: {selected_node()}")
