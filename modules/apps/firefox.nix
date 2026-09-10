@@ -1,13 +1,28 @@
 {
   flake.modules.home."apps/firefox" =
     {
+      config,
+      lib,
       pkgs,
       ...
     }:
+    let
+      # macOS 27+ only lets Mozilla-signed Firefox builds use the traditional
+      # data directory, so the wrapper's MOZ_APP_DATA and home-manager's
+      # profile directory have to move together.
+      # Upstream: nixpkgs#559515, nixpkgs#556611, home-manager#9852.
+      isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+      darwinDataDir = "Library/Application Support/org.nixos.firefox";
+    in
     {
       programs.firefox = {
         enable = true;
-        package = pkgs.firefox;
+        package = lib.mkIf isDarwin (
+          pkgs.firefox.override {
+            appDataDir = "${config.home.homeDirectory}/${darwinDataDir}";
+          }
+        );
+        configPath = lib.mkIf isDarwin darwinDataDir;
         # configPath = "${config.xdg.configHome}/mozilla/firefox";
 
         policies = {
