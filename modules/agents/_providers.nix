@@ -236,6 +236,8 @@ let
           profile = "codex-ds";
           providerName = "deepseek";
           defaultModel = "ds_v4flash";
+          reasoningEffort = true;
+          disableWebSearch = true;
         };
         omp = {
           enable = true;
@@ -252,13 +254,17 @@ let
       };
       models = {
         ds_v4flash = {
-          id = "deepseek-v4-flash";
-          anthropicId = "deepseek-v4-flash[1m]";
-          displayName = "DeepSeek-V4-Flash";
-          description = "Latest frontier agentic coding model.";
+          id = "deepseek-flash";
+          anthropicId = "deepseek-flash[1m]";
+          displayName = "DeepSeek-Flash";
+          description = "Latest frontier agentic coding model with image input.";
           priority = 1;
           contextWindow = 1048576;
-          input = [ "text" ];
+          input = [
+            "text"
+            "image"
+          ];
+          supportsImageDetailOriginal = true;
           maxOutputTokens = 384000;
           thinking = {
             efforts = [
@@ -275,52 +281,9 @@ let
           displayName = "DeepSeek-V4-Pro";
           description = "Most capable frontier agentic coding model.";
           priority = 2;
+          supportsSearchTool = false;
           contextWindow = 1048576;
           input = [ "text" ];
-          maxOutputTokens = 384000;
-          thinking = {
-            efforts = [
-              "low"
-              "high"
-              "max"
-            ];
-            default = "high";
-          };
-        };
-        ds_v4flash_vision_exp = {
-          id = "deepseek-v4-flash-vision-exp";
-          anthropicId = "deepseek-v4-flash-vision-exp[1m]";
-          displayName = "DeepSeek-V4-Flash-Vision";
-          description = "Latest frontier agentic coding model with image input.";
-          priority = 3;
-          contextWindow = 1048576;
-          input = [
-            "text"
-            "image"
-          ];
-          supportsImageDetailOriginal = true;
-          maxOutputTokens = 384000;
-          thinking = {
-            efforts = [
-              "low"
-              "high"
-              "max"
-            ];
-            default = "high";
-          };
-        };
-        ds_v41flash_exp_0910 = {
-          id = "deepseek-v4.1-flash-expires-on-0910";
-          anthropicId = "deepseek-v4.1-flash-expires-on-0910[1m]";
-          displayName = "DeepSeek-V4.1-Flash";
-          description = "DeepSeek V4.1 Flash model expiring on 2026-09-10.";
-          priority = 4;
-          contextWindow = 1048576;
-          input = [
-            "text"
-            "image"
-          ];
-          supportsImageDetailOriginal = true;
           maxOutputTokens = 384000;
           thinking = {
             efforts = [

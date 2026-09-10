@@ -76,6 +76,7 @@ Model fields are capability declarations, not inferred defaults:
 | `contextWindow`, `maxOutputTokens` | Optional token limits. |
 | `input` | Accepted modalities, normally `[ "text" ]` or `[ "text" "image" ]`. |
 | `supportsImageDetailOriginal` | Whether the model supports Codex's `original` image-detail mode. It is independent of ordinary image input. |
+| `supportsSearchTool` | Whether Codex should offer its search tool for the model; falls back to the baseline catalog value when unset. |
 | `thinking.efforts`, `thinking.default` | Exact provider-supported effort levels and the provider's default. |
 
 Define effort levels and image capabilities only in this registry. Consumers

@@ -40,6 +40,7 @@
           input_modalities = model.input or [ "text" ];
           supports_image_detail_original =
             model.supportsImageDetailOriginal or baseline.supports_image_detail_original;
+          supports_search_tool = model.supportsSearchTool or baseline.supports_search_tool;
           context_window = model.contextWindow or null;
           max_context_window = model.contextWindow or null;
           priority = model.priority or baseline.priority;
@@ -116,6 +117,15 @@
           ${lib.optionalString (agentConfig.reasoningSummaries or false) ''
             model_reasoning_summary = "auto"
             model_reasoning_effort = "${defaultModel.thinking.default}"
+          ''}
+          ${lib.optionalString
+            ((agentConfig.reasoningEffort or false) && !(agentConfig.reasoningSummaries or false))
+            ''
+              model_reasoning_effort = "${defaultModel.thinking.default}"
+            ''
+          }
+          ${lib.optionalString (agentConfig.disableWebSearch or false) ''
+            web_search = "disabled"
           ''}
 
           [features]
