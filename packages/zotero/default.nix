@@ -6,14 +6,14 @@
 }:
 stdenv.mkDerivation rec {
   pname = "zotero";
-  version = "10.0.1";
+  version = "10.0.2";
 
   # Universal build: single DMG for both Apple Silicon and Intel.
   # version + sha256 from https://github.com/Homebrew/homebrew-cask (Casks/z/zotero.rb)
   src = fetchurl {
     name = "Zotero-${version}.dmg";
     url = "https://download.zotero.org/client/release/${version}/Zotero-${version}.dmg";
-    hash = "sha256-G25XztstvL4/McBgaXNNIgFVnamaNMf4QWe2tMfuWqg=";
+    hash = "sha256-mcLz0HMJDMfvKkNgnDpnjqvewTLvjIxEesq5/LIEza4=";
   };
 
   nativeBuildInputs = [ undmg ];
