@@ -17,7 +17,8 @@ let
   # Shared by NixOS and Darwin: the upFlags option + the tailscale-auth command.
   # Replaces the NixOS module's extraSetFlags, which created a tailscaled-set
   # service that ran before login at boot (so the pref didn't persist). Default
-  # accepts advertised subnet routes; desktop-lab-peace overrides to advertise.
+  # accepts advertised subnet routes, but does not accept DNS settings from the
+  # tailnet control plane. This keeps local DNS independent of Tailscale.
   # --operator is added by the script itself, not per-host.
   common =
     {
@@ -32,9 +33,9 @@ let
         type = lib.types.listOf lib.types.str;
         default = [
           "--accept-routes"
-          "--accept-dns" # MagicDNS resolves *.tailscale; no manual /etc/hosts
+          "--accept-dns=false"
         ];
-        description = "Route flags passed to `tailscale up` by tailscale-auth (--operator is added automatically).";
+        description = "Route flags passed to `tailscale up` by tailscale-auth (--operator is added automatically). Tailscale DNS is disabled to keep local DNS independent of the tailnet control plane.";
       };
       config.environment.systemPackages = [
         pkgs.tailscale

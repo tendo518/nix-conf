@@ -106,30 +106,30 @@
           Port = 22;
           IdentityFile = "~/.ssh/id_ed25519";
         };
-        # Tailnet hosts, aliased <host>.tailnet. Hostname is the MagicDNS name,
-        # so the entries keep working when IPs change.
+        # Tailnet hosts, aliased <host>.tailnet. Use Tailscale IPs because
+        # accept-dns is disabled; update an address if a node is re-enrolled.
         "desktop-home-saki.tailnet" = {
-          Hostname = "desktop-home-saki.tail7b233.ts.net";
+          Hostname = "100.124.50.41";
           User = "tendo";
           IdentityFile = "~/.ssh/id_ed25519";
         };
         "desktop-lab-peace.tailnet" = {
-          Hostname = "desktop-lab-peace.tail7b233.ts.net";
+          Hostname = "100.66.176.74";
           User = "pengwy";
           IdentityFile = "~/.ssh/id_ed25519";
         };
         "laptop-solar-chiyoko.tailnet" = {
-          Hostname = "laptop-solar-chiyoko.tail7b233.ts.net";
+          Hostname = "100.111.132.42";
           User = "tendo";
           IdentityFile = "~/.ssh/id_ed25519";
         };
         "nas-home-coin.tailnet" = {
-          Hostname = "nas-home-coin.tail7b233.ts.net";
+          Hostname = "100.102.147.88";
           User = "tendo";
           IdentityFile = "~/.ssh/id_ed25519";
         };
         "server-lab-sardine.tailnet" = {
-          Hostname = "server-lab-sardine.tail7b233.ts.net";
+          Hostname = "100.81.243.74";
           User = "tendo";
           IdentityFile = "~/.ssh/id_ed25519";
         };

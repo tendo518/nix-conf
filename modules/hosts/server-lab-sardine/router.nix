@@ -71,7 +71,7 @@ _: {
     # default gateway, so routing is consolidated here.
     host.tailscale.upFlags = [
       "--advertise-routes=192.168.11.0/24,172.18.36.0/23,172.18.34.0/23,10.16.0.0/17"
-      "--accept-dns"
+      "--accept-dns=false"
     ];
     services.tailscale.useRoutingFeatures = "server";
 
