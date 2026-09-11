@@ -3,16 +3,18 @@
 Living reference for how the machines, the tailnet, subnet routing, and the
 server's services interconnect. Keep this in sync when the config changes.
 Single sources of truth are referenced inline: **`modules/network/tailscale.nix`**
-(subnet-router defaults and dynamic host completion),
-**`modules/hosts/server-lab-sardine/*`** (server services).
+(subnet-router defaults), **`modules/network/ssh-client.nix`** (tailnet SSH
+hosts), **`modules/hosts/server-lab-sardine/*`** (server services).
 
 ---
 
 ## 1. Machines & Tailnet
 
-Mesh overlay via **Tailscale MagicDNS**. Fish completes live peer DNS names from
-`tailscale status --json`; selected `<host>.tailscale` names resolve through
-MagicDNS without a static host/IP table.
+Mesh overlay via **Tailscale MagicDNS**. `ssh-client.nix` has one entry per
+tailnet host, aliased `<host>.tailnet` with `Hostname` set to the MagicDNS FQDN
+(`<host>.tail7b233.ts.net`) so the entries survive IP changes. Fish completes
+those aliases from `tailscale status --json`; enumerate peers with
+`tailscale status` when the tailnet changes.
 
 | host | OS | ssh user |
 |------|----|----------|

@@ -1,5 +1,5 @@
 {
-  flake.modules.home."network/ssh-client" = _: {
+  flake.modules.home."network/ssh-client" = { pkgs, ... }: {
     # services.ssh-agent.enable = true;
     programs.ssh = {
       enable = true;
@@ -106,8 +106,46 @@
           Port = 22;
           IdentityFile = "~/.ssh/id_ed25519";
         };
-        # Tailscale host completion is configured by network/tailscale.
+        # Tailnet hosts, aliased <host>.tailnet. Hostname is the MagicDNS name,
+        # so the entries keep working when IPs change.
+        "desktop-home-saki.tailnet" = {
+          Hostname = "desktop-home-saki.tail7b233.ts.net";
+          User = "tendo";
+          IdentityFile = "~/.ssh/id_ed25519";
+        };
+        "desktop-lab-peace.tailnet" = {
+          Hostname = "desktop-lab-peace.tail7b233.ts.net";
+          User = "pengwy";
+          IdentityFile = "~/.ssh/id_ed25519";
+        };
+        "laptop-solar-chiyoko.tailnet" = {
+          Hostname = "laptop-solar-chiyoko.tail7b233.ts.net";
+          User = "tendo";
+          IdentityFile = "~/.ssh/id_ed25519";
+        };
+        "nas-home-coin.tailnet" = {
+          Hostname = "nas-home-coin.tail7b233.ts.net";
+          User = "tendo";
+          IdentityFile = "~/.ssh/id_ed25519";
+        };
+        "server-lab-sardine.tailnet" = {
+          Hostname = "server-lab-sardine.tail7b233.ts.net";
+          User = "tendo";
+          IdentityFile = "~/.ssh/id_ed25519";
+        };
       };
     };
+
+    # Complete the tailnet aliases from the live peer list, so a newly joined
+    # machine shows up before its Host entry is added above.
+    programs.fish.functions.__fish_tailscale_ssh_hosts = ''
+      if not set -q __tailscale_ssh_hosts
+          set -g __tailscale_ssh_hosts (tailscale status --json | ${pkgs.jq}/bin/jq -r '.Peer[]? | "\(.HostName).tailnet"')
+      end
+      printf '%s\n' $__tailscale_ssh_hosts
+    '';
+    programs.fish.interactiveShellInit = ''
+      complete -c ssh -k -f -a '(__fish_tailscale_ssh_hosts)'
+    '';
   };
 }
