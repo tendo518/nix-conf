@@ -25,7 +25,7 @@
 
         # Office & Productivity
         obsidian
-        chatgpt-desktop
+        llm-agents.chatgpt
         llm-agents.hermes-desktop
         yt-dlp # upstream deno build fail
         qq

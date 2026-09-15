@@ -11,7 +11,7 @@
         # yt-dlp  # upstream deno build fail
         qq
         deskflow
-        chatgpt-desktop
+        llm-agents.chatgpt
         llm-agents.hermes-desktop
         obs-studio
         calibre

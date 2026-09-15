@@ -29,7 +29,7 @@
         zathura
         telegram-desktop
         chromium
-        chatgpt-desktop
+        llm-agents.chatgpt
 
         darktable
         imagemagick

@@ -15,9 +15,9 @@ _: {
         obsidian
         skimpdf
         deskflow
-        chatgpt-desktop
+        llm-agents.chatgpt
         llm-agents.hermes-desktop
-        spotify
+        # spotify  # 这玩意发布不带版本的，上游只能 web.archive.org 打包
         ticktick
 
         wechat

@@ -4,7 +4,7 @@
 # Add new packages by creating a subdirectory with default.nix
 # and adding it here. Platform-specific packages should return null
 # on unsupported host platforms.
-{ pkgs, inputs }:
+{ pkgs }:
 {
   # ticktick only available on darwin
   ticktick = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./ticktick { } else null;
@@ -14,15 +14,6 @@
 
   # deskflow only available on darwin
   deskflow = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./deskflow { } else null;
-
-  # ChatGPT desktop: official artifact on macOS; llm-agents' Linux-only chatgpt on Linux
-  chatgpt-desktop =
-    if pkgs.stdenv.hostPlatform.isDarwin then
-      pkgs.callPackage ./chatgpt-desktop { }
-    else if pkgs.stdenv.hostPlatform.isLinux then
-      inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.chatgpt
-    else
-      null;
 
   # clash-verge-rev only available on darwin
   clash-verge-rev =

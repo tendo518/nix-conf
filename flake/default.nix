@@ -26,6 +26,6 @@
       formatter = pkgs.nixfmt-tree;
 
       # Export all custom packages to flake outputs (filter out nulls from platform-conditionals)
-      packages = pkgs.lib.filterAttrs (_: pkg: pkg != null) (import ../packages { inherit pkgs inputs; });
+      packages = pkgs.lib.filterAttrs (_: pkg: pkg != null) (import ../packages { inherit pkgs; });
     };
 }

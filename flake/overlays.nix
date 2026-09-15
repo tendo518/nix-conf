@@ -29,18 +29,6 @@
           prev.deskflow;
     };
 
-    # ChatGPT desktop overlay: official artifact on macOS; llm-agents' Linux-only
-    # chatgpt package on Linux
-    chatgpt-desktop = final: prev: {
-      chatgpt-desktop =
-        if prev.stdenv.hostPlatform.isDarwin then
-          final.callPackage ../packages/chatgpt-desktop { }
-        else if prev.stdenv.hostPlatform.isLinux then
-          final.llm-agents.chatgpt
-        else
-          prev.chatgpt-desktop or null;
-    };
-
     # Clash Verge Rev overlay with macOS support (Pin version)
     clash-verge-rev =
       final: prev:
