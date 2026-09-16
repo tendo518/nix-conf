@@ -31,18 +31,29 @@ in
   flake.modules.nixos."desktop/fonts" =
     { pkgs, ... }:
     {
-      fonts.packages = sharedPackages pkgs;
+      # IBM Plex 只替换 Linux 上的 sans/serif;monospace 仍用 Maple Mono NF CN。
+      # macOS 不装 IBM Plex,避免影响系统字体栈。
+      fonts.packages = sharedPackages pkgs ++ [
+        (pkgs.ibm-plex.override {
+          families = [
+            "sans"
+            "sans-sc"
+            "serif"
+          ];
+        })
+      ];
 
       fonts.fontconfig = {
         enable = true;
         defaultFonts = {
           serif = [
-            "Noto Serif"
+            "IBM Plex Serif"
             "Noto Serif CJK SC"
             "Noto Color Emoji"
           ];
           sansSerif = [
-            "Noto Sans"
+            "IBM Plex Sans"
+            "IBM Plex Sans SC"
             "Noto Sans CJK SC"
             "Noto Color Emoji"
           ];
