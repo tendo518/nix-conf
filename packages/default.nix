@@ -29,4 +29,8 @@
 
   # zotero: official universal DMG on darwin
   zotero = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./zotero { } else null;
+
+  # workbuddy-cn: Tencent WorkBuddy, arm64-only DMG on darwin
+  workbuddy-cn =
+    if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./workbuddy-cn { } else null;
 }

@@ -23,6 +23,7 @@ _: {
         wechat
         qq
         tencent-meeting
+        workbuddy-cn
 
         # stats
         drawio

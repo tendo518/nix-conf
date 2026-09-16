@@ -1,10 +1,10 @@
 {
-  stdenv,
+  stdenvNoCC,
   lib,
   unzip,
   fetchurl,
 }:
-stdenv.mkDerivation rec {
+stdenvNoCC.mkDerivation rec {
   pname = "keepingyouawake";
   version = "1.6.8";
 

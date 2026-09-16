@@ -74,6 +74,14 @@
         if prev.stdenv.hostPlatform.isDarwin then final.callPackage ../packages/zotero { } else prev.zotero;
     };
 
+    # Tencent WorkBuddy overlay with macOS (Apple Silicon) support (Pin version)
+    workbuddy-cn =
+      final: prev:
+      if prev.stdenv.hostPlatform.isDarwin then
+        { workbuddy-cn = final.callPackage ../packages/workbuddy-cn { }; }
+      else
+        { };
+
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
     llm-agents = final: _prev: {

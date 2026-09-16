@@ -1,5 +1,5 @@
 {
-  stdenv,
+  stdenvNoCC,
   lib,
   fetchurl,
   makeWrapper,
@@ -9,7 +9,7 @@
 let
   appname = "TickTick";
 in
-stdenv.mkDerivation {
+stdenvNoCC.mkDerivation {
   pname = "ticktick";
   version = "8.2.03";
 
@@ -28,6 +28,11 @@ stdenv.mkDerivation {
     runHook preInstall
     mkdir -p $out/{Applications/${appname}.app,bin}
     cp -R . $out/Applications/${appname}.app
+
+    # 7zz exports HFS extended attributes as sibling "name:com.apple.*" files,
+    # which are not part of the bundle Appest signed.
+    find $out/Applications/${appname}.app -name '*:com.apple.*' -delete
+
     makeWrapper $out/Applications/${appname}.app/Contents/MacOS/${appname} $out/bin/ticktick
     runHook postInstall
   '';

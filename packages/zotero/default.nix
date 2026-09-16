@@ -1,10 +1,10 @@
 {
-  stdenv,
+  stdenvNoCC,
   lib,
   undmg,
   fetchurl,
 }:
-stdenv.mkDerivation rec {
+stdenvNoCC.mkDerivation rec {
   pname = "zotero";
   version = "10.0.2";
 

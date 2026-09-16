@@ -1,10 +1,10 @@
 {
-  stdenv,
+  stdenvNoCC,
   lib,
   undmg,
   fetchurl,
 }:
-stdenv.mkDerivation rec {
+stdenvNoCC.mkDerivation rec {
   pname = "Skim";
   version = "1.7.15";
 
@@ -17,6 +17,10 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ undmg ];
 
   sourceRoot = ".";
+
+  # Skim's SharedSupport scripts must stay as shipped: rewriting their shebangs
+  # invalidates the bundle's Developer ID signature.
+  dontPatchShebangs = true;
 
   installPhase = ''
     runHook preInstall
