@@ -1,9 +1,9 @@
-# Mihomo runtime config template. mihomo-ctl subscription init replaces $URL at runtime.
+# Mihomo runtime config template. mihomo-ctl replaces $URL and $MODE at runtime.
 # Never put a real subscription URL in this file.
 
 mixed-port: 7890
 
-mode: rule
+mode: $MODE
 log-level: info
 allow-lan: false
 ipv6: true
@@ -56,14 +56,12 @@ proxy-providers:
       lazy: true
 
 proxy-groups:
-  # Used when Mihomo mode is set to global.
+  # Used when the Mihomo mode is global. It follows the PROXY selection so
+  # `mihomo-ctl proxy node` picks the exit node for both modes.
   - name: GLOBAL
     type: select
     proxies:
-      - AUTO
-      - DIRECT
-    use:
-      - subscription
+      - PROXY
 
   - name: PROXY
     type: select

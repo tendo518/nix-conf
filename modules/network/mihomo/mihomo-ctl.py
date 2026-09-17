@@ -34,11 +34,13 @@ CONFIG_PATH = CONFIG_DIR / "config.yaml"
 STATE_DIR = Path("/var/lib/mihomo")
 SUBSCRIPTIONS_DIR = STATE_DIR / "subscriptions"
 ACTIVE_SUBSCRIPTION_PATH = STATE_DIR / "active-subscription"
+MODE_STATE_FILE = STATE_DIR / "mode"
 ROUTING_STATE_DIR = Path("/run/mihomo-routing")
 ROUTING_STATE_FILE = ROUTING_STATE_DIR / "rules"
 CONTROLLER = "http://127.0.0.1:9090"
 TABLE = "2023"
 TUN = "mihomo"
+MODES = ("rule", "global", "direct", "script")
 SUDO = "/run/wrappers/bin/sudo"
 TEMPLATE_PATH = "@MIHOMO_TEMPLATE_PATH@"
 SYSTEMD_CREDS = "@SYSTEMD_CREDS@"
@@ -283,6 +285,30 @@ def set_active_subscription(name: str) -> None:
         temporary_path.unlink(missing_ok=True)
 
 
+def saved_mode() -> str:
+    if not MODE_STATE_FILE.is_file():
+        return "rule"
+    mode = MODE_STATE_FILE.read_text().strip()
+    if mode not in MODES:
+        raise MihomoError(f"Saved Mihomo mode is invalid: {MODE_STATE_FILE}")
+    return mode
+
+
+def save_mode(mode: str) -> None:
+    STATE_DIR.mkdir(mode=0o750, parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix="mode.", dir=STATE_DIR)
+    temporary_path = Path(temporary)
+    try:
+        with os.fdopen(fd, "w") as output:
+            output.write(f"{mode}\n")
+        os.chown(temporary_path, 0, 0)
+        # The mode is not a secret; let unprivileged `mihomo-ctl mode` read it.
+        os.chmod(temporary_path, 0o644)
+        os.replace(temporary_path, MODE_STATE_FILE)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
 def subscription_names() -> list[str]:
     if not SUBSCRIPTIONS_DIR.is_dir():
         return []
@@ -293,8 +319,8 @@ def subscription_names() -> list[str]:
     )
 
 
-def write_config(template: str, url: str) -> None:
-    rendered = template.replace("$URL", url)
+def write_config(template: str, url: str, mode: str) -> None:
+    rendered = template.replace("$URL", url).replace("$MODE", mode)
     fd, temporary = tempfile.mkstemp(prefix="config.yaml.", dir=CONFIG_DIR)
     temporary_path = Path(temporary)
     try:
@@ -310,21 +336,9 @@ def write_config(template: str, url: str) -> None:
 def apply_subscription(template: str, name: str) -> None:
     url = load_subscription(name)
     set_active_subscription(name)
-    write_config(template, url)
-    routing_active = (
-        command(
-            "systemctl",
-            "is-active",
-            "--quiet",
-            "mihomo-routing.service",
-            check=False,
-        ).returncode
-        == 0
-    )
+    write_config(template, url, saved_mode())
     cleanup_runtime("tun")
-    command("systemctl", "restart", "mihomo.service")
-    if routing_active:
-        command("systemctl", "restart", "mihomo-routing.service")
+    restart_mihomo()
 
 
 def init_runtime(template: str) -> None:
@@ -506,6 +520,40 @@ def wait_for_tun() -> None:
             return
         time.sleep(1)
     raise MihomoError(f"Mihomo TUN interface {TUN} did not appear")
+
+
+def routing_service_active() -> bool:
+    return (
+        command(
+            "systemctl",
+            "is-active",
+            "--quiet",
+            "mihomo-routing.service",
+            check=False,
+        ).returncode
+        == 0
+    )
+
+
+def reinstall_routing() -> None:
+    """Rebuild the policy routes by stopping and starting the routing unit."""
+    command("systemctl", "stop", "mihomo-routing.service")
+    command("systemctl", "start", "mihomo-routing.service")
+
+
+def restart_mihomo() -> None:
+    """Restart the daemon and put transparent routing back in place.
+
+    Restarting the daemon makes systemd stop mihomo-routing through BindsTo, so
+    the routing unit is stopped up front: a propagated stop that lands while a
+    routing restart is in flight cancels that start (status=15/TERM).
+    """
+    routing_enabled = routing_service_active()
+    if routing_enabled:
+        command("systemctl", "stop", "mihomo-routing.service")
+    command("systemctl", "restart", "mihomo.service")
+    if routing_enabled:
+        command("systemctl", "start", "mihomo-routing.service")
 
 
 def choose_base() -> int:
@@ -980,16 +1028,29 @@ def set_mode(mode: str | None) -> None:
     controller_check()
     if mode is None:
         config = api("/configs")
-        console.print(
+        current = (
             config.get("mode", "unknown")
             if isinstance(config, dict)
             else "unknown"
         )
+        saved = saved_mode()
+        console.print(current)
+        if current != saved:
+            warning(
+                f"Runtime mode {current} differs from the saved mode {saved}; "
+                f"run: sudo mihomo-ctl mode {saved}"
+            )
         return
-    if mode not in {"rule", "global", "direct", "script"}:
-        raise MihomoError("Mode must be one of: rule, global, direct, script")
-    api("/configs", "PUT", {"mode": mode})
+    if mode not in MODES:
+        raise MihomoError(f"Mode must be one of: {', '.join(MODES)}")
+    as_root()
+    save_mode(mode)
+    # PATCH only touches the general configuration. PUT would re-apply the whole
+    # config, which rebuilds the TUN device and drops the policy routes.
+    api("/configs", "PATCH", {"mode": mode})
     success(f"Mihomo mode: {mode}")
+    if mode == "global":
+        info(f"Global mode uses the PROXY selection: {selected_node()}")
 
 
 def service_invocation_id() -> str:
@@ -1126,7 +1187,9 @@ def routing_enable() -> None:
     as_root()
     require_config()
     command("systemctl", "start", "mihomo.service")
-    command("systemctl", "start", "mihomo-routing.service")
+    # Stop and start: the unit stays "active" after a Mihomo reload even when its
+    # policy routes are gone, so a plain start would not repair them.
+    reinstall_routing()
     success("Mihomo transparent routing enabled")
 
 
@@ -1147,7 +1210,8 @@ def reload() -> None:
     command("mihomo", "-t", "-d", str(STATE_DIR), "-f", str(CONFIG_PATH))
     info("Reloading Mihomo through the local controller")
     api("/configs?force=true", "PUT", {"path": str(CONFIG_PATH), "payload": ""})
-    command("systemctl", "restart", "mihomo-routing.service")
+    if routing_service_active():
+        reinstall_routing()
     run_doctor()
 
 
@@ -1184,9 +1248,9 @@ def doctor() -> None:
     run_doctor()
 
 
-@proxy_app.command()
+@app.command()
 def mode(value: Annotated[str | None, typer.Argument()] = None) -> None:
-    """Show or set the Mihomo mode."""
+    """Show or set the Mihomo mode (rule, global, direct, script)."""
     set_mode(value)
 
 
