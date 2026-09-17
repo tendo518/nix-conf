@@ -34,10 +34,32 @@ switch-nixos hostname=`hostname -s` *args:
 switch-darwin hostname=`hostname -s` *args:
     nh darwin switch -H {{ hostname }} . {{ args }}
 
+# Make the next NixOS generation the boot default (activate on reboot).
+[group('System Management')]
+boot-nixos hostname=`hostname -s` *args:
+    nh os boot -H {{ hostname }} . {{ args }}
+
 # Install NixOS on a new machine.
 [group('System Management')]
 install-nixos hostname ip_address:
     nixos-anywhere --flake .#{{ hostname }} root@{{ ip_address }}
+
+# Install NixOS on a new machine over SSH (default target <hostname>.tailnet).
+# Wipes the target disks; root SSH must work on the target.
+[group('System Management')]
+remote-install-nixos hostname target=(hostname + ".tailnet"):
+    nixos-anywhere --flake .#{{ hostname }} root@{{ target }}
+
+# Switch a remote NixOS host over SSH (default target <hostname>.tailnet).
+[group('System Management')]
+remote-switch-nixos hostname target=(hostname + ".tailnet") *args:
+    nh os switch -H {{ hostname }} --target-host {{ target }} . {{ args }}
+
+# Make the next generation the boot default on a remote NixOS host
+# (default target <hostname>.tailnet).
+[group('System Management')]
+remote-boot-nixos hostname target=(hostname + ".tailnet") *args:
+    nh os boot -H {{ hostname }} --target-host {{ target }} . {{ args }}
 
 ############################################################################
 #
@@ -59,6 +81,11 @@ nix-build-darwin hostname=`hostname -s` *args:
 [group('Raw Nix Commands')]
 nix-switch-nixos hostname=`hostname -s` *args:
     sudo nixos-rebuild switch --flake .#{{ hostname }} {{ args }}
+
+# Make the next NixOS generation the boot default (raw)
+[group('Raw Nix Commands')]
+nix-boot-nixos hostname=`hostname -s` *args:
+    sudo nixos-rebuild boot --flake .#{{ hostname }} {{ args }}
 
 # Switch for Darwin (raw)
 [group('Raw Nix Commands')]

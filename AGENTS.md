@@ -193,9 +193,13 @@ The `nh` tool is used for most operations. Set `NH_FLAKE` to point to this repo:
 just                          # List all commands
 just switch-nixos             # Build and switch NixOS (current host)
 just switch-nixos <hostname>  # Build and switch NixOS (specific host)
+just boot-nixos <hostname>    # Set NixOS boot default (activate on reboot)
 just build-nixos              # Build without switching
 just switch-darwin            # Build and switch Darwin
 just build-darwin             # Build Darwin without switching
+just remote-switch-nixos <host> [target]  # Deploy to a remote NixOS host over SSH
+just remote-boot-nixos <host> [target]    # Set a remote NixOS host's boot default
+just remote-install-nixos <host> [target] # Reinstall a NixOS host via nix-anywhere
 just up                       # Update all flake inputs
 just up-input <input>         # Update specific flake input
 just clean                    # Garbage collect (keep 3 generations)
@@ -212,6 +216,7 @@ just gcroot                   # List garbage collection roots
 # Raw nix commands (fallback if nh unavailable)
 just nix-build-nixos          # Raw nix build for NixOS
 just nix-switch-nixos         # Raw nixos-rebuild switch
+just nix-boot-nixos           # Raw nixos-rebuild boot
 just nix-build-darwin         # Raw nix build for Darwin
 just nix-switch-darwin        # Raw darwin-rebuild switch
 ```
@@ -239,7 +244,8 @@ just nix-switch-darwin        # Raw darwin-rebuild switch
   becomes unreachable. Do not run nixos-anywhere against a box you cannot
   reach physically/IPMI/LAN — you can strand it in the kexec installer.
 - To update an already-running host, use `nixos-rebuild switch --target-host`
-  or `nh` instead of nixos-anywhere.
+  or `nh` instead of nixos-anywhere (`just remote-switch-nixos <host>` wraps
+  this for tailnet hosts).
 
 ### New files must be `git add`-ed before flake evaluation
 
