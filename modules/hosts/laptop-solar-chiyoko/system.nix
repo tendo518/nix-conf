@@ -28,7 +28,7 @@
         libcamera
         zathura
         telegram-desktop
-        chromium
+        google-chrome
         llm-agents.chatgpt
 
         darktable

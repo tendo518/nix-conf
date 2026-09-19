@@ -37,7 +37,7 @@
 
         # Development & Browsing
         telegram-desktop
-        chromium
+        google-chrome
 
         darktable
         imagemagick
