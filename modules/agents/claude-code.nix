@@ -10,38 +10,35 @@
       providers = import ./_providers.nix { inherit config lib; };
       selected = providers.selectProviders "claudeCode";
 
-      mkClaudecodeWrapper =
-        baseUrl: model: smallModel: apiKeyPath: name: effortLevel:
-        pkgs.writeShellScriptBin name ''
-          export ANTHROPIC_BASE_URL="${baseUrl}"
-          export ANTHROPIC_MODEL="${model}"
-          export ANTHROPIC_DEFAULT_OPUS_MODEL="${model}"
-          export ANTHROPIC_DEFAULT_SONNET_MODEL="${model}"
-          export ANTHROPIC_DEFAULT_HAIKU_MODEL="${smallModel}"
-          export CLAUDE_CODE_SUBAGENT_MODEL="${smallModel}"
-          ${lib.optionalString (effortLevel != "") "export CLAUDE_CODE_EFFORT_LEVEL=\"${effortLevel}\""}
-          export API_TIMEOUT_MS="1200000"
-          export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
-          if [ -r "${apiKeyPath}" ]; then
-            export ANTHROPIC_AUTH_TOKEN="$(cat "${apiKeyPath}")"
-          fi
-          exec ${lib.getExe pkgs.llm-agents.claude-code} "$@"
-        '';
-
       mkClaudecodeWrappers =
         providerName: provider:
         let
           agentConfig = provider.agents.claudeCode;
-          smallModelId =
-            provider.models.${agentConfig.smallModel}.anthropicId
-              or provider.models.${agentConfig.smallModel}.id;
+          effortLevel = agentConfig.effortLevel or "";
+          smallModel = provider.models.${agentConfig.smallModel};
+          smallModelId = smallModel.anthropicId or smallModel.id;
+          apiKeyPath = config.age.secrets.${provider.secret}.path;
         in
         lib.mapAttrsToList (
           modelName: model:
-          mkClaudecodeWrapper provider.endpoints.anthropic (model.anthropicId or model.id) smallModelId
-            provider.secret.path
-            "cc-${providerName}-${modelName}"
-            (agentConfig.effortLevel or "")
+          let
+            modelId = model.anthropicId or model.id;
+          in
+          pkgs.writeShellScriptBin "cc-${providerName}-${modelName}" ''
+            export ANTHROPIC_BASE_URL="${provider.endpoints.anthropic}"
+            export ANTHROPIC_MODEL="${modelId}"
+            export ANTHROPIC_DEFAULT_OPUS_MODEL="${modelId}"
+            export ANTHROPIC_DEFAULT_SONNET_MODEL="${modelId}"
+            export ANTHROPIC_DEFAULT_HAIKU_MODEL="${smallModelId}"
+            export CLAUDE_CODE_SUBAGENT_MODEL="${smallModelId}"
+            ${lib.optionalString (effortLevel != "") "export CLAUDE_CODE_EFFORT_LEVEL=\"${effortLevel}\""}
+            export API_TIMEOUT_MS="1200000"
+            export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
+            if [ -r "${apiKeyPath}" ]; then
+              export ANTHROPIC_AUTH_TOKEN="$(cat "${apiKeyPath}")"
+            fi
+            exec ${lib.getExe pkgs.llm-agents.claude-code} "$@"
+          ''
         ) provider.models;
 
       claudecodeWrappers = lib.concatLists (lib.mapAttrsToList mkClaudecodeWrappers selected);

@@ -11,10 +11,13 @@
       selected = providers.selectProviders "codex";
       baseline = builtins.fromJSON (builtins.readFile ./_model-baseline.json);
 
+      # Wording of the Codex CLI's own reasoning levels; a level the registry
+      # declares beyond these falls back to the level name.
       reasoningLevelDescriptions = {
         low = "Fast responses with lighter reasoning";
-        medium = "Moderate reasoning depth for balanced speed and accuracy";
-        high = "Extra high reasoning depth for complex problems";
+        medium = "Balances speed and reasoning depth for everyday tasks";
+        high = "Greater reasoning depth for complex problems";
+        xhigh = "Extra high reasoning depth for complex problems";
         max = "Maximum reasoning depth for the hardest problems";
       };
 
@@ -38,21 +41,65 @@
             description = reasoningLevelDescriptions.${effort} or effort;
           }) thinking.efforts;
           input_modalities = model.input or [ "text" ];
-          supports_image_detail_original =
-            model.supportsImageDetailOriginal or baseline.supports_image_detail_original;
-          supports_search_tool = model.supportsSearchTool or baseline.supports_search_tool;
           context_window = model.contextWindow or null;
           max_context_window = model.contextWindow or null;
-          priority = model.priority or baseline.priority;
-        };
+        }
+        # `codexCatalog` carries raw Codex catalog attributes: whatever the
+        # registry writes there wins, so catalog fields need no per-field
+        # plumbing here.
+        // (model.codexCatalog or { });
 
-      catalogConfigs = lib.mapAttrs (
+      mkCodexWrapper =
+        profile:
+        pkgs.writeShellScriptBin profile ''
+          export CODEX_HOME="${config.xdg.configHome}/codex"
+          exec ${lib.getExe pkgs.llm-agents.codex} --profile ${profile} "$@"
+        '';
+
+      # Everything Codex needs per provider: the generated catalog, the profile
+      # that points at it, and the wrapper that selects that profile.
+      providerArtifacts = lib.mapAttrs (
         _name: provider:
-        pkgs.writeText "${provider.agents.codex.profile}-models.json" (
-          builtins.toJSON {
-            models = lib.mapAttrsToList (_model: model: mkCatalogModel provider model) provider.models;
-          }
-        )
+        let
+          agentConfig = provider.agents.codex;
+          defaultModel = provider.models.${agentConfig.defaultModel};
+          catalog = pkgs.writeText "${agentConfig.profile}-models.json" (
+            builtins.toJSON {
+              models = lib.mapAttrsToList (_model: model: mkCatalogModel provider model) provider.models;
+            }
+          );
+        in
+        {
+          inherit catalog;
+          profileConfig = pkgs.writeText "${agentConfig.profile}.config.toml" ''
+            model = "${defaultModel.id}"
+            model_provider = "${agentConfig.providerName}"
+            model_catalog_json = "${catalog}"
+            ${lib.optionalString (agentConfig.reasoningSummaries or false) ''
+              model_reasoning_summary = "auto"
+              model_reasoning_effort = "${defaultModel.thinking.default}"
+            ''}
+            ${lib.optionalString
+              ((agentConfig.reasoningEffort or false) && !(agentConfig.reasoningSummaries or false))
+              ''
+                model_reasoning_effort = "${defaultModel.thinking.default}"
+              ''
+            }
+            ${lib.optionalString (agentConfig.disableWebSearch or false) ''
+              web_search = "disabled"
+            ''}
+
+            [features]
+            # Experimental context management is only for the official OpenAI
+            # provider; keep it disabled in third-party profiles.
+            context_management.experimental_mode = false
+
+            [tui]
+            status_line = ["model-with-reasoning", "project-name", "run-state", "context-used"]
+            status_line_use_colors = true
+          '';
+          wrapper = mkCodexWrapper agentConfig.profile;
+        }
       ) selected;
 
       providerBlocks = lib.concatStrings (
@@ -60,6 +107,7 @@
           _name: provider:
           let
             agentConfig = provider.agents.codex;
+            secretPath = config.age.secrets.${provider.secret}.path;
           in
           ''
 
@@ -70,12 +118,12 @@
             stream_idle_timeout_ms = 600000
             request_max_retries = 6
           ''
-          + lib.optionalString (provider ? secret) ''
+          + ''
 
             [model_providers.${agentConfig.providerName}.auth]
-            command = "${pkgs.writeShellScript "read-${provider.secret.name}" ''
-              [ -r "${provider.secret.path}" ] || exit 1
-              value="$(<"${provider.secret.path}")"
+            command = "${pkgs.writeShellScript "read-${provider.secret}" ''
+              [ -r "${secretPath}" ] || exit 1
+              value="$(<"${secretPath}")"
               printf '%s' "$value"
             ''}"
           ''
@@ -104,51 +152,6 @@
         trust_level = "trusted"
       '';
 
-      profileConfigs = lib.mapAttrs (
-        _name: provider:
-        let
-          agentConfig = provider.agents.codex;
-          defaultModel = provider.models.${agentConfig.defaultModel};
-        in
-        pkgs.writeText "${agentConfig.profile}.config.toml" ''
-          model = "${defaultModel.id}"
-          model_provider = "${agentConfig.providerName}"
-          model_catalog_json = "${catalogConfigs.${_name}}"
-          ${lib.optionalString (agentConfig.reasoningSummaries or false) ''
-            model_reasoning_summary = "auto"
-            model_reasoning_effort = "${defaultModel.thinking.default}"
-          ''}
-          ${lib.optionalString
-            ((agentConfig.reasoningEffort or false) && !(agentConfig.reasoningSummaries or false))
-            ''
-              model_reasoning_effort = "${defaultModel.thinking.default}"
-            ''
-          }
-          ${lib.optionalString (agentConfig.disableWebSearch or false) ''
-            web_search = "disabled"
-          ''}
-
-          [features]
-          # Experimental context management is only for the official OpenAI
-          # provider; keep it disabled in third-party profiles.
-          context_management.experimental_mode = false
-
-          [tui]
-          status_line = ["model-with-reasoning", "project-name", "run-state", "context-used"]
-          status_line_use_colors = true
-        ''
-      ) selected;
-
-      mkCodexWrapper =
-        _name: provider:
-        let
-          profile = provider.agents.codex.profile;
-        in
-        pkgs.writeShellScriptBin profile ''
-          export CODEX_HOME="${config.xdg.configHome}/codex"
-          exec ${lib.getExe pkgs.llm-agents.codex} --profile ${profile} "$@"
-        '';
-
       codex = pkgs.writeShellScriptBin "codex" ''
         export CODEX_HOME="${config.xdg.configHome}/codex"
         exec ${lib.getExe pkgs.llm-agents.codex} "$@"
@@ -161,7 +164,7 @@
             profile = provider.agents.codex.profile;
           in
           ''
-            install -m 0644 ${profileConfigs.${name}} "$cfgDir/${profile}.config.toml"
+            install -m 0644 ${providerArtifacts.${name}.profileConfig} "$cfgDir/${profile}.config.toml"
           ''
         ) selected
       );
@@ -170,7 +173,7 @@
       home.packages = [
         codex
       ]
-      ++ lib.mapAttrsToList mkCodexWrapper selected;
+      ++ lib.mapAttrsToList (_name: provider: provider.wrapper) providerArtifacts;
 
       home.activation.setupCodexConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         cfgDir="${config.xdg.configHome}/codex"

@@ -11,16 +11,19 @@
       selected = providers.selectProviders "omp";
       apiKeyCommand = path: "!${pkgs.coreutils}/bin/cat ${path}";
 
+      defaultProvider = "senseaudio";
+      defaultModel =
+        (selected.${defaultProvider}.models.${selected.${defaultProvider}.agents.omp.defaultModel}).id;
+
       toOmpProvider =
         _name: provider:
         let
           agentConfig = provider.agents.omp;
-          thinking = model: model.thinking or null;
         in
         {
           baseUrl = provider.endpoints.${agentConfig.endpoint};
-          api = agentConfig.api;
-          apiKey = if provider ? secret then apiKeyCommand provider.secret.path else provider.apiKey;
+          api = providers.endpointApis.${agentConfig.endpoint};
+          apiKey = apiKeyCommand (config.age.secrets.${provider.secret}.path);
           models = lib.mapAttrsToList (
             _model: model:
             (
@@ -34,29 +37,18 @@
                 maxTokens = model.maxOutputTokens;
               })
             )
-            // (lib.optionalAttrs (thinking model != null) {
+            // (lib.optionalAttrs (model ? thinking) {
               reasoning = true;
               thinking = {
                 mode = "effort";
-                efforts = (thinking model).efforts;
-                defaultLevel = (thinking model).default;
+                efforts = model.thinking.efforts;
+                defaultLevel = model.thinking.default;
               };
             })
           ) provider.models;
         };
 
       ompProviders = lib.mapAttrs toOmpProvider selected;
-
-      defaultEntry = lib.findFirst (entry: entry.provider.agents.omp ? defaultModel) null (
-        lib.mapAttrsToList (name: provider: { inherit name provider; }) selected
-      );
-
-      defaultProvider = if defaultEntry == null then null else defaultEntry.name;
-      defaultModel =
-        if defaultEntry == null then
-          null
-        else
-          defaultEntry.provider.models.${defaultEntry.provider.agents.omp.defaultModel}.id;
 
       modelsYml = builtins.toJSON {
         providers = ompProviders;
@@ -87,10 +79,14 @@
     {
       home.packages = [ pkgs.llm-agents.omp ];
 
-      home.file."./.omp/agent/models.yml".force = true;
-      home.file."./.omp/agent/models.yml".text = modelsYml;
-      home.file."./.omp/agent/config.yml".force = true;
-      home.file."./.omp/agent/config.yml".text = configYml;
+      home.file."./.omp/agent/models.yml" = {
+        force = true;
+        text = modelsYml;
+      };
+      home.file."./.omp/agent/config.yml" = {
+        force = true;
+        text = configYml;
+      };
 
       age.secrets = providers.ageSecrets selected;
     };

@@ -13,6 +13,7 @@
       agentConfig = deepseek.agents.reasonix;
       defaultModel = deepseek.models.${agentConfig.defaultModel};
       reasonixHome = "${config.xdg.configHome}/reasonix";
+      secretPath = config.age.secrets.${deepseek.secret}.path;
 
       reasonixWrapped = pkgs.writeShellScriptBin "reasonix" ''
         export REASONIX_HOME="${reasonixHome}"
@@ -93,9 +94,9 @@
 
       home.activation.setupReasonixEnv = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         mkdir -p "${reasonixHome}"
-        if [ ! -e "${reasonixHome}/.env" ] && [ -r "${deepseek.secret.path}" ]; then
+        if [ ! -e "${reasonixHome}/.env" ] && [ -r "${secretPath}" ]; then
           umask 077
-          printf 'DEEPSEEK_API_KEY=%s\n' "$(cat "${deepseek.secret.path}")" > "${reasonixHome}/.env"
+          printf 'DEEPSEEK_API_KEY=%s\n' "$(cat "${secretPath}")" > "${reasonixHome}/.env"
         fi
       '';
 

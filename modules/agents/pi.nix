@@ -11,29 +11,34 @@
       selected = providers.selectProviders "pi";
       apiKeyCommand = path: "!${pkgs.coreutils}/bin/cat ${path}";
 
+      thinkingLevelMap =
+        efforts:
+        let
+          levels = [
+            "minimal"
+            "low"
+            "medium"
+            "high"
+            "xhigh"
+            "max"
+          ];
+        in
+        lib.genAttrs levels (level: if builtins.elem level efforts then level else null);
+
+      defaultProvider = "senseaudio";
+      defaultModel =
+        (selected.${defaultProvider}.models.${selected.${defaultProvider}.agents.pi.defaultModel}).id;
+
       toPiProvider =
         _name: provider:
         let
           agentConfig = provider.agents.pi;
-          thinkingLevelMap =
-            efforts:
-            let
-              levels = [
-                "minimal"
-                "low"
-                "medium"
-                "high"
-                "xhigh"
-                "max"
-              ];
-            in
-            lib.genAttrs levels (level: if builtins.elem level efforts then level else null);
         in
         {
           inherit (provider) name;
           baseUrl = provider.endpoints.${agentConfig.endpoint};
-          api = agentConfig.api;
-          apiKey = if provider ? secret then apiKeyCommand provider.secret.path else provider.apiKey;
+          api = providers.endpointApis.${agentConfig.endpoint};
+          apiKey = apiKeyCommand (config.age.secrets.${provider.secret}.path);
           models = lib.mapAttrsToList (
             _model: model:
             ({
@@ -51,17 +56,6 @@
 
       piProviders = lib.mapAttrs toPiProvider selected;
 
-      defaultEntry = lib.findFirst (entry: entry.provider.agents.pi ? defaultModel) null (
-        lib.mapAttrsToList (name: provider: { inherit name provider; }) selected
-      );
-
-      defaultProvider = if defaultEntry == null then null else defaultEntry.name;
-      defaultModel =
-        if defaultEntry == null then
-          null
-        else
-          defaultEntry.provider.models.${defaultEntry.provider.agents.pi.defaultModel}.id;
-
       modelsJson = builtins.toJSON {
         providers = piProviders;
       };
@@ -74,10 +68,14 @@
     {
       home.packages = [ pkgs.llm-agents.pi ];
 
-      home.file."./.pi/agent/models.json".force = true;
-      home.file."./.pi/agent/models.json".text = modelsJson;
-      home.file."./.pi/agent/settings.json".force = true;
-      home.file."./.pi/agent/settings.json".text = settingsJson;
+      home.file."./.pi/agent/models.json" = {
+        force = true;
+        text = modelsJson;
+      };
+      home.file."./.pi/agent/settings.json" = {
+        force = true;
+        text = settingsJson;
+      };
 
       age.secrets = providers.ageSecrets selected;
     };

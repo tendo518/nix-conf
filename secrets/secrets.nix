@@ -20,7 +20,6 @@ in
   # List all public keys that should be able to decrypt each secret.
   # Include: your user key (for editing) + host keys (for decryption at boot).
   "deepseek-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
-  "aliyun-codingplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "volcengine-codingplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "tendo-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "pengwy-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
@@ -30,5 +29,6 @@ in
   "tailscale-authkey.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "senseaudio-tokenplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "stepfun-plan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
+  "qwen-tokenplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "gpu-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
 }

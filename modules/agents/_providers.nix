@@ -1,43 +1,189 @@
 { config, lib }:
 let
   providers = {
-    aliyun = {
-      name = "Aliyun Coding Plan";
-      secret = {
-        name = "aliyun-codingplan-api-key";
-        file = ../../secrets/aliyun-codingplan-api-key.age;
-        path = config.age.secrets.aliyun-codingplan-api-key.path;
+    qwen = {
+      name = "Qwen Token Plan";
+      secret = "qwen-tokenplan-api-key";
+      endpoints = {
+        anthropic = "https://token-plan.maas.qianwenaiapi.com/apps/anthropic";
+        responses = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1";
       };
-      endpoints.anthropic = "https://coding.dashscope.aliyuncs.com/apps/anthropic";
-      agents.claudeCode = {
-        enable = false;
-        smallModel = "qwen3_5_plus";
+      agents = {
+        claudeCode = {
+          enable = true;
+          smallModel = "qwen3_8_flash";
+        };
+        codex = {
+          enable = true;
+          profile = "codex-qwen";
+          providerName = "qwen-token-plan";
+          defaultModel = "qwen3_8_max";
+          reasoningEffort = true;
+        };
+        omp = {
+          enable = true;
+          endpoint = "anthropic";
+          defaultModel = "qwen3_8_max";
+        };
+        pi = {
+          enable = true;
+          endpoint = "anthropic";
+          defaultModel = "qwen3_8_max";
+        };
       };
       models = {
-        qwen3_max = {
-          id = "qwen3-max-2026-01-23";
-          displayName = "Qwen3 Max";
-          input = [ "text" ];
+        qwen3_8_max = {
+          id = "qwen3.8-max";
+          displayName = "Qwen3.8 Max";
+          contextWindow = 983616;
+          input = [
+            "text"
+            "image"
+          ];
+          thinking = {
+            efforts = [
+              "low"
+              "medium"
+              "xhigh"
+            ];
+            default = "xhigh";
+          };
+          codexCatalog = {
+            priority = 1;
+            supports_image_detail_original = true;
+            supports_parallel_tool_calls = false;
+          };
         };
-        qwen3_6_plus = {
-          id = "qwen3.6-plus";
-          displayName = "Qwen3.6 Plus";
-          input = [ "text" ];
+        qwen3_8_flash = {
+          id = "qwen3.8-flash";
+          displayName = "Qwen3.8 Flash";
+          contextWindow = 983616;
+          input = [
+            "text"
+            "image"
+          ];
+          thinking = {
+            efforts = [
+              "low"
+              "medium"
+              "xhigh"
+            ];
+            default = "xhigh";
+          };
+          codexCatalog = {
+            priority = 2;
+            supports_image_detail_original = true;
+            supports_parallel_tool_calls = false;
+          };
         };
-        glm_5 = {
-          id = "glm-5";
-          displayName = "GLM 5";
+        qwen3_7_max = {
+          id = "qwen3.7-max";
+          displayName = "Qwen3.7 Max";
+          contextWindow = 1000000;
           input = [ "text" ];
+          thinking = {
+            efforts = [
+              "low"
+              "medium"
+              "high"
+              "xhigh"
+            ];
+            default = "high";
+          };
+          codexCatalog = {
+            priority = 3;
+            supports_parallel_tool_calls = false;
+          };
+        };
+        qwen3_7_plus = {
+          id = "qwen3.7-plus";
+          displayName = "Qwen3.7 Plus";
+          contextWindow = 1000000;
+          input = [
+            "text"
+            "image"
+          ];
+          thinking = {
+            efforts = [
+              "low"
+              "medium"
+              "high"
+              "xhigh"
+            ];
+            default = "high";
+          };
+          codexCatalog = {
+            priority = 4;
+            supports_image_detail_original = true;
+            supports_parallel_tool_calls = false;
+          };
+        };
+        glm_5_3 = {
+          id = "glm-5.3";
+          displayName = "GLM 5.3";
+          contextWindow = 1000000;
+          input = [ "text" ];
+          thinking = {
+            efforts = [
+              "low"
+              "medium"
+              "high"
+              "xhigh"
+            ];
+            default = "high";
+          };
+          codexCatalog = {
+            priority = 6;
+            supports_parallel_tool_calls = false;
+          };
+        };
+        glm_5_2 = {
+          id = "glm-5.2";
+          displayName = "GLM 5.2";
+          contextWindow = 1000000;
+          input = [ "text" ];
+          thinking = {
+            efforts = [
+              "low"
+              "medium"
+              "high"
+              "xhigh"
+            ];
+            default = "high";
+          };
+          codexCatalog = {
+            priority = 7;
+            supports_parallel_tool_calls = false;
+          };
+        };
+        ds_v4_1flash = {
+          id = "deepseek-v4.1-flash";
+          displayName = "DeepSeek-V4.1-Flash";
+          contextWindow = 1000000;
+          input = [
+            "text"
+            "image"
+          ];
+          thinking = {
+            efforts = [
+              "low"
+              "medium"
+              "high"
+              "xhigh"
+            ];
+            default = "high";
+          };
+          codexCatalog = {
+            priority = 8;
+            supports_image_detail_original = true;
+            supports_parallel_tool_calls = false;
+          };
         };
       };
     };
     senseaudio = {
       name = "SenseAudio Token Plan";
-      secret = {
-        name = "senseaudio-tokenplan-api-key";
-        file = ../../secrets/senseaudio-tokenplan-api-key.age;
-        path = config.age.secrets.senseaudio-tokenplan-api-key.path;
-      };
+      secret = "senseaudio-tokenplan-api-key";
       endpoints = {
         anthropic = "https://api.senseaudio.cn";
         responses = "https://api.senseaudio.cn/v1";
@@ -55,13 +201,11 @@ let
         };
         omp = {
           enable = true;
-          api = "anthropic-messages";
           endpoint = "anthropic";
           defaultModel = "ds_v4flash";
         };
         pi = {
           enable = true;
-          api = "anthropic-messages";
           endpoint = "anthropic";
           defaultModel = "ds_v4flash";
         };
@@ -126,7 +270,6 @@ let
             "text"
             "image"
           ];
-          supportsImageDetailOriginal = true;
           thinking = {
             efforts = [
               "low"
@@ -135,41 +278,38 @@ let
             ];
             default = "high";
           };
+          codexCatalog = {
+            supports_image_detail_original = true;
+          };
         };
       };
     };
     volces = {
       name = "Volcengine Coding Plan";
-      secret = {
-        name = "volcengine-codingplan-api-key";
-        file = ../../secrets/volcengine-codingplan-api-key.age;
-        path = config.age.secrets.volcengine-codingplan-api-key.path;
-      };
+      secret = "volcengine-codingplan-api-key";
       endpoints = {
         anthropic = "https://ark.cn-beijing.volces.com/api/coding";
         responses = "https://ark.cn-beijing.volces.com/api/coding/v3";
       };
       agents = {
         claudeCode = {
-          enable = true;
+          enable = false;
           smallModel = "glm_5_3_flash";
         };
         codex = {
-          enable = true;
+          enable = false;
           profile = "codex-volce";
           providerName = "volcengine-coding-plan";
           defaultModel = "glm_5_3_flash";
           reasoningSummaries = true;
         };
         omp = {
-          enable = true;
-          api = "anthropic-messages";
+          enable = false;
           endpoint = "anthropic";
           defaultModel = "glm_5_3_flash";
         };
         pi = {
-          enable = true;
-          api = "anthropic-messages";
+          enable = false;
           endpoint = "anthropic";
           defaultModel = "glm_5_3";
         };
@@ -199,7 +339,6 @@ let
             "text"
             "image"
           ];
-          supportsImageDetailOriginal = true;
           thinking = {
             efforts = [
               "low"
@@ -208,17 +347,16 @@ let
             ];
             default = "high";
           };
+          codexCatalog = {
+            supports_image_detail_original = true;
+          };
         };
       };
     };
 
     deepseek = {
       name = "DeepSeek";
-      secret = {
-        name = "deepseek-api-key";
-        file = ../../secrets/deepseek-api-key.age;
-        path = config.age.secrets.deepseek-api-key.path;
-      };
+      secret = "deepseek-api-key";
       endpoints = {
         openai = "https://api.deepseek.com";
         responses = "https://api.deepseek.com/";
@@ -241,10 +379,8 @@ let
         };
         omp = {
           enable = true;
-          api = "anthropic-messages";
           endpoint = "anthropic";
         };
-        pi.enable = false;
         reasonix = {
           enable = true;
           apiKeyEnv = "DEEPSEEK_API_KEY";
@@ -258,13 +394,11 @@ let
           anthropicId = "deepseek-flash[1m]";
           displayName = "DeepSeek-Flash";
           description = "Latest frontier agentic coding model with image input.";
-          priority = 1;
           contextWindow = 1048576;
           input = [
             "text"
             "image"
           ];
-          supportsImageDetailOriginal = true;
           maxOutputTokens = 384000;
           thinking = {
             efforts = [
@@ -274,14 +408,16 @@ let
             ];
             default = "high";
           };
+          codexCatalog = {
+            priority = 1;
+            supports_image_detail_original = true;
+          };
         };
         ds_v4pro = {
           id = "deepseek-v4-pro";
           anthropicId = "deepseek-v4-pro[1m]";
           displayName = "DeepSeek-V4-Pro";
           description = "Most capable frontier agentic coding model.";
-          priority = 2;
-          supportsSearchTool = false;
           contextWindow = 1048576;
           input = [ "text" ];
           maxOutputTokens = 384000;
@@ -293,17 +429,17 @@ let
             ];
             default = "high";
           };
+          codexCatalog = {
+            priority = 2;
+            supports_search_tool = false;
+          };
         };
       };
     };
 
     gpu = {
       name = "GPU";
-      secret = {
-        name = "gpu-api-key";
-        file = ../../secrets/gpu-api-key.age;
-        path = config.age.secrets.gpu-api-key.path;
-      };
+      secret = "gpu-api-key";
       endpoints = {
         openai = "http://172.18.36.44:8000/v1";
         responses = "http://172.18.36.44:8000/v1";
@@ -317,12 +453,10 @@ let
         };
         omp = {
           enable = true;
-          api = "openai-completions";
           endpoint = "openai";
         };
         pi = {
           enable = true;
-          api = "openai-completions";
           endpoint = "openai";
         };
       };
@@ -335,7 +469,6 @@ let
             "text"
             "image"
           ];
-          supportsImageDetailOriginal = true;
           thinking = {
             efforts = [
               "low"
@@ -344,17 +477,16 @@ let
             ];
             default = "high";
           };
+          codexCatalog = {
+            supports_image_detail_original = true;
+          };
         };
       };
     };
 
     stepfun = {
       name = "StepFun Step Plan";
-      secret = {
-        name = "stepfun-plan-api-key";
-        file = ../../secrets/stepfun-plan-api-key.age;
-        path = config.age.secrets.stepfun-plan-api-key.path;
-      };
+      secret = "stepfun-plan-api-key";
       endpoints = {
         anthropic = "https://api.stepfun.com/step_plan";
         openai = "https://api.stepfun.com/step_plan/v1";
@@ -374,13 +506,11 @@ let
         };
         omp = {
           enable = true;
-          api = "anthropic-messages";
           endpoint = "anthropic";
           defaultModel = "step_5_preview";
         };
         pi = {
           enable = true;
-          api = "anthropic-messages";
           endpoint = "anthropic";
           defaultModel = "step_5_preview";
         };
@@ -442,20 +572,32 @@ let
     };
   };
 
+  # Wire protocol spoken by each `endpoints` key; agent modules pick the entry
+  # named by their `endpoint` field.
+  endpointApis = {
+    anthropic = "anthropic-messages";
+    openai = "openai-completions";
+  };
+
   selectProviders =
     agent: lib.filterAttrs (_name: provider: provider.agents.${agent}.enable or false) providers;
 
+  # Every provider authenticates through an agenix secret named after
+  # `secrets/<secret>.age`.
   ageSecrets =
     selected:
     lib.listToAttrs (
-      lib.map (provider: lib.nameValuePair provider.secret.name { inherit (provider.secret) file; }) (
-        lib.filter (provider: provider ? secret) (lib.attrValues selected)
-      )
+      lib.map (
+        provider:
+        lib.nameValuePair provider.secret {
+          file = ../../secrets + "/${provider.secret}.age";
+        }
+      ) (lib.attrValues selected)
     );
 in
 {
   inherit
-    providers
+    endpointApis
     selectProviders
     ageSecrets
     ;
