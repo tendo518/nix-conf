@@ -131,7 +131,7 @@
       );
 
       codexConfig = pkgs.writeText "codex-config.toml" ''
-        model = "gpt-5.6-terra"
+        model = "gpt-6-luna"
         model_provider = "openai"
         approval_policy = "on-request"
         approvals_reviewer = "auto_review"
