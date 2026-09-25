@@ -6,12 +6,12 @@
 }:
 stdenvNoCC.mkDerivation rec {
   pname = "Skim";
-  version = "1.7.16";
+  version = "1.7.17";
 
   src = fetchurl {
     name = "Skim-${version}.dmg";
     url = "mirror://sourceforge/project/skim-app/Skim/Skim-${version}/Skim-${version}.dmg";
-    hash = "sha256-0VsLuNTFQZ88Y22gj0m5jhX+s+A/d5HNPWbImE++0Io=";
+    hash = "sha256-tHf4affVd1kZUCCWOrdTZDKvRjj1U6/MiJYjRaRAQow=";
   };
 
   nativeBuildInputs = [ undmg ];
