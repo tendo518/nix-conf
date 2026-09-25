@@ -26,8 +26,8 @@ in
       # 仍在评审。若需本地覆写，hardware.deviceTree.overlays 是天然落点。
 
       boot = {
-        # 7.2 在 X13s 上无法稳定启动，钉在 7.1 分支直到上游修复可用。
-        kernelPackages = pkgs.linuxPackages_7_1;
+        # 跟随 nixpkgs 的默认 LTS 内核，避开 X13s 上不稳定的最新内核分支。
+        kernelPackages = pkgs.linuxPackages;
         # hardware.deviceTree 会让 systemd-boot 加载内核自带的 DTB
         # （启动项里的 `devicetree /EFI/nixos/*-dtbs-filtered-*`），因此不需要 dtb= 参数。
         # 固件通过 UEFI configuration table 提供的 DT 只在未指定 DTB 时才会被使用。
