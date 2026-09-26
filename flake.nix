@@ -37,7 +37,7 @@
 
     # Keep lanzaboote on its pinned nixpkgs: following the root input would
     # pull a different rustc toolchain build (large) on secure-boot hosts.
-    lanzaboote.url = "github:nix-community/lanzaboote/v1.1.0";
+    lanzaboote.url = "github:nix-community/lanzaboote/v1.2.0";
 
     agenix = {
       url = "github:ryantm/agenix";
