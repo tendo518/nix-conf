@@ -9,11 +9,11 @@ let
   isArm = stdenvNoCC.hostPlatform.isAarch64;
   arch = if isArm then "arm64" else "x86_64";
   # build tokens + sha256 from https://formulae.brew.sh/cask/tencent-meeting
-  version = "3.46.0.442";
-  armToken = "d33a84b584a220bd4772f72ca40653d9";
-  armHash = "sha256-Bf8BJY3ie5QAJs5to5dBSP9iyIIHo0RFgGIh+ztndRU=";
-  intelToken = "bf7b0890f1478972fb7361260f7ff2bc";
-  intelHash = "sha256-LbSshJbxwOQ8HaWgebPLT/WUfeYvaRwwesaArXnhdu0=";
+  version = "3.46.11.414";
+  armToken = "007d4fe6a7ceef12308c0796e7480f75";
+  armHash = "sha256-QIYp4V0GW5T1EL5CbEn8mEuThKHrvBQh4t3rNcJbQiU=";
+  intelToken = "51223bc4efdcfd008c2249bfd272a885";
+  intelHash = "sha256-Cxy1ed8G9nEUvGu8DBJe1pG45lDD1Ewt3o6CmNZcCWA=";
   token = if isArm then armToken else intelToken;
 in
 stdenvNoCC.mkDerivation rec {
