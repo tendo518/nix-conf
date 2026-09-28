@@ -34,7 +34,9 @@ let
       models = {
         qwen3_8_max = {
           id = "qwen3.8-max";
+          anthropicId = "qwen3.8-max[1m]";
           displayName = "Qwen3.8 Max";
+          claudeCode.behavesAs = "claude-opus-5-5";
           contextWindow = 983616;
           input = [
             "text"
@@ -56,7 +58,9 @@ let
         };
         qwen3_8_flash = {
           id = "qwen3.8-flash";
+          anthropicId = "qwen3.8-flash[1m]";
           displayName = "Qwen3.8 Flash";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 983616;
           input = [
             "text"
@@ -78,7 +82,9 @@ let
         };
         qwen3_7_max = {
           id = "qwen3.7-max";
+          anthropicId = "qwen3.7-max[1m]";
           displayName = "Qwen3.7 Max";
+          claudeCode.behavesAs = "claude-opus-5-5";
           contextWindow = 1000000;
           input = [ "text" ];
           thinking = {
@@ -97,7 +103,9 @@ let
         };
         qwen3_7_plus = {
           id = "qwen3.7-plus";
+          anthropicId = "qwen3.7-plus[1m]";
           displayName = "Qwen3.7 Plus";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 1000000;
           input = [
             "text"
@@ -120,7 +128,9 @@ let
         };
         glm_5_3 = {
           id = "glm-5.3";
+          anthropicId = "glm-5.3[1m]";
           displayName = "GLM 5.3";
+          claudeCode.behavesAs = "claude-opus-5-5";
           contextWindow = 1000000;
           input = [ "text" ];
           thinking = {
@@ -139,7 +149,9 @@ let
         };
         glm_5_2 = {
           id = "glm-5.2";
+          anthropicId = "glm-5.2[1m]";
           displayName = "GLM 5.2";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 1000000;
           input = [ "text" ];
           thinking = {
@@ -158,7 +170,9 @@ let
         };
         ds_v4_1flash = {
           id = "deepseek-v4.1-flash";
+          anthropicId = "deepseek-v4.1-flash[1m]";
           displayName = "DeepSeek-V4.1-Flash";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 1000000;
           input = [
             "text"
@@ -216,6 +230,7 @@ let
           anthropicId = "qwen3.8-27b[1m]";
           displayName = "Qwen3.8-27B";
           description = "Qwen 3.8 27B Dense Model.";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 1048576;
           input = [
             "text"
@@ -235,6 +250,7 @@ let
           anthropicId = "deepseek-v4-flash-0731[1m]";
           displayName = "DeepSeek-V4-Flash";
           description = "Latest frontier agentic coding model.";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 1048576;
           input = [ "text" ];
           thinking = {
@@ -250,6 +266,7 @@ let
           id = "glm-5.2";
           anthropicId = "glm-5.2[1m]";
           displayName = "GLM 5.2";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 1048576;
           input = [ "text" ];
           thinking = {
@@ -265,6 +282,7 @@ let
           id = "glm-5.3-flash";
           anthropicId = "glm-5.3-flash[1m]";
           displayName = "GLM 5.3 Flash";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 1048576;
           input = [
             "text"
@@ -319,6 +337,7 @@ let
           id = "glm-5.3";
           anthropicId = "glm-5.3[1m]";
           displayName = "GLM 5.3";
+          claudeCode.behavesAs = "claude-opus-5-5";
           contextWindow = 1048576;
           input = [ "text" ];
           thinking = {
@@ -334,6 +353,7 @@ let
           id = "glm-5.3-flash";
           anthropicId = "glm-5.3-flash[1m]";
           displayName = "GLM 5.3 Flash";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 1048576;
           input = [
             "text"
@@ -394,6 +414,7 @@ let
           anthropicId = "deepseek-flash[1m]";
           displayName = "DeepSeek-Flash";
           description = "Latest frontier agentic coding model with image input.";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 1048576;
           input = [
             "text"
@@ -418,6 +439,7 @@ let
           anthropicId = "deepseek-v4-pro[1m]";
           displayName = "DeepSeek-V4-Pro";
           description = "Most capable frontier agentic coding model.";
+          claudeCode.behavesAs = "claude-opus-5-5";
           contextWindow = 1048576;
           input = [ "text" ];
           maxOutputTokens = 384000;
@@ -518,8 +540,10 @@ let
       models = {
         step_5_preview = {
           id = "step-5-preview";
+          anthropicId = "step-5-preview[1m]";
           displayName = "Step 5 Preview";
           description = "Flagship model for coding and knowledge work, with a 1M-token context window.";
+          claudeCode.behavesAs = "claude-opus-5-5";
           contextWindow = 1048576;
           maxOutputTokens = 1048576;
           input = [
@@ -539,6 +563,7 @@ let
           id = "step-3.7-flash";
           displayName = "Step 3.7 Flash";
           description = "Flagship multimodal reasoning model for agent and coding tasks.";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 262144;
           input = [
             "text"
@@ -557,6 +582,7 @@ let
           id = "step-router-v1";
           displayName = "Step Router V1";
           description = "Routes each request between deepseek-v4-pro and step-3.7-flash.";
+          claudeCode.behavesAs = "claude-sonnet-5";
           contextWindow = 262144;
           maxOutputTokens = 250000;
           input = [ "text" ];

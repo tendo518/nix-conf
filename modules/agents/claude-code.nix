@@ -42,6 +42,27 @@
         ) provider.models;
 
       claudecodeWrappers = lib.concatLists (lib.mapAttrsToList mkClaudecodeWrappers selected);
+
+      # Third-party model IDs are absent from the Claude Code catalog, so an
+      # unmapped session logs an "isn't described by this version's model
+      # catalog" notice, emits the [claude-code:unrecognized_model] diagnostic
+      # line, and handles prompts as an unrecognized model. `modelPicker` rows
+      # with `behavesAs` map each ID onto a built-in model whose client-side
+      # handling applies instead; the ID sent to the provider is unchanged.
+      modelPickerRows =
+        _providerName: provider:
+        lib.concatLists (
+          lib.mapAttrsToList (
+            _modelName: model:
+            lib.optional (model.claudeCode.behavesAs or null != null) {
+              model = model.anthropicId or model.id;
+              label = model.displayName;
+              behavesAs = model.claudeCode.behavesAs;
+            }
+          ) provider.models
+        );
+
+      pickerOptions = lib.concatLists (lib.mapAttrsToList modelPickerRows selected);
     in
     {
       home.packages = [ pkgs.llm-agents.claude-code ] ++ claudecodeWrappers;
@@ -58,6 +79,7 @@
               };
               skipWebFetchPreflight = true;
               theme = "auto";
+              modelPicker.options = pickerOptions;
             }
           )
         } "$HOME/.claude/settings.json"

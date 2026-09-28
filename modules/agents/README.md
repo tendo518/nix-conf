@@ -49,6 +49,7 @@ provider = {
   models.model_key = {
     id = "upstream-model-id";
     displayName = "Model name";
+    claudeCode.behavesAs = "claude-opus-4-8";
     contextWindow = 1000000;
     input = [ "text" "image" ];
     supportsImageDetailOriginal = true;
@@ -71,12 +72,13 @@ Model fields are capability declarations, not inferred defaults:
 | Field | Meaning |
 | --- | --- |
 | `id` | Provider model identifier. |
-| `anthropicId` | Optional identifier for an Anthropic-compatible endpoint. |
+| `anthropicId` | Optional identifier for an Anthropic-compatible endpoint. Append `[1m]` only when the deployment accepts 1M-token context. |
 | `displayName`, `description` | UI metadata; `description` is optional. |
 | `contextWindow`, `maxOutputTokens` | Optional token limits. |
 | `input` | Accepted modalities, normally `[ "text" ]` or `[ "text" "image" ]`. |
 | `codexCatalog.<field>` | Raw Codex catalog attributes, merged verbatim over the derived entries: `priority`, `supports_image_detail_original`, `supports_search_tool`, and anything else the catalog accepts. |
 | `thinking.efforts`, `thinking.default` | Exact provider-supported effort levels and the provider's default. |
+| `claudeCode.behavesAs` | Built-in Claude model whose client-side handling a third-party model borrows. Declare it on every model in the registry; only `claudeCode`-enabled providers turn it into picker rows. See [Claude Code model mapping](#claude-code-model-mapping). |
 
 Define effort levels and image capabilities only in this registry. Consumers
 must preserve those declarations rather than adding model-specific validation
@@ -86,7 +88,7 @@ or guessed capabilities.
 
 | Module | Generated command/configuration |
 | --- | --- |
-| Claude Code | One `cc-<provider>-<model>` wrapper per enabled provider model. The provider's optional `effortLevel` is exported as `CLAUDE_CODE_EFFORT_LEVEL`. |
+| Claude Code | One `cc-<provider>-<model>` wrapper per enabled provider model. The provider's optional `effortLevel` is exported as `CLAUDE_CODE_EFFORT_LEVEL`. A generated `modelPicker` lineup in `~/.claude/settings.json` maps each exposed model ID onto a built-in model via `behavesAs`. |
 | Codex | `codex` plus one `codex-<provider>` wrapper per enabled provider. Profiles and generated catalogs are installed below `$XDG_CONFIG_HOME/codex`; `~/.codex` is linked there. |
 | OMP | `~/.omp/agent/models.yml` and `config.yml`; model thinking entries carry the declared efforts and default level. |
 | Pi | `~/.pi/agent/models.json` and `settings.json`; supported Pi levels are mapped from each model's declared effort list. |
@@ -106,14 +108,42 @@ identical across providers — they set the Codex agent's behavior, not a
 provider's capabilities — so they belong in the baseline instead of being
 repeated per model. Do not add provider-specific instruction overrides.
 
+## Claude Code model mapping
+
+Claude Code checks every model ID against the model catalog compiled into the
+release. A third-party ID is not in that catalog, so an unmapped session prints
+`"<id>" isn't described by this version's model catalog`, writes a
+`[claude-code:unrecognized_model]` diagnostic line, and treats the model as
+unknown for prompt assembly and for the auto-compact window it assumes.
+
+`claudeCode.behavesAs` names a built-in Claude model whose client-side handling
+the third-party model borrows. The Claude Code module turns each declared
+mapping into a `modelPicker` row, which is the only settings source that
+carries `behavesAs` and is honored from user settings. Rows are matched
+case-insensitively with any `[1m]` suffix stripped, so one row covers both the
+bare ID and its `[1m]` spelling, and the ID sent to the provider never changes.
+
+Pick the built-in model with the closest capability tier, preferring a recent
+release: an Opus-class ID for a provider's flagship and a Sonnet-class ID for
+everything else. Haiku-class targets carry no effort levels, so mapping a model
+that declares its own efforts onto one drops them.
+
+A resolved mapping changes which context window Claude Code assumes: a model
+without a mapping follows `CLAUDE_CODE_MAX_CONTEXT_TOKENS`, while a mapped model
+ignores it and falls back to the default window. A model that needs the 1M
+window therefore keeps its `[1m]` `anthropicId`, which is read from the ID
+itself and is independent of the mapping.
+
 ## Adding or changing a model
 
 1. Add or update the model in `_providers.nix`, including its documented input
    modalities and exact reasoning efforts.
-2. Set `agents.<agent>.enable` and the endpoint fields for every tool that
+2. Set `claudeCode.behavesAs` to a built-in Claude model the current Claude Code
+   release knows.
+3. Set `agents.<agent>.enable` and the endpoint fields for every tool that
    should expose the provider.
-3. Add an agenix secret under `secrets/` and register it in `secrets/secrets.nix`.
-4. Run `just fmt` and `just check`.
+4. Add an agenix secret under `secrets/` and register it in `secrets/secrets.nix`.
+5. Run `just fmt` and `just check`.
 
 New Nix files must be staged with `git add` before flake evaluation. The files
 in this directory deliberately share the registry; do not duplicate provider
