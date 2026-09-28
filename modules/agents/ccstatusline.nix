@@ -5,7 +5,7 @@
       home.packages = [ pkgs.llm-agents.ccstatusline ];
 
       xdg.configFile."ccstatusline/settings.json".text = builtins.toJSON {
-        version = 3;
+        version = 4;
         lines = [
           [
             {
