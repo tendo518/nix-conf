@@ -57,9 +57,9 @@
         NSAutomaticPeriodSubstitutionEnabled = false; # 关闭自动省略号 (…)
         NSAutomaticQuoteSubstitutionEnabled = false; # 关闭智能引号
         NSAutomaticSpellingCorrectionEnabled = false; # 关闭自动拼写纠正
-        NSAutomaticWindowAnimationsEnabled = false; # 关闭窗口打开/关闭动画
+        NSAutomaticWindowAnimationsEnabled = true; # 窗口打开/关闭动画
         NSDocumentSaveNewDocumentsToCloud = false; # 新文档默认保存到本机
-        NSTableViewDefaultSizeMode = 1; # Finder 侧栏使用小图标
+        NSTableViewDefaultSizeMode = 2; # Finder 侧栏使用小图标
         AppleSpacesSwitchOnActivate = true; # 点击 Dock 应用时切换到其所在 Space
         NSNavPanelExpandedStateForSaveMode = true; # 保存对话框: 侧边栏默认展开
         NSNavPanelExpandedStateForSaveMode2 = true; # 打开对话框: 侧边栏默认展开
@@ -81,7 +81,7 @@
 
       screensaver = {
         askForPassword = true; # 屏保/锁屏后需要密码
-        askForPasswordDelay = 5; # 恢复后 5 秒才开始要求密码
+        askForPasswordDelay = 15; # 恢复后 5 秒才开始要求密码
       };
 
       CustomUserPreferences = {
