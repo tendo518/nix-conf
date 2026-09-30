@@ -125,7 +125,13 @@
             # Remote SSH
             "remote.SSH.enableX11Forwarding" = false;
             "remote.SSH.externalSSH_ASKPASS" = true;
+            # Declaring the remote platform makes Remote-SSH bootstrap the
+            # server through an explicit `bash`; without it, it streams its
+            # POSIX bootstrap script into the remote login shell. The NixOS
+            # hosts use fish, which cannot execute that script, so
+            # <host>.tailnet connections would stall and time out after ~17s.
             "remote.SSH.remotePlatform" = {
+              "*.tailnet" = "linux";
               "*.tailscale" = "linux";
               "*.local" = "linux";
               "*.cluster" = "linux";
