@@ -33,4 +33,8 @@
   # workbuddy-cn: Tencent WorkBuddy, arm64-only DMG on darwin
   workbuddy-cn =
     if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./workbuddy-cn { } else null;
+
+  # deepseek-harness: DeepSeek desktop client, arm64-only zip on darwin
+  deepseek-harness =
+    if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./deepseek-harness { } else null;
 }

@@ -82,6 +82,14 @@
       else
         { };
 
+    # DeepSeek Harness overlay with macOS (Apple Silicon) support (Pin version)
+    deepseek-harness =
+      final: prev:
+      if prev.stdenv.hostPlatform.isDarwin then
+        { deepseek-harness = final.callPackage ../packages/deepseek-harness { }; }
+      else
+        { };
+
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
     llm-agents = final: _prev: {

@@ -18,6 +18,7 @@ _: {
         llm-agents.chatgpt
         llm-agents.hermes-desktop
         llm-agents.zcode
+        deepseek-harness
         # spotify  # 这玩意发布不带版本的，上游只能 web.archive.org 打包
         ticktick
 
