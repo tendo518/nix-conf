@@ -9,12 +9,12 @@ let
   isArm = stdenvNoCC.hostPlatform.isAarch64;
   arch = if isArm then "arm64" else "x86_64";
   # sha256 from https://github.com/deskflow/homebrew-tap (Casks/d/deskflow.rb)
-  armHash = "sha256-uua+/CwxGd49dRwSAKqzCvPvpUlukdXKECnMOI7qacU=";
-  intelHash = "sha256-tgvXjoKbmTfFgS5vwgi3KpI1w6W6g2YB1Q4aW+msSvI=";
+  armHash = "sha256-3SHnnlZjFDlCFJBtMzjFBdM3r1NvxYDAIu4/rf+tDJc=";
+  intelHash = "sha256-iso8d6Gxa5o9a4o4Dl44oOar9tJBuzLc88+LZ6u/9dg=";
 in
 stdenvNoCC.mkDerivation rec {
   pname = "deskflow";
-  version = "1.26.0";
+  version = "1.27.0";
 
   src = fetchurl {
     name = "deskflow-${version}-macos-${arch}.dmg";
