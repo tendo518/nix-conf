@@ -139,6 +139,30 @@ let
             system.stateVersion = hostCfg.stateVersion;
             programs.${hostCfg.user.shell}.enable = true;
           }
+          (
+            { config, options, ... }:
+            let
+              hostNixpkgs = inputs.${hostCfg.nixpkgsInput};
+            in
+            {
+              nixpkgs =
+                {
+                  # `nixpkgs.config` is ignored when `nixpkgs.pkgs` is set.
+                  # Pass config into the import instead, otherwise NixOS
+                  # rejects setting both options.
+                  pkgs = import hostNixpkgs {
+                    config = {
+                      allowUnfree = true;
+                      # allowBroken = true;
+                    };
+                    system = config.nixpkgs.hostPlatform.system;
+                  };
+                }
+                // lib.optionalAttrs (options ? nixpkgs && options.nixpkgs ? source) {
+                  source = hostNixpkgs.outPath;
+                };
+            }
+          )
         ];
         specialArgs = {
           inherit inputs hostContext;

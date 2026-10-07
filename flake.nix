@@ -47,7 +47,7 @@
     import-tree.url = "github:vic/import-tree";
 
     # Keep its upstream nixpkgs pin: cache.numtide.com publishes agent builds
-    # against it, so following the root nixpkgs would reduce cache hits.
+    # against it, so following a host nixpkgs would reduce cache hits.
     llm-agents.url = "github:numtide/llm-agents.nix";
 
     disko = {

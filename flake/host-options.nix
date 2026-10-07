@@ -63,6 +63,11 @@ let
         type = types.str;
         description = "Platform for nixpkgs (e.g., x86_64-linux, aarch64-darwin)";
       };
+      nixpkgsInput = mkOption {
+        type = types.str;
+        default = "nixpkgs";
+        description = "Flake input name of the nixpkgs instance to use for this host";
+      };
     };
   };
 in

@@ -16,7 +16,6 @@ _: {
           server = {
             # Gitea needs one canonical absolute URL; use the LAN address,
             # which is also reachable through the advertised Tailscale route.
-            DOMAIN = "192.168.11.1";
             ROOT_URL = "http://192.168.11.1:3000/";
             HTTP_ADDR = "0.0.0.0";
             HTTP_PORT = 3000;
