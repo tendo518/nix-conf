@@ -9,7 +9,8 @@ output "eDP-1" {
 }
 
 cursor {
-    xcursor-size 36
+    xcursor-theme "Adwaita"
+    xcursor-size 24
 }
 
 hotkey-overlay {
@@ -270,5 +271,8 @@ switch-events {
 }
 
 debug {
+    // msm/Adreno (ThinkPad X13s): the hardware cursor plane doesn't show the
+    // pointer, so let niri composite it into the frame instead.
+    disable-cursor-plane
     honor-xdg-activation-with-invalid-serial
 }
