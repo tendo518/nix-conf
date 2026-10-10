@@ -44,6 +44,19 @@
       # niri is NixOS-only, set home-manager options directly instead of a homeManager module
       home-manager.users.${hostContext.user.name} = {
         xdg.configFile."niri/config.kdl".source = ./config.kdl;
+
+        # niri sessions are systemd-managed, so the fcitx5 package's XDG
+        # autostart entry becomes app-org.fcitx.Fcitx5@autostart.service in
+        # addition to home-manager's fcitx5-daemon.service and the two race for
+        # the DBus name ("Is there another fcitx already running?"). A
+        # user-level autostart entry with the same name and Hidden=true
+        # shadows the packaged one, leaving a single starter.
+        xdg.configFile."autostart/org.fcitx.Fcitx5.desktop".text = ''
+          [Desktop Entry]
+          Type=Application
+          Name=Fcitx 5
+          Hidden=true
+        '';
       };
     };
 }
