@@ -53,7 +53,10 @@
         profile:
         pkgs.writeShellScriptBin profile ''
           export CODEX_HOME="${config.xdg.configHome}/codex"
-          exec ${lib.getExe pkgs.llm-agents.codex} --profile ${profile} "$@"
+          # `--profile` (config profile v2) cannot run on the shared background
+          # server, so Codex falls back to embedded mode and notes that at
+          # startup. Opt out of the shared server so the note never appears.
+          exec ${lib.getExe pkgs.llm-agents.codex} --no-daemon --profile ${profile} "$@"
         '';
 
       # Everything Codex needs per provider: the generated catalog, the profile
@@ -172,6 +175,9 @@
     {
       home.packages = [
         codex
+        # Codex's Linux sandbox warns unless bwrap is on PATH, falling back
+        # to the copy bundled in the Codex package.
+        pkgs.bubblewrap
       ]
       ++ lib.mapAttrsToList (_name: provider: provider.wrapper) providerArtifacts;
 
