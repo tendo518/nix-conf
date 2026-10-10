@@ -23,6 +23,14 @@
         recursive = true;
       };
 
+      # ClassicUI reads themes from $XDG_DATA_HOME/fcitx5/themes as well as from
+      # the data dirs the fcitx5 wrapper exports; link them here so the theme is
+      # found no matter which fcitx5 binary ends up running.
+      xdg.dataFile."fcitx5/themes" = {
+        source = "${pkgs.fcitx5-mellow-themes}/share/fcitx5/themes";
+        recursive = true;
+      };
+
       xdg.configFile."fcitx5/conf/classicui.conf".text = ''
         # 垂直候选列表
         Vertical Candidate List=False
