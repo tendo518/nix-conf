@@ -1,8 +1,12 @@
 environment {}
 
-spawn-at-startup "polkit-gnome-authentication-agent-1"
 spawn-at-startup "noctalia-shell"
-spawn-at-startup "fcitx5 -d --replace"
+
+// polkit-gnome and fcitx5 are not started here: niri spawns argv without a
+// shell, so neither `polkit-gnome-authentication-agent-1` (lives in libexec)
+// nor `fcitx5 -d --replace` (no word splitting) can be exec'd this way.
+// They are started declaratively instead: the polkit agent by NixOS' XDG
+// autostart entry, fcitx5 by home-manager's fcitx5-daemon.service.
 
 output "eDP-1" {
     scale 1.3
