@@ -173,12 +173,10 @@
       );
     in
     {
-      home.packages = [
-        codex
-        # Codex's Linux sandbox warns unless bwrap is on PATH, falling back
-        # to the copy bundled in the Codex package.
-        pkgs.bubblewrap
-      ]
+      home.packages = [ codex ]
+      # Codex's Linux sandbox warns unless bwrap is on PATH, falling back
+      # to the copy bundled in the Codex package.
+      ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.bubblewrap ]
       ++ lib.mapAttrsToList (_name: provider: provider.wrapper) providerArtifacts;
 
       home.activation.setupCodexConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
