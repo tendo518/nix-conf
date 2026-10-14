@@ -22,6 +22,10 @@
         konsole
       ];
 
+      # plasma6 now pulls in the KDE PIM suite by default
+      # (programs.kde-pim.enable = mkDefault true); drop KMail/Kontact/Merkuro.
+      programs.kde-pim.enable = false;
+
       services.displayManager.sddm.wayland.compositor = "kwin";
       services.desktopManager.plasma6.enable = true;
 
