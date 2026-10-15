@@ -96,5 +96,20 @@
       llm-agents = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system};
     };
 
+    # Temporarily disable atuin's test suite on Darwin: the checks fail the
+    # local build and block whole-system updates. Remove this overlay once
+    # upstream PR https://github.com/NixOS/nixpkgs/pull/574333 (tracking
+    # issue: https://github.com/NixOS/nixpkgs/issues/573527) lands.
+    atuin =
+      _final: prev:
+      if prev.stdenv.hostPlatform.isDarwin then
+        {
+          atuin = prev.atuin.overrideAttrs (_: {
+            doCheck = false;
+          });
+        }
+      else
+        { };
+
   };
 }
