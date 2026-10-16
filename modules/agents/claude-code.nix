@@ -10,21 +10,25 @@
       providers = import ./_providers.nix { inherit config lib; };
       selected = providers.selectProviders "claudeCode";
 
+      # Allow near-million windows that reserve a small part of the context.
+      claudeModelId = model: model.id + lib.optionalString (model.contextWindow >= 950000) "[1m]";
+
       mkClaudecodeWrappers =
         providerName: provider:
         let
-          agentConfig = provider.agents.claudeCode;
+          agentConfig = provider.agentConfig;
           effortLevel = agentConfig.effortLevel or "";
-          smallModel = provider.models.${agentConfig.smallModel};
-          smallModelId = smallModel.anthropicId or smallModel.id;
-          apiKeyPath = config.age.secrets.${provider.secret}.path;
+          smallModel = provider.models.${agentConfig.smallModel or provider.defaultModel};
+          smallModelId = claudeModelId smallModel;
+          apiKeyPath = provider.secretPath;
         in
         lib.mapAttrsToList (
           modelName: model:
           let
-            modelId = model.anthropicId or model.id;
+            modelId = claudeModelId model;
           in
           pkgs.writeShellScriptBin "cc-${providerName}-${modelName}" ''
+            set -e
             export ANTHROPIC_BASE_URL="${provider.endpoints.anthropic}"
             export ANTHROPIC_MODEL="${modelId}"
             export ANTHROPIC_DEFAULT_OPUS_MODEL="${modelId}"
@@ -34,9 +38,8 @@
             ${lib.optionalString (effortLevel != "") "export CLAUDE_CODE_EFFORT_LEVEL=\"${effortLevel}\""}
             export API_TIMEOUT_MS="1200000"
             export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1"
-            if [ -r "${apiKeyPath}" ]; then
-              export ANTHROPIC_AUTH_TOKEN="$(cat "${apiKeyPath}")"
-            fi
+            apiKey="$(cat "${apiKeyPath}")"
+            export ANTHROPIC_AUTH_TOKEN="$apiKey"
             exec ${lib.getExe pkgs.llm-agents.claude-code} "$@"
           ''
         ) provider.models;
@@ -49,20 +52,16 @@
       # line, and handles prompts as an unrecognized model. `modelPicker` rows
       # with `behavesAs` map each ID onto a built-in model whose client-side
       # handling applies instead; the ID sent to the provider is unchanged.
-      modelPickerRows =
-        _providerName: provider:
-        lib.concatLists (
-          lib.mapAttrsToList (
-            _modelName: model:
-            lib.optional (model.claudeCode.behavesAs or null != null) {
-              model = model.anthropicId or model.id;
-              label = model.displayName;
-              behavesAs = model.claudeCode.behavesAs;
-            }
-          ) provider.models
-        );
-
-      pickerOptions = lib.concatLists (lib.mapAttrsToList modelPickerRows selected);
+      pickerOptions = lib.unique (
+        lib.concatMap (
+          provider:
+          map (model: {
+            model = claudeModelId model;
+            label = model.displayName;
+            behavesAs = model.claudeBehavesAs;
+          }) (lib.filter (model: model ? claudeBehavesAs) (lib.attrValues provider.models))
+        ) (lib.attrValues selected)
+      );
     in
     {
       home.packages = [ pkgs.llm-agents.claude-code ] ++ claudecodeWrappers;

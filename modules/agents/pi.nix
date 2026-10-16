@@ -9,7 +9,6 @@
     let
       providers = import ./_providers.nix { inherit config lib; };
       selected = providers.selectProviders "pi";
-      apiKeyCommand = path: "!${pkgs.coreutils}/bin/cat ${path}";
 
       thinkingLevelMap =
         efforts:
@@ -25,34 +24,35 @@
         in
         lib.genAttrs levels (level: if builtins.elem level efforts then level else null);
 
-      defaultProvider = "senseaudio";
+      defaultProvider = providers.defaultProvider selected;
+      defaultProviderConfig = selected.${defaultProvider};
       defaultModel =
-        (selected.${defaultProvider}.models.${selected.${defaultProvider}.agents.pi.defaultModel}).id;
-
-      toPiProvider =
-        _name: provider:
-        let
-          agentConfig = provider.agents.pi;
-        in
-        {
-          inherit (provider) name;
-          baseUrl = provider.endpoints.${agentConfig.endpoint};
-          api = providers.endpointApis.${agentConfig.endpoint};
-          apiKey = apiKeyCommand (config.age.secrets.${provider.secret}.path);
-          models = lib.mapAttrsToList (
-            _model: model:
-            ({
-              id = model.id;
-              name = model.displayName;
-              inherit (model) contextWindow;
-              input = model.input or [ "text" ];
-            })
-            // (lib.optionalAttrs (model ? thinking) {
-              reasoning = true;
-              thinkingLevelMap = thinkingLevelMap model.thinking.efforts;
-            })
-          ) provider.models;
+        defaultProviderConfig.models.${
+          defaultProviderConfig.agentConfig.defaultModel or defaultProviderConfig.defaultModel
         };
+
+      toPiProvider = _name: provider: {
+        inherit (provider) name;
+        baseUrl = provider.endpoints.openai;
+        api = "openai-completions";
+        apiKey = ''!${pkgs.coreutils}/bin/cat "${provider.secretPath}"'';
+        models = lib.mapAttrsToList (
+          _model: model:
+          {
+            id = model.id;
+            name = model.displayName;
+            inherit (model) contextWindow;
+            input = model.input or [ "text" ];
+          }
+          // lib.optionalAttrs (model ? maxOutputTokens) {
+            maxTokens = model.maxOutputTokens;
+          }
+          // lib.optionalAttrs (model ? thinking) {
+            reasoning = true;
+            thinkingLevelMap = thinkingLevelMap model.thinking.efforts;
+          }
+        ) provider.models;
+      };
 
       piProviders = lib.mapAttrs toPiProvider selected;
 
@@ -60,10 +60,16 @@
         providers = piProviders;
       };
 
-      settingsJson = builtins.toJSON {
-        inherit defaultProvider defaultModel;
-        quietStartup = true;
-      };
+      settingsJson = builtins.toJSON (
+        {
+          inherit defaultProvider;
+          defaultModel = defaultModel.id;
+          quietStartup = true;
+        }
+        // lib.optionalAttrs (defaultModel ? thinking) {
+          defaultThinkingLevel = defaultModel.thinking.default;
+        }
+      );
     in
     {
       home.packages = [ pkgs.llm-agents.pi ];

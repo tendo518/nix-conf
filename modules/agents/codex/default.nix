@@ -9,7 +9,25 @@
     let
       providers = import ../_providers.nix { inherit config lib; };
       selected = providers.selectProviders "codex";
-      baseline = builtins.fromJSON (builtins.readFile ./_model-baseline.json);
+      toml = pkgs.formats.toml { };
+      defaultModel = "gpt-6-luna";
+
+      # Keep agent instructions in step with the installed Codex. Export only
+      # its prompt; OpenAI-specific tool modes and capabilities do not apply
+      # to our third-party providers.
+      instructions =
+        pkgs.runCommand "codex-model-instructions"
+          {
+            nativeBuildInputs = [ pkgs.jq ];
+          }
+          ''
+            export CODEX_HOME="$TMPDIR/codex"
+            mkdir -p "$CODEX_HOME"
+            ${lib.getExe pkgs.llm-agents.codex} debug models --bundled \
+              | jq -er --arg model ${lib.escapeShellArg defaultModel} \
+                '.models[] | select(.slug == $model) | .base_instructions | select(length > 0)' \
+              > "$out"
+          '';
 
       # Wording of the Codex CLI's own reasoning levels; a level the registry
       # declares beyond these falls back to the level name.
@@ -30,8 +48,7 @@
               default = null;
             };
         in
-        baseline
-        // {
+        {
           slug = model.id;
           display_name = model.displayName;
           description = model.description or "${model.displayName} via ${provider.name}";
@@ -43,11 +60,30 @@
           input_modalities = model.input or [ "text" ];
           context_window = model.contextWindow or null;
           max_context_window = model.contextWindow or null;
+          shell_type = "shell_command";
+          visibility = "list";
+          supported_in_api = true;
+          priority = model.codexPriority or 1;
+          support_verbosity = true;
+          default_verbosity = "low";
+          apply_patch_tool_type = "freeform";
+          web_search_tool_type = "text";
+          truncation_policy = {
+            mode = "tokens";
+            limit = 10000;
+          };
+          experimental_supported_tools = [ ];
+          supports_parallel_tool_calls = provider.codexSupportsParallelToolCalls or true;
+          multi_agent_version = "v2";
+          effective_context_window_percent = 95;
+          comp_hash = "3000";
+          reasoning_summary_format = "experimental";
+          default_reasoning_summary = "none";
+          supports_search_tool = model.codexSupportsSearchTool or true;
         }
-        # `codexCatalog` carries raw Codex catalog attributes: whatever the
-        # registry writes there wins, so catalog fields need no per-field
-        # plumbing here.
-        // (model.codexCatalog or { });
+        // lib.optionalAttrs (model ? codexSupportsOriginalImageDetail) {
+          supports_image_detail_original = model.codexSupportsOriginalImageDetail;
+        };
 
       mkCodexWrapper =
         profile:
@@ -62,98 +98,92 @@
       # Everything Codex needs per provider: the generated catalog, the profile
       # that points at it, and the wrapper that selects that profile.
       providerArtifacts = lib.mapAttrs (
-        _name: provider:
+        name: provider:
         let
-          agentConfig = provider.agents.codex;
-          defaultModel = provider.models.${agentConfig.defaultModel};
-          catalog = pkgs.writeText "${agentConfig.profile}-models.json" (
-            builtins.toJSON {
-              models = lib.mapAttrsToList (_model: model: mkCatalogModel provider model) provider.models;
-            }
-          );
+          agentConfig = provider.agentConfig;
+          profile = agentConfig.profile or "codex-${name}";
+          defaultModel = provider.models.${agentConfig.defaultModel or provider.defaultModel};
+          catalog =
+            pkgs.runCommand "${profile}-models.json"
+              {
+                nativeBuildInputs = [ pkgs.jq ];
+                models = builtins.toJSON {
+                  models = lib.mapAttrsToList (_model: model: mkCatalogModel provider model) provider.models;
+                };
+                passAsFile = [ "models" ];
+              }
+              ''
+                jq --rawfile instructions ${instructions} \
+                  '.models |= map(. + {base_instructions: $instructions})' \
+                  "$modelsPath" > "$out"
+              '';
         in
         {
-          inherit catalog;
-          profileConfig = pkgs.writeText "${agentConfig.profile}.config.toml" ''
-            model = "${defaultModel.id}"
-            model_provider = "${agentConfig.providerName}"
-            model_catalog_json = "${catalog}"
-            ${lib.optionalString (agentConfig.reasoningSummaries or false) ''
-              model_reasoning_summary = "auto"
-              model_reasoning_effort = "${defaultModel.thinking.default}"
-            ''}
-            ${lib.optionalString
-              ((agentConfig.reasoningEffort or false) && !(agentConfig.reasoningSummaries or false))
-              ''
-                model_reasoning_effort = "${defaultModel.thinking.default}"
-              ''
+          inherit catalog profile;
+          profileConfig = toml.generate "${profile}.config.toml" (
+            {
+              model = defaultModel.id;
+              model_provider = name;
+              model_catalog_json = toString catalog;
+              # Experimental context management is for the official provider.
+              features.context_management.experimental_mode = false;
+              tui.status_line = [
+                "model-with-reasoning"
+                "project-name"
+                "run-state"
+                "context-used"
+              ];
             }
-            ${lib.optionalString (agentConfig.disableWebSearch or false) ''
-              web_search = "disabled"
-            ''}
-
-            [features]
-            # Experimental context management is only for the official OpenAI
-            # provider; keep it disabled in third-party profiles.
-            context_management.experimental_mode = false
-
-            [tui]
-            status_line = ["model-with-reasoning", "project-name", "run-state", "context-used"]
-            status_line_use_colors = true
-          '';
-          wrapper = mkCodexWrapper agentConfig.profile;
+            // lib.optionalAttrs (agentConfig.reasoningSummaries or false) {
+              model_reasoning_summary = "auto";
+            }
+            // lib.optionalAttrs (defaultModel ? thinking) {
+              model_reasoning_effort = defaultModel.thinking.default;
+            }
+            // lib.optionalAttrs (agentConfig.disableWebSearch or false) {
+              web_search = "disabled";
+            }
+          );
+          wrapper = mkCodexWrapper profile;
         }
       ) selected;
 
-      providerBlocks = lib.concatStrings (
-        lib.mapAttrsToList (
-          _name: provider:
-          let
-            agentConfig = provider.agents.codex;
-            secretPath = config.age.secrets.${provider.secret}.path;
-          in
-          ''
-
-            [model_providers.${agentConfig.providerName}]
-            name = "${agentConfig.providerName}"
-            base_url = "${provider.endpoints.responses}"
-            wire_api = "responses"
-            stream_idle_timeout_ms = 600000
-            request_max_retries = 6
-          ''
-          + ''
-
-            [model_providers.${agentConfig.providerName}.auth]
-            command = "${pkgs.writeShellScript "read-${provider.secret}" ''
-              [ -r "${secretPath}" ] || exit 1
-              value="$(<"${secretPath}")"
+      codexConfig = toml.generate "codex-config.toml" {
+        model = defaultModel;
+        model_provider = "openai";
+        approval_policy = "on-request";
+        approvals_reviewer = "auto_review";
+        sandbox_mode = "workspace-write";
+        check_for_update_on_startup = false;
+        analytics.enabled = false;
+        model_providers = lib.mapAttrs (_name: provider: {
+          name = provider.name;
+          base_url = provider.endpoints.openai;
+          wire_api = "responses";
+          stream_idle_timeout_ms = 600000;
+          request_max_retries = 6;
+          auth.command = toString (
+            pkgs.writeShellScript "read-${provider.secret}" ''
+              [ -r "${provider.secretPath}" ] || exit 1
+              value="$(<"${provider.secretPath}")"
               printf '%s' "$value"
-            ''}"
-          ''
-        ) selected
-      );
-
-      codexConfig = pkgs.writeText "codex-config.toml" ''
-        model = "gpt-6-luna"
-        model_provider = "openai"
-        approval_policy = "on-request"
-        approvals_reviewer = "auto_review"
-        sandbox_mode = "workspace-write"
-        check_for_update_on_startup = false
-        analytics.enabled = false
-        ${providerBlocks}
-
-        [features]
-        context_management.experimental_mode = true
-
-        [tui]
-        status_line = ["model-with-reasoning", "project-name", "run-state", "context-used", "weekly-limit"]
-        status_line_use_colors = true
-        notifications = true
-
-        [projects."${config.home.homeDirectory}"]
-        trust_level = "trusted"
-      '';
+            ''
+          );
+        }) selected;
+        features.context_management.experimental_mode = true;
+        tui = {
+          status_line = [
+            "model-with-reasoning"
+            "project-name"
+            "run-state"
+            "context-used"
+            "weekly-limit"
+          ];
+          status_line_use_colors = true;
+          notifications = true;
+        };
+        projects.${config.home.homeDirectory}.trust_level = "trusted";
+      };
 
       codex = pkgs.writeShellScriptBin "codex" ''
         export CODEX_HOME="${config.xdg.configHome}/codex"
@@ -161,19 +191,15 @@
       '';
 
       profileInstallLines = lib.concatStrings (
-        lib.mapAttrsToList (
-          name: provider:
-          let
-            profile = provider.agents.codex.profile;
-          in
-          ''
-            install -m 0644 ${providerArtifacts.${name}.profileConfig} "$cfgDir/${profile}.config.toml"
-          ''
-        ) selected
+        lib.mapAttrsToList (_name: artifacts: ''
+          install -m 0644 ${artifacts.profileConfig} "$cfgDir/${artifacts.profile}.config.toml"
+        '') providerArtifacts
       );
     in
     {
-      home.packages = [ codex ]
+      home.packages = [
+        codex
+      ]
       # Codex's Linux sandbox warns unless bwrap is on PATH, falling back
       # to the copy bundled in the Codex package.
       ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.bubblewrap ]

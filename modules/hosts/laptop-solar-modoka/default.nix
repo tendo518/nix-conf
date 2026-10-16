@@ -16,6 +16,7 @@ _: {
         skimpdf
         deskflow
         llm-agents.chatgpt
+        llm-agents.claude-desktop
         llm-agents.hermes-desktop
         llm-agents.zcode
         deepseek-harness

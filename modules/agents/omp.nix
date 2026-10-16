@@ -9,44 +9,39 @@
     let
       providers = import ./_providers.nix { inherit config lib; };
       selected = providers.selectProviders "omp";
-      apiKeyCommand = path: "!${pkgs.coreutils}/bin/cat ${path}";
 
-      defaultProvider = "senseaudio";
+      defaultProvider = providers.defaultProvider selected;
+      defaultProviderConfig = selected.${defaultProvider};
       defaultModel =
-        (selected.${defaultProvider}.models.${selected.${defaultProvider}.agents.omp.defaultModel}).id;
+        defaultProviderConfig.models.${
+          defaultProviderConfig.agentConfig.defaultModel or defaultProviderConfig.defaultModel
+        }.id;
 
-      toOmpProvider =
-        _name: provider:
-        let
-          agentConfig = provider.agents.omp;
-        in
-        {
-          baseUrl = provider.endpoints.${agentConfig.endpoint};
-          api = providers.endpointApis.${agentConfig.endpoint};
-          apiKey = apiKeyCommand (config.age.secrets.${provider.secret}.path);
-          models = lib.mapAttrsToList (
-            _model: model:
-            (
-              {
-                id = model.anthropicId or model.id;
-                name = model.displayName;
-                inherit (model) contextWindow;
-                input = model.input or [ "text" ];
-              }
-              // (lib.optionalAttrs (model ? maxOutputTokens) {
-                maxTokens = model.maxOutputTokens;
-              })
-            )
-            // (lib.optionalAttrs (model ? thinking) {
-              reasoning = true;
-              thinking = {
-                mode = "effort";
-                efforts = model.thinking.efforts;
-                defaultLevel = model.thinking.default;
-              };
-            })
-          ) provider.models;
-        };
+      toOmpProvider = _name: provider: {
+        baseUrl = provider.endpoints.openai;
+        api = "openai-completions";
+        apiKey = ''!${pkgs.coreutils}/bin/cat "${provider.secretPath}"'';
+        models = lib.mapAttrsToList (
+          _model: model:
+          {
+            id = model.id;
+            name = model.displayName;
+            inherit (model) contextWindow;
+            input = model.input or [ "text" ];
+          }
+          // lib.optionalAttrs (model ? maxOutputTokens) {
+            maxTokens = model.maxOutputTokens;
+          }
+          // lib.optionalAttrs (model ? thinking) {
+            reasoning = true;
+            thinking = {
+              mode = "effort";
+              efforts = model.thinking.efforts;
+              defaultLevel = model.thinking.default;
+            };
+          }
+        ) provider.models;
+      };
 
       ompProviders = lib.mapAttrs toOmpProvider selected;
 
