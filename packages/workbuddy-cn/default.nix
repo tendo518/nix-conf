@@ -10,11 +10,11 @@
 # URL below comes from https://www.codebuddy.cn/v2/update?platform=workbuddy-darwin-arm64
 stdenvNoCC.mkDerivation rec {
   pname = "workbuddy-cn";
-  version = "5.8.2.41111488";
+  version = "5.8.3.41334564";
 
   src = fetchurl {
-    url = "https://download.codebuddy.cn/workbuddy/saas/darwin-arm64/WorkBuddy-darwin-arm64-5.8.2.41111488-b8f6c953.dmg";
-    hash = "sha256-gXglOcKtIRDpQPjsRaLg55+r95Ho3pXt7iNwFwTk6v0=";
+    url = "https://download.codebuddy.cn/workbuddy/saas/darwin-arm64/WorkBuddy-darwin-arm64-5.8.3.41334564-db0e9b51.dmg";
+    hash = "sha256-7NQE8W+en5etp3z4IRICzrHs0Khuv/4Xgt/qCsfq5iY=";
   };
 
   # Extract with 7zz like the nixpkgs wechat package: undmg silently drops
