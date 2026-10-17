@@ -12,12 +12,12 @@
 # (https://github.com/Homebrew/homebrew-cask, Casks/d/deepseek-harness.rb).
 stdenvNoCC.mkDerivation rec {
   pname = "deepseek-harness";
-  version = "0.2.0-rc.2";
+  version = "0.2.1-rc.2";
 
   src = fetchurl {
     name = "deepseek-harness-${version}-mac-arm64.zip";
     url = "https://download.deepseek.com/dsh-desk/bin/mac-arm64/deepseek-harness-${version}-mac-arm64.zip";
-    hash = "sha256-uD2vI+SC2WxMA5oqeG2vOnCC6GfqStk8UUaAIN76iio=";
+    hash = "sha256-ETHaANdHS1Nz8//FgGhrSwCUZLaL0112HENSgk+WRgQ=";
   };
 
   nativeBuildInputs = [ unzip ];
