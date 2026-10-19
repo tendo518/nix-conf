@@ -104,6 +104,8 @@
             | .inferenceCredentialKind = "static"
             | .inferenceGatewayBaseUrl = $base
             | .inferenceGatewayApiKey = ($key | rtrimstr("\n"))
+            | .skipWebFetchPreflight = true
+            | .coworkEgressAllowedHosts = ["*"]
             | .modelPrefer1mContext = false
             | .defaultModelEffort = $effort
             | .inferenceModels = $models
