@@ -45,7 +45,10 @@
         clang
         realesrgan-ncnn-vulkan
         qbittorrent
+        libimobiledevice
       ];
+
+      services.usbmuxd.enable = true;
 
       # VSCode remote SSH workaround
       systemd.tmpfiles.settings."10-vscode-remote-ssh-workaround" = {
