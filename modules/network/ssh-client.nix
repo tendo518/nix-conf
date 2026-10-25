@@ -123,6 +123,11 @@
           User = "tendo";
           IdentityFile = "~/.ssh/id_ed25519";
         };
+        "laptop-solar-modoka.tailnet" = {
+          Hostname = "100.112.217.3";
+          User = "tendo";
+          IdentityFile = "~/.ssh/id_ed25519";
+        };
         "nas-home-coin.tailnet" = {
           Hostname = "100.102.147.88";
           User = "tendo";
