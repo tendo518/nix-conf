@@ -1,11 +1,17 @@
 {
   flake.modules.nixos."apps/sunshine" =
-    { hostContext, ... }:
+    { hostContext, lib, ... }:
     {
       services.sunshine = {
         enable = true;
         openFirewall = true;
         capSysAdmin = true;
+      };
+
+      # nixpkgs' Sunshine module still sets these obsolete Avahi options.
+      services.avahi.publish = {
+        enable = lib.mkForce null;
+        userServices = lib.mkForce null;
       };
 
       # fix upstream: https://github.com/NixOS/nixpkgs/issues/455737

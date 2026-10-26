@@ -36,8 +36,6 @@
 
       # LUKS encryption
       boot.initrd.luks.devices."cryptroot".device = "/dev/disk/by-label/NIXLUKS";
-      boot.initrd.systemd.enable = true;
-
       # Filesystems
       fileSystems."/" = {
         device = "/dev/disk/by-label/NIXROOT";

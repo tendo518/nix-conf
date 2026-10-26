@@ -18,6 +18,7 @@
         zathura
         moonlight-qt
 
+        blender
         # Development & Browsing
         telegram-desktop
         google-chrome

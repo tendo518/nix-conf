@@ -12,7 +12,6 @@
       };
       boot.loader.efi.canTouchEfiVariables = true;
       boot.loader.timeout = lib.mkDefault 5; # wait for x seconds to select the boot entry
-      boot.initrd.systemd.enable = true;
       boot.initrd.compressor = "zstd";
 
       # LTS Kernel
