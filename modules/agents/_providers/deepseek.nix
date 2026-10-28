@@ -22,6 +22,7 @@
       profile = "codex-ds";
     };
     omp = { };
+    pi = { };
     reasonix.default = true;
   };
   models = {

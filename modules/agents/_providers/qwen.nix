@@ -92,5 +92,47 @@
       codexPriority = 8;
       codexSupportsOriginalImageDetail = true;
     };
+    glm_5_3_flash = {
+      id = "glm-5.3-flash";
+      displayName = "GLM 5.3 Flash";
+      contextWindow = 1000000;
+      input = [
+        "text"
+        "image"
+      ];
+      thinking = {
+        efforts = [
+          "low"
+          "medium"
+          "high"
+          "xhigh"
+        ];
+        default = "high";
+      };
+      claudeBehavesAs = "claude-sonnet-5";
+      codexPriority = 7;
+      codexSupportsOriginalImageDetail = true;
+    };
+    ds_v4_1flash_1017 = {
+      id = "deepseek-v4.1-flash-1017";
+      displayName = "DeepSeek-V4.1-Flash-1017";
+      contextWindow = 1000000;
+      input = [
+        "text"
+        "image"
+      ];
+      thinking = {
+        efforts = [
+          "low"
+          "medium"
+          "high"
+          "xhigh"
+        ];
+        default = "high";
+      };
+      claudeBehavesAs = "claude-sonnet-5";
+      codexPriority = 9;
+      codexSupportsOriginalImageDetail = true;
+    };
   };
 }
