@@ -63,21 +63,32 @@
       # Intentionally unpinned: Pi resolves these when installing or updating,
       # and the selected versions are recorded in ~/.pi/agent/npm.
       piPackages = [
-        "npm:@companion-ai/feynman"
+        "npm:@ff-labs/pi-fff"
+        "npm:@narumitw/pi-btw"
+        "npm:@narumitw/pi-goal"
+        "npm:@narumitw/pi-plan-mode"
         "npm:@narumitw/pi-statusline"
         "npm:@narumitw/pi-tool"
         "npm:@narumitw/pi-usage"
-        "npm:@tintinweb/pi-subagents"
         "npm:pi-open-tui"
+        "npm:pi-subagents"
         "npm:pi-web-access"
       ];
 
       settingsJson = builtins.toJSON (
         {
+          "$schema" = "https://pi.dev/schemas/settings.schema.json";
           inherit defaultProvider;
           defaultModel = defaultModel.id;
           packages = piPackages;
           quietStartup = true;
+          enableInstallTelemetry = false;
+          retry.provider.maxRetries = 0;
+          theme = "dark";
+          hideThinkingBlock = true;
+          tuiMode = "fullscreen";
+          fullscreenWheelScrollLines = "auto";
+          terminal.showTerminalProgress = true;
         }
         // lib.optionalAttrs (defaultModel ? thinking) {
           defaultThinkingLevel = defaultModel.thinking.default;
@@ -85,6 +96,42 @@
       );
 
       piSettingsDefaults = pkgs.writeText "pi-settings.json" settingsJson;
+
+      # pi-open-tui keeps its own config outside settings.json.
+      openTuiConfig = {
+        enabled = true;
+        inlineFooter = true;
+        settingsLanguage = "en";
+        cursorStyle = "block";
+        icons.mode = "ascii";
+        footerSegments = {
+          cwd = true;
+          hostname = true;
+          sessionName = true;
+          gitBranch = true;
+          gitStatus = true;
+          gitCommit = false;
+          runtime = true;
+          context = true;
+          tokens = true;
+          cost = true;
+          extensionStatuses = true;
+          capitalizeProviderName = true;
+          nerdIconSpacing = false;
+        };
+        telemetry = {
+          enabled = true;
+          tps = true;
+          ttft = true;
+          duration = true;
+          tokens = true;
+          stalls = true;
+          cost = true;
+        };
+        thinkingPeek.lines = 2;
+      };
+
+      openTuiDefaults = pkgs.writeText "pi-open-tui.json" (builtins.toJSON openTuiConfig);
     in
     {
       home.packages = [ pkgs.llm-agents.pi ];
@@ -94,31 +141,21 @@
         text = modelsJson;
       };
 
-      # Keep Pi's settings writable so `pi install`, `pi remove`, and
-      # `pi config` can persist changes. Nix defaults are merged on activation,
-      # while packages installed at runtime are retained.
+      # Rewrite Pi's settings from the Nix defaults on every activation. The
+      # files stay writable so `pi install`, `pi config`, and extension UIs work
+      # at runtime, but their changes are discarded on the next switch.
       home.activation.setupPiSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         piSettings="$HOME/.pi/agent/settings.json"
+        openTui="$HOME/.pi/agent/open-tui.json"
         mkdir -p "$(dirname "$piSettings")"
 
-        # Migrate the read-only home-manager symlink from earlier generations.
-        if [ -L "$piSettings" ]; then
-          rm -f "$piSettings"
-        fi
+        # Drop any previous file, including the read-only home-manager symlink
+        # from earlier generations.
+        rm -f "$piSettings"
+        install -m 600 ${piSettingsDefaults} "$piSettings"
 
-        if [ -f "$piSettings" ]; then
-          tmp="$(mktemp "$piSettings.tmp.XXXXXX")"
-          ${lib.getExe pkgs.jq} -s '
-            .[0] as $current
-            | .[1] as $defaults
-            | ($current + $defaults)
-            | .packages = ((($current.packages // []) + ($defaults.packages // [])) | unique)
-          ' "$piSettings" ${piSettingsDefaults} > "$tmp"
-          chmod 600 "$tmp"
-          mv "$tmp" "$piSettings"
-        else
-          install -m 600 ${piSettingsDefaults} "$piSettings"
-        fi
+        rm -f "$openTui"
+        install -m 644 ${openTuiDefaults} "$openTui"
       '';
 
       age.secrets = providers.ageSecrets selected;
