@@ -11,7 +11,9 @@
     claudeCode.smallModel = "qwen3_8_flash";
     codex = { };
     omp = { };
-    pi = { };
+    pi = {
+      api = "openai-responses";
+    };
   };
   models = {
     qwen3_8_max = {
