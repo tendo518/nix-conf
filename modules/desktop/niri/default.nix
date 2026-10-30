@@ -20,7 +20,7 @@
 
       environment.systemPackages = with pkgs; [
         niri
-        noctalia-shell
+        noctalia
         brightnessctl
         playerctl
         ghostty
