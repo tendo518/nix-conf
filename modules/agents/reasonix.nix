@@ -20,6 +20,11 @@
       # agenix mounts secrets in a separate user service. Sync both during
       # activation and at launch, when the latest secret is available.
       syncReasonixEnv = ''
+        # agenix exposes home secrets under $XDG_RUNTIME_DIR, which the
+        # system-level home-manager service does not export while it runs
+        # activation. It always runs as the owning user, so default to that
+        # user's runtime dir (same idiom home-manager uses for reloadSystemd).
+        : "''${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
         if [ -r "${secretPath}" ]; then
           (
             set -e
