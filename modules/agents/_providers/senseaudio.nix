@@ -10,7 +10,7 @@
     claudeCode = { };
     codex = { };
     omp.default = true;
-    pi.default = true;
+    pi = { };
   };
   models = {
     ds_v4_1flash = {
