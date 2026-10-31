@@ -27,6 +27,7 @@ in
   "telegram-hermes-bot-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "telegram-userid.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "tailscale-authkey.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
+  "github-nix-token.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "senseaudio-tokenplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "stepfun-plan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "qwen-tokenplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;

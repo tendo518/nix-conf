@@ -30,12 +30,19 @@ let
     lib.optional user.trusted user.name ++ [ "root" ] ++ [ adminGroup ];
 
   # Common module settings
-  commonModule = _: {
+  commonModule = { hostContext, ... }: {
     # Disable legacy channels, force Flakes
     nix.channel.enable = false;
 
     # Auto optimize Store
     nix.optimise.automatic = true;
+
+    # The encrypted payload is a nix.conf fragment, included only at runtime.
+    age.secrets.github-nix-token = {
+      file = ../../secrets/github-nix-token.age;
+      owner = hostContext.user.name;
+      mode = "0400";
+    };
   };
 in
 {
@@ -88,5 +95,13 @@ in
         trusted-users = trustedUsers lib hostContext.user "@admin";
       };
 
+    };
+
+  flake.modules.home."core/nix" =
+    { osConfig, ... }:
+    {
+      nix.extraOptions = ''
+        !include ${osConfig.age.secrets.github-nix-token.path}
+      '';
     };
 }
