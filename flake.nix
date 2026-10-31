@@ -20,7 +20,7 @@
 
   inputs = {
     # -small cause tooo many compilation in darwin
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst";
 
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin";
