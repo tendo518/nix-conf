@@ -2,6 +2,7 @@
   lib,
   stdenvNoCC,
   fetchurl,
+  makeWrapper,
   herdr-app,
   herdr-core,
 }:
@@ -25,16 +26,17 @@ stdenvNoCC.mkDerivation {
   dontBuild = true;
   dontFixup = true;
 
+  nativeBuildInputs = [ makeWrapper ];
+
   installPhase = ''
         runHook preInstall
 
         app="$out/Applications/Herdr.app"
         mkdir -p "$out/bin" "$app/Contents/MacOS" "$app/Contents/Resources"
 
-        # bin/herdr-app is makeWrapper's script; .herdr-app-wrapped is the
-        # Mach-O binary. Keep the former for CLI use and put the latter in the
-        # bundle with the core added through LSEnvironment.
-        install -m755 "${herdr-app}/bin/herdr-app" "$out/bin/herdr-app"
+        # Put the actual Mach-O binary in the bundle. The CLI wrapper below
+        # executes this same copy instead of retaining llm-agents' wrapper and
+        # binary as a second runtime copy.
         install -m755 "${herdr-app}/bin/.herdr-app-wrapped" "$app/Contents/MacOS/Herdr"
 
         install -m644 "${icon}" "$app/Contents/Resources/Herdr.icns"
@@ -63,6 +65,9 @@ stdenvNoCC.mkDerivation {
         # Nix's Mach-O fixup signs the executable itself; sign the surrounding
         # app bundle too so LaunchServices sees a valid ad-hoc application.
         /usr/bin/codesign --force --deep --sign - "$app"
+
+        makeWrapper "$app/Contents/MacOS/Herdr" "$out/bin/herdr-app" \
+          --suffix PATH : "${herdr-core}/bin"
 
         runHook postInstall
   '';
