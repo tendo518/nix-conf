@@ -15,6 +15,7 @@ _: {
         obsidian
         skimpdf
         deskflow
+        llm-agents.herdr-app # desktop GUI, backed by herdr-core
         llm-agents.chatgpt
         llm-agents.claude-desktop
         llm-agents.hermes-desktop

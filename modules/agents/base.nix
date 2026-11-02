@@ -8,7 +8,8 @@
         # kilocode-cli
         # qoder-cli
         # opencode2
-        herdr # https://herdr.dev
+        herdr # terminal workspace manager (TUI)
+        herdr-core # headless terminal runtime (hc)
         hermes-agent
       ];
     };

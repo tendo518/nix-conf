@@ -8,6 +8,7 @@
         wechat
         # Office & Productivity
         obsidian
+        llm-agents.herdr-app # desktop GUI, backed by herdr-core
         # yt-dlp  # upstream deno build fail
         qq
         deskflow

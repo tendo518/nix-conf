@@ -109,9 +109,24 @@
 
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
-    llm-agents = final: _prev: {
-      llm-agents = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system};
-    };
+    llm-agents =
+      final: _prev:
+      let
+        packages = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system};
+      in
+      {
+        llm-agents = packages // {
+          # llm-agents ships only the herdr-app executable. On macOS, wrap
+          # it in Herdr.app so Finder, Spotlight and LSEnvironment work.
+          herdr-app =
+            if final.stdenv.hostPlatform.isDarwin then
+              final.callPackage ../packages/herdr-app {
+                inherit (packages) herdr-app herdr-core;
+              }
+            else
+              packages.herdr-app;
+        };
+      };
 
   };
 }

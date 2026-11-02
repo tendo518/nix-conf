@@ -29,6 +29,7 @@
         zathura
         telegram-desktop
         google-chrome
+        llm-agents.herdr-app # desktop GUI, backed by herdr-core
         llm-agents.chatgpt
 
         darktable
