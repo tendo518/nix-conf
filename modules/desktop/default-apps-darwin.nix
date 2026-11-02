@@ -1,35 +1,58 @@
 # Configure default applications for document types using duti
 _: {
   flake.modules.darwin."desktop/default-apps-darwin" =
-    { pkgs, lib, ... }:
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      primaryUser = lib.escapeShellArg config.system.primaryUser;
+    in
     {
       environment.systemPackages = [ pkgs.duti ];
 
       system.activationScripts.postActivation.text = lib.mkAfter ''
         echo "Setting default applications..."
 
-        # Helper function to set default app by UTI
+        # Activation scripts run as root, but LaunchServices associations are
+        # per-user. Run duti in the primary user's GUI session.
+        run_as_user() {
+          /bin/launchctl asuser "$(/usr/bin/id -u -- ${primaryUser})" \
+            /usr/bin/sudo --user=${primaryUser} -- "$@"
+        }
+
+        # Set default app by UTI
         set_default() {
           local bundle_id="$1"
           local uti="$2"
-          ${pkgs.duti}/bin/duti -s "$bundle_id" "$uti" all 2>/dev/null || true
+          if ! run_as_user ${lib.getExe pkgs.duti} -s "$bundle_id" "$uti" all; then
+            echo "warning: failed to set $uti handler to $bundle_id" >&2
+          fi
         }
 
-        # For file types with dynamic UTIs, we use extension-based approach
-        # duti supports: echo 'bundle_id .ext role' | duti
+        # For file types with dynamic UTIs, set the extension handler directly.
         set_ext() {
           local bundle_id="$1"
           local ext="$2"
-          echo "$bundle_id .$ext all" | ${pkgs.duti}/bin/duti 2>/dev/null || true
+          if ! run_as_user ${lib.getExe pkgs.duti} -s "$bundle_id" ".$ext" all; then
+            echo "warning: failed to set .$ext handler to $bundle_id" >&2
+          fi
         }
 
         # ============================================================
-        # VSCode - Text and source code files
+        # CotEditor - Plain-text files
+        # ============================================================
+        COTEDITOR="com.coteditor.CotEditor"
+        set_default "$COTEDITOR" "public.plain-text"   # .txt
+        set_ext "$COTEDITOR" "txt"
+
+        # ============================================================
+        # VSCode - Source code files
         # ============================================================
         VSCODE="com.microsoft.VSCode"
 
-        # Standard text types
-        set_default "$VSCODE" "public.plain-text"      # .txt
         set_default "$VSCODE" "public.source-code"     # generic source code
         set_default "$VSCODE" "public.script"          # generic scripts
         set_default "$VSCODE" "public.shell-script"    # .sh, .bash, .zsh

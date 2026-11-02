@@ -37,4 +37,7 @@
   # deepseek-harness: DeepSeek desktop client, arm64-only zip on darwin
   deepseek-harness =
     if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./deepseek-harness { } else null;
+
+  # coteditor: text editor DMG on darwin
+  coteditor = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./coteditor { } else null;
 }

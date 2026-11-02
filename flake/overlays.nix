@@ -69,6 +69,14 @@
           inherit (prev) clash-verge-rev;
         };
 
+    # CotEditor overlay with macOS support (Pin version)
+    coteditor =
+      final: prev:
+      if prev.stdenv.hostPlatform.isDarwin then
+        { coteditor = final.callPackage ../packages/coteditor { }; }
+      else
+        { };
+
     # Tencent Meeting overlay with macOS support (Pin version)
     tencent-meeting =
       final: prev:
