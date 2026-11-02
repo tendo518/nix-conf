@@ -145,6 +145,8 @@ _: {
           Group = "mihomo";
           WorkingDirectory = stateDir;
           StateDirectory = "mihomo";
+          # The provider cache holds the subscription's node credentials.
+          StateDirectoryMode = "0700";
           Environment = "SAFE_PATHS=${configDir}";
           ExecStartPre = "${mihomo} -t -d ${stateDir} -f ${configPath}";
           ExecStart = "${mihomo} -d ${stateDir} -f ${configPath}";
@@ -169,6 +171,13 @@ _: {
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
+          # The helper only adds and deletes policy routes.
+          RuntimeDirectory = "mihomo-routing";
+          CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
+          NoNewPrivileges = true;
+          PrivateTmp = true;
+          ProtectHome = true;
+          ProtectSystem = "strict";
           ExecStart = "${mihomoCtl}/bin/mihomo-ctl routing start";
           ExecStop = "${mihomoCtl}/bin/mihomo-ctl routing cleanup";
         };

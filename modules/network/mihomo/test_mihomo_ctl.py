@@ -310,9 +310,36 @@ class CoreOperationTests(unittest.TestCase):
         ):
             self.core.set_mode("global")
         self.assertEqual(events.mock_calls, [
-            call.api("/version"), call.save("global"),
-            call.api("/configs", "PATCH", {"mode": "global"}),
+            call.api("/version"), call.api("/configs", "PATCH", {"mode": "global"}),
+            call.save("global"),
         ])
+
+    def test_mode_switch_needs_no_privileges_and_records_only_as_root(self):
+        events = MagicMock()
+        with (
+            patch.object(ctl.os, "geteuid", return_value=1000),
+            patch.object(self.core, "api", events.api),
+            patch.object(self.core, "save_mode", events.save),
+        ):
+            self.core.set_mode("direct")
+        self.assertEqual(events.mock_calls, [
+            call.api("/version"), call.api("/configs", "PATCH", {"mode": "direct"}),
+        ])
+
+    def test_saved_mode_is_optional_for_unprivileged_callers(self):
+        self.core.settings.mode_state_file.write_text("global\n")
+        self.assertEqual(self.core.saved_mode(), "global")
+        with patch.object(ctl.Path, "read_text", side_effect=PermissionError):
+            self.assertIsNone(self.core.saved_mode())
+            with patch.object(self.core, "current_mode", side_effect=ctl.MihomoError("down")):
+                self.assertEqual(self.core.applied_mode(), "rule")
+
+    def test_applied_mode_prefers_the_live_mode(self):
+        self.core.settings.mode_state_file.write_text("rule\n")
+        with patch.object(self.core, "current_mode", return_value="global"):
+            self.assertEqual(self.core.applied_mode(), "global")
+        with patch.object(self.core, "current_mode", return_value="unknown"):
+            self.assertEqual(self.core.applied_mode(), "rule")
 
     def test_restart_preserves_routing_enablement_and_order(self):
         for enabled in (False, True):
@@ -699,6 +726,7 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
         selected = "other"
         offline = False
         action_threads = []
+        mode_calls = []
 
         def status():
             if offline:
@@ -711,6 +739,9 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
             nonlocal selected
             action_threads.append(threading.get_ident())
             selected = name
+
+        def set_mode(value):
+            mode_calls.append((value, threading.get_ident()))
 
         with (
             tempfile.TemporaryDirectory() as runtime,
@@ -750,11 +781,11 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
 
                 global_mode = next(a for a in modes.actions() if a.text() == "global")
                 global_mode.trigger()
-                wait_for(menu.isEnabled)
-                self.assertEqual(processes[-1][0], "/custom/pkexec")
-                self.assertEqual(processes[-1][1][:2], ["--disable-internal-agent", sys.executable])
-                self.assertEqual(processes[-1][1][3:5], ["--settings", str(settings_path)])
-                self.assertEqual(processes[-1][1][5:], ["mode", "global"])
+                wait_for(lambda: menu.isEnabled() and bool(mode_calls))
+                # Mode switching is a controller call, not a privileged one.
+                self.assertEqual(mode_calls[0][0], "global")
+                self.assertNotEqual(mode_calls[0][1], threading.get_ident())
+                self.assertEqual(processes, [])
 
                 actions["Transparent routing"].trigger()
                 wait_for(menu.isEnabled)
@@ -777,6 +808,7 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
                 patch.object(ctl.os, "geteuid", return_value=1000),
                 patch.object(self.core, "get_status", side_effect=status),
                 patch.object(self.core, "select_node", side_effect=select),
+                patch.object(self.core, "set_mode", side_effect=set_mode),
                 patch.object(self.core, "close_connections", side_effect=ctl.MihomoError("request timed out")),
                 patch.object(QtWidgets, "QApplication", return_value=application),
                 patch.object(QtWidgets, "QSystemTrayIcon", Tray),

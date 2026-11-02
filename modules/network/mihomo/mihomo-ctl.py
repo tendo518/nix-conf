@@ -457,17 +457,29 @@ class MihomoCore:
         self.settings.state_dir.mkdir(mode=0o750, parents=True, exist_ok=True)
         atomic_write_text(self.settings.active_subscription_path, f"{name}\n", mode=0o600)
 
-    def saved_mode(self) -> str:
-        if not self.settings.mode_state_file.is_file():
-            return "rule"
-        mode = self.settings.mode_state_file.read_text().strip()
+    def saved_mode(self) -> str | None:
+        """Return the recorded mode, or None when it is absent or not readable."""
+        try:
+            mode = self.settings.mode_state_file.read_text().strip()
+        except OSError:
+            # The state directory is root-only, so an unprivileged caller cannot
+            # see the recording. It is only a fallback, never the authority.
+            return None
         if mode not in MODES:
             raise MihomoError(f"Saved Mihomo mode is invalid: {self.settings.mode_state_file}")
         return mode
 
+    def applied_mode(self) -> str:
+        """Prefer the live mode so an unprivileged switch survives a config rewrite."""
+        try:
+            mode = self.current_mode()
+        except MihomoError:
+            mode = None
+        return mode if mode in MODES else self.saved_mode() or "rule"
+
     def save_mode(self, mode: str) -> None:
         self.settings.state_dir.mkdir(mode=0o750, parents=True, exist_ok=True)
-        # The mode is not a secret; let unprivileged `mihomo-ctl mode` read it.
+        # Only the fallback used when the controller is unreachable is recorded.
         atomic_write_text(self.settings.mode_state_file, f"{mode}\n", mode=0o644)
 
     def subscription_names(self) -> list[str]:
@@ -515,7 +527,7 @@ class MihomoCore:
         require_root()
         url = self.load_subscription(name)
         self.set_active_subscription(name)
-        self.write_config(config_template, url, self.saved_mode())
+        self.write_config(config_template, url, self.applied_mode())
         self.cleanup_runtime("tun")
         self.restart_mihomo()
 
@@ -765,14 +777,15 @@ class MihomoCore:
         return str(as_dict(self.api("/configs")).get("mode", "unknown"))
 
     def set_mode(self, value: str) -> None:
-        # Check connectivity before persisting a mode that could not be applied.
+        # Check connectivity before applying a mode that could not be applied.
         self.controller_check()
         if value not in MODES:
             raise MihomoError(f"Mode must be one of: {', '.join(MODES)}")
-        require_root()
-        self.save_mode(value)
         # PATCH avoids recreating the TUN device and losing the policy routes.
         self.api("/configs", "PATCH", {"mode": value})
+        # Switching needs no privileges; recording the fallback needs root.
+        if os.geteuid() == 0:
+            self.save_mode(value)
 
     def update_providers(self, provider: str | None = None, update_all: bool = False) -> list[str]:
         require_root()
@@ -1415,16 +1428,8 @@ def create_cli(core: MihomoCore | None = None, console=None):
     def mode_command(value: Annotated[str | None, typer.Argument()] = None) -> None:
         """Show or set the Mihomo mode (rule, global, direct, script)."""
         if value is None:
-            current = core.current_mode()
-            saved = core.saved_mode()
-            console.print(current)
-            if current != saved:
-                warning(
-                    f"Runtime mode {current} differs from the saved mode {saved}; "
-                    f"run: sudo mihomo-ctl mode {saved}"
-                )
+            console.print(core.current_mode())
             return
-        as_root()
         core.set_mode(value)
         success(f"Mihomo mode: {value}")
         if value == "global":
@@ -1662,7 +1667,7 @@ def run_tray(core: MihomoCore, settings_path: Path | None = None) -> None:
         action.setCheckable(True)
         mode_group.addAction(action)
         action.triggered.connect(
-            lambda _checked=False, value=value: run_privileged("mode", value)
+            lambda _checked=False, value=value: run_operation(core.set_mode, value)
         )
     routing_action.triggered.connect(
         lambda checked: run_privileged("routing", "enable" if checked else "disable")
