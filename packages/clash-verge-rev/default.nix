@@ -9,12 +9,12 @@ let
   isArm = stdenv.hostPlatform.isAarch64;
   arch = if isArm then "aarch64" else "x64";
   # sha256 from https://github.com/Homebrew/homebrew-cask (Casks/c/clash-verge-rev.rb)
-  armHash = "sha256-H3w6c5cPED/Dy5lEdEdy+hVAFg8FkR4DP/xX98n4YOw=";
-  intelHash = "sha256-jN96AaHFSKCBM5r/IbJZnWD2dzDQVIXpCDH0u9vzsJM=";
+  armHash = "sha256-PEh98wVGvL7lg2Pt2i3wwi+ZAKfASAf7jDlFqNd9FDY=";
+  intelHash = "sha256-Kt/kc2mQaCQMmFUGa2EgfDYvWjpk+RoLeZQmZL29XOY=";
 in
 stdenv.mkDerivation rec {
   pname = "clash-verge-rev";
-  version = "2.5.8";
+  version = "2.5.9";
 
   src = fetchurl {
     name = "Clash.Verge-${version}-${arch}.dmg";
