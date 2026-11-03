@@ -85,13 +85,16 @@
         enableZshIntegration = true;
       };
 
-      programs.atuin = {
+      programs.fzf = {
         enable = true;
         enableBashIntegration = true;
         enableFishIntegration = true;
         enableZshIntegration = true;
-        flags = [
-          "--disable-up-arrow"
+        defaultOptions = [
+          "--height=60%"
+          "--layout=reverse"
+          "--border=rounded"
+          "--info=inline"
         ];
       };
 
@@ -137,7 +140,6 @@
           ripgrep # A line-oriented search tool that recursively searches for a regex pattern
           jq # Command-line JSON processor
           yq-go # Command-line YAML, JSON and XML processor
-          fzf # A command-line fuzzy finder
 
           # --- Networking ---
           aria2 # Lightweight multi-protocol & multi-source command-line download utility
