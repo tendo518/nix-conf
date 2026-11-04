@@ -33,7 +33,7 @@ _: {
         # stats
         drawio
         moonlight-qt
-        clash-verge-rev
+        flclash
         keepingyouawake
         zotero
         imagemagick

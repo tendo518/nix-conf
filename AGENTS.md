@@ -183,7 +183,7 @@ Use `hostContext.user.name` instead of the old `config.host.user.name` path.
 
 Custom overlays are defined in `modules/overlays/default.nix` (exposed as `config.flake.overlays`):
 - `llm-agents` - AI tools from `numtide/llm-agents.nix`
-- `ticktick`, `skimpdf`, `deskflow`, `clash-verge-rev` - pinned local builds from `packages/` (platform guards per package)
+- `ticktick`, `skimpdf`, `deskflow`, `flclash` - pinned local builds from `packages/` (platform guards per package)
 
 ## Common Commands (Justfile)
 
@@ -290,7 +290,7 @@ packages/               # Custom package definitions; platform guards per packag
 ├── ticktick/           # TickTick app with macOS support
 ├── skimpdf/            # Skim PDF with macOS support
 ├── deskflow/           # Deskflow with macOS support
-└── clash-verge-rev/    # Clash Verge Rev with macOS support
+└── flclash/            # FlClash with macOS support
 
 scripts/                # Helpers (check-nixpkgs-pr-channel.py)
 docs/                   # Runbooks and notes (agenix setup, hardware debugging)

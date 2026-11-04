@@ -15,9 +15,8 @@
   # deskflow only available on darwin
   deskflow = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./deskflow { } else null;
 
-  # clash-verge-rev only available on darwin
-  clash-verge-rev =
-    if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./clash-verge-rev { } else null;
+  # flclash only available on darwin
+  flclash = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./flclash { } else null;
 
   # tencent-meeting only available on darwin
   tencent-meeting =
