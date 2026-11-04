@@ -4,7 +4,18 @@
       pkgs,
       ...
     }:
+    let
+      plyPython = pkgs.python3.withPackages (ps: [
+        ps.numpy
+        ps.pillow
+      ]);
+      plyRenderer = pkgs.writeShellScriptBin "yazi-ply-render" ''
+        exec ${plyPython}/bin/python3 ${./plugins/ply-preview/render.py} "$@"
+      '';
+    in
     {
+      home.packages = [ plyRenderer ];
+
       programs.yazi = {
         enable = true;
         enableFishIntegration = true;
@@ -46,6 +57,10 @@
             # (the built-in image previewer only downscales)
             prepend_previewers = [
               {
+                url = "*.ply";
+                run = "ply-preview";
+              }
+              {
                 mime = "image/*";
                 run = "image-fill";
               }
@@ -74,6 +89,7 @@
 
         plugins."toggle-pane" = ./plugins/toggle-pane;
         plugins."image-fill" = ./plugins/image-fill;
+        plugins."ply-preview" = ./plugins/ply-preview;
       };
 
       # ycd: launch yazi then cd to the directory you navigated to.
