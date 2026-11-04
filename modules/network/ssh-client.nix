@@ -27,6 +27,12 @@
           User = "pengwy";
           IdentityFile = "~/.ssh/id_ed25519";
         };
+        "ai-gpu-4rtxpro5000.cluster" = {
+          Hostname = "10.16.51.141";
+          User = "ailab2";
+          Port = 22022;
+          IdentityFile = "~/.ssh/id_ed25519";
+        };
         "hpc1-login01.cluster" = {
           Hostname = "172.18.34.23";
           User = "30017301";
