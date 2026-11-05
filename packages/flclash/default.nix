@@ -9,12 +9,12 @@ let
   isArm = stdenvNoCC.hostPlatform.isAarch64;
   arch = if isArm then "arm64" else "amd64";
   # sha256 from https://github.com/chen08209/FlClash/releases
-  armHash = "sha256-IW9xdztwlBr+P20d9vId8FgQ4Qm7gHX0RWCgNJ5m4NI=";
-  intelHash = "sha256-5UXFU5xjHAEW6dWKBLP7lc5YcwRhboVIm6FaVOjH63A=";
+  armHash = "sha256-mA6cw71H0gkIduXjwG93TjKokzDYOqZqw/hJDjmSTZs=";
+  intelHash = "sha256-lzjuvsTI3QF767YI8tHowgnPWql8xPGBeDA2tm3TyUQ=";
 in
 stdenvNoCC.mkDerivation rec {
   pname = "flclash";
-  version = "0.9.2";
+  version = "0.9.3";
 
   src = fetchurl {
     name = "FlClash-${version}-macos-${arch}.dmg";
