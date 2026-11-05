@@ -101,6 +101,27 @@
       else
         { };
 
+    # uutils-diffutils 0.6.0's tests look for Homebrew's `gpatch` on macOS.
+    # Nixpkgs only provides GNU patch as `patch`, so the patch-validation tests
+    # fail. Use Nixpkgs' GNU patch and ed, and point the tests at `patch`.
+    # Upstream context: https://github.com/uutils/diffutils/issues/225
+    uutils-diffutils =
+      final: prev:
+      if prev.stdenv.hostPlatform.isDarwin then
+        {
+          uutils-diffutils = prev.uutils-diffutils.overrideAttrs (old: {
+            nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [
+              final.gnupatch
+              final.ed
+            ];
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace src/utils.rs --replace-fail '"gpatch"' '"patch"'
+            '';
+          });
+        }
+      else
+        { };
+
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
     llm-agents =
