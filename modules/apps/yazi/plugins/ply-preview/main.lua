@@ -47,12 +47,18 @@ local function job_skip(job)
 	return 0
 end
 
+local function exists(url)
+	-- Yazi 26.9.x exposes fs.cha; newer versions renamed it to fs.stat.
+	local stat = fs.cha or fs.stat
+	return stat ~= nil and stat(url) ~= nil
+end
+
 function M:preload(job)
 	local cache = ya.file_cache(job)
 	if not cache then
 		return false, Err("Failed to create a preview cache path")
 	end
-	if fs.stat(cache) then
+	if exists(cache) then
 		return true
 	end
 
@@ -95,14 +101,17 @@ function M:peek(job)
 end
 
 function M:seek(job)
-	local hovered = cx and cx.tab and cx.tab.current and cx.tab.current.hovered
+	-- Yazi 26.9.x uses cx.active; newer versions use cx.tab.
+	local current = cx.active and cx.active.current or cx.tab and cx.tab.current
+	local preview = cx.active and cx.active.preview or cx.tab and cx.tab.preview
+	local hovered = current and current.hovered
 	if not hovered or hovered.url ~= job.file.url then
 		return
 	end
 
 	local step = ya.clamp(-1, job.units or 0, 1)
-	local skip = math.max(0, job_skip(job) + step)
-	ya.emit("peek", { skip, only_if = job.file.url, scope = job.scope })
+	local base = preview and preview.skip or job_skip(job)
+	ya.emit("peek", { math.max(0, base + step), only_if = job.file.url, scope = job.scope })
 end
 
 local function default_spot(job)
