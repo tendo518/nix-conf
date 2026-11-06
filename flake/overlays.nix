@@ -2,6 +2,16 @@
 { inputs, ... }:
 {
   flake.overlays = {
+    # gwfox Firefox theme (Linux)
+    "gwfox" = final: _prev: {
+      "gwfox" = final.callPackage ../packages/gwfox { };
+    };
+
+    # GWfox-T Firefox theme (macOS)
+    "gwfox-t" = final: _prev: {
+      "gwfox-t" = final.callPackage ../packages/gwfox-t { };
+    };
+
     # vim-full 9.2.1164 fails on Darwin when built with GTK2 and the image
     # feature is enabled: image.c references gui.scale, but that field is
     # omitted for GTK2.  Backport NixOS/nixpkgs#576728 until the pinned

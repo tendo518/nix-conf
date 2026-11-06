@@ -6,6 +6,12 @@
 # on unsupported host platforms.
 { pkgs }:
 {
+  # gwfox Firefox theme (Linux)
+  "gwfox" = pkgs.callPackage ./gwfox { };
+
+  # GWfox-T Firefox theme (macOS)
+  "gwfox-t" = pkgs.callPackage ./gwfox-t { };
+
   # ticktick only available on darwin
   ticktick = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./ticktick { } else null;
 
