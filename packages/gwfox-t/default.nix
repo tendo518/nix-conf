@@ -10,8 +10,8 @@ stdenvNoCC.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "akkva";
     repo = "GWfox-T";
-    rev = "c3da624118e219df75f16ffcb029ed9a890dadf4";
-    hash = "sha256-FnxaeijQt9O8AareEqZhBcOg14CWzRBPbk/6poQa214=";
+    rev = "7a3ef63d54dd3c82f828fe5fb108f9aa40131e12";
+    hash = "sha256-4Im7C9usMPc57XuE8nKHP2vNAEBoidvqpfiatS7VBZ8=";
   };
 
   installPhase = ''
