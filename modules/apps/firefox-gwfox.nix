@@ -1,20 +1,29 @@
 {
   flake.modules.home."apps/firefox-gwfox" =
-    { lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
       theme = if isDarwin then pkgs."gwfox-t" else pkgs."gwfox";
       themeDir = if isDarwin then "gwfox-t" else "gwfox";
+      profileChrome = "${config.programs.firefox.profilesPath}/${config.programs.firefox.profiles.default.path}/chrome";
     in
     {
+      home.file = {
+        "${profileChrome}/gwfox/userChrome.css".source = "${theme}/share/${themeDir}/userChrome.css";
+        "${profileChrome}/gwfox/userContent.css".source = "${theme}/share/${themeDir}/userContent.css";
+      };
+
       programs.firefox.profiles.default = {
-        # Put the theme first: its stylesheet starts with an @namespace rule,
-        # which must precede all ordinary CSS rules.
         userChrome = lib.mkBefore ''
-          ${builtins.readFile "${theme}/share/${themeDir}/userChrome.css"}
+          @import url("gwfox/userChrome.css");
         '';
         userContent = lib.mkBefore ''
-          ${builtins.readFile "${theme}/share/${themeDir}/userContent.css"}
+          @import url("gwfox/userContent.css");
         '';
 
         settings = {
