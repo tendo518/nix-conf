@@ -13,7 +13,6 @@
         qq
         deskflow
         llm-agents.chatgpt
-        llm-agents.hermes-desktop
         obs-studio
         calibre
         zathura

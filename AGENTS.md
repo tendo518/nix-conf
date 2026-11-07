@@ -277,7 +277,7 @@ modules/
 ├── core/               # Core system modules (nix, nixpkgs, ssh, users, editors, shell, xdg)
 ├── system/             # System configuration
 ├── desktop/            # Desktop environment (fonts, plasma, input-method, niri)
-├── agents/             # LLM agent CLIs (claude-code, codex, hermes, omp, pi, reasonix)
+├── agents/             # LLM agent CLIs (claude-code, codex, omp, pi, reasonix)
 ├── apps/               # Applications (ghostty, kitty, mpv, vscode, neovim, yazi, firefox)
 ├── network/            # Network configuration (tailscale, tailnet, syncthing, tproxy)
 ├── development/        # Development tools

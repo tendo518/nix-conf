@@ -27,7 +27,6 @@
         obsidian
         llm-agents.herdr-app # desktop GUI, backed by herdr-core
         llm-agents.chatgpt
-        llm-agents.hermes-desktop
         yt-dlp # upstream deno build fail
         qq
         obs-studio

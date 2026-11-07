@@ -11,7 +11,6 @@
           # opencode2
           herdr # terminal workspace manager (TUI)
           herdr-core # headless terminal runtime (hc)
-          hermes-agent
         ])
         ++ (with pkgs; [
           pnpm # needed for dsh plugin
