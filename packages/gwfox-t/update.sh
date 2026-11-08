@@ -6,7 +6,14 @@ source "$SCRIPT_DIR/../update-lib.sh"
 NIX_FILE="$SCRIPT_DIR/default.nix"
 
 echo "Fetching latest GWfox-T commit..."
-JSON=$(curl -sS https://api.github.com/repos/akkva/GWfox-T/commits/main)
+GH_API_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+AUTH_HEADER=()
+if [ -n "$GH_API_TOKEN" ]; then
+  AUTH_HEADER=(-H "Authorization: Bearer $GH_API_TOKEN")
+fi
+JSON=$(curl -fsSL --retry 3 "${AUTH_HEADER[@]}" \
+  -H "Accept: application/vnd.github+json" \
+  https://api.github.com/repos/akkva/GWfox-T/commits/main)
 
 REV=$(echo "$JSON" | jq -r '.sha')
 DATE=$(echo "$JSON" | jq -r '.commit.committer.date' | cut -dT -f1)

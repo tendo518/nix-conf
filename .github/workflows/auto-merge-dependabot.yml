@@ -3,6 +3,8 @@ name: Auto-merge Dependabot PRs
 on:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "packages/**"
 
 permissions:
   contents: write
