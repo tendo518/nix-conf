@@ -12,6 +12,13 @@
   # GWfox-T Firefox theme (macOS)
   "gwfox-t" = pkgs.callPackage ./gwfox-t { };
 
+  # fcitx5-macos: prebuilt Apple Silicon input method app bundle with Rime
+  fcitx5-macos =
+    if pkgs.stdenv.hostPlatform.isDarwin && pkgs.stdenv.hostPlatform.isAarch64 then
+      pkgs.callPackage ./fcitx5-macos { }
+    else
+      null;
+
   # ticktick only available on darwin
   ticktick = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./ticktick { } else null;
 

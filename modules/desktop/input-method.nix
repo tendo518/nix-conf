@@ -1,4 +1,32 @@
 {
+  flake.modules.darwin."desktop/input-method" =
+    { pkgs, lib, ... }:
+    let
+      source = "${pkgs.fcitx5-macos}/Applications/Fcitx5.app";
+      destination = "/Library/Input Methods/Fcitx5.app";
+      stagingRoot = "/Library/Input Methods/.fcitx5-nix-staging";
+      staging = "${stagingRoot}/Fcitx5.app";
+    in
+    {
+      # Install only the app bundle. macOS owns input-source registration and
+      # the user enables Fcitx5 from System Settings; doing that automatically
+      # would modify per-user input preferences from a system activation.
+      system.activationScripts.postActivation.text = lib.mkAfter ''
+        echo "Installing Fcitx5 macOS input method..." >&2
+        /bin/mkdir -p "/Library/Input Methods"
+        /bin/rm -rf ${lib.escapeShellArg stagingRoot}
+        /bin/mkdir -p ${lib.escapeShellArg stagingRoot}
+        /usr/bin/ditto ${lib.escapeShellArg source} ${lib.escapeShellArg staging}
+        /usr/bin/codesign --verify --deep --strict ${lib.escapeShellArg staging}
+        /usr/bin/killall Fcitx5 2>/dev/null || true
+        /bin/rm -rf ${lib.escapeShellArg destination}
+        /bin/mv ${lib.escapeShellArg staging} ${lib.escapeShellArg destination}
+        /bin/rmdir ${lib.escapeShellArg stagingRoot}
+        /usr/bin/killall Fcitx5 2>/dev/null || true
+        echo "Fcitx5 installed. On first install, log out and back in, then add it in System Settings > Keyboard > Input Sources." >&2
+      '';
+    };
+
   flake.modules.homeNixOS."desktop/input-method" =
     {
       pkgs,

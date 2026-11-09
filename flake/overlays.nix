@@ -29,6 +29,14 @@
           prev.vim-full;
     };
 
+    # Fcitx5 macOS input method with Rime (prebuilt Apple Silicon app bundle)
+    fcitx5-macos =
+      final: prev:
+      if prev.stdenv.hostPlatform.isDarwin && prev.stdenv.hostPlatform.isAarch64 then
+        { fcitx5-macos = final.callPackage ../packages/fcitx5-macos { }; }
+      else
+        { };
+
     # TickTick overlay with macOS support (Pin version)
     ticktick = final: prev: {
       ticktick =
