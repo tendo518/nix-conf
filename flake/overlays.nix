@@ -12,23 +12,6 @@
       "gwfox-t" = final.callPackage ../packages/gwfox-t { };
     };
 
-    # vim-full 9.2.1164 fails on Darwin when built with GTK2 and the image
-    # feature is enabled: image.c references gui.scale, but that field is
-    # omitted for GTK2.  Backport NixOS/nixpkgs#576728 until the pinned
-    # nixpkgs includes it: default Darwin's vim-full to GTK3 and make the
-    # GTK wrapper hook use gtk3-x11.
-    #   https://github.com/NixOS/nixpkgs/pull/576728
-    vim = _final: prev: {
-      vim-full =
-        if prev.stdenv.hostPlatform.isDarwin then
-          prev.vim-full.override {
-            guiSupport = "gtk3";
-            wrapGAppsHook3 = prev.wrapGAppsHook3.override { gtk3 = prev.gtk3-x11; };
-          }
-        else
-          prev.vim-full;
-    };
-
     # Fcitx5 macOS input method with Rime (prebuilt Apple Silicon app bundle)
     fcitx5-macos =
       final: prev:
