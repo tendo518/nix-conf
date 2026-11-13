@@ -145,22 +145,21 @@ let
               hostNixpkgs = inputs.${hostCfg.nixpkgsInput};
             in
             {
-              nixpkgs =
-                {
-                  # `nixpkgs.config` is ignored when `nixpkgs.pkgs` is set.
-                  # Pass config into the import instead, otherwise NixOS
-                  # rejects setting both options.
-                  pkgs = import hostNixpkgs {
-                    config = {
-                      allowUnfree = true;
-                      # allowBroken = true;
-                    };
-                    system = config.nixpkgs.hostPlatform.system;
+              nixpkgs = {
+                # `nixpkgs.config` is ignored when `nixpkgs.pkgs` is set.
+                # Pass config into the import instead, otherwise NixOS
+                # rejects setting both options.
+                pkgs = import hostNixpkgs {
+                  config = {
+                    allowUnfree = true;
+                    # allowBroken = true;
                   };
-                }
-                // lib.optionalAttrs (options ? nixpkgs && options.nixpkgs ? source) {
-                  source = hostNixpkgs.outPath;
+                  system = config.nixpkgs.hostPlatform.system;
                 };
+              }
+              // lib.optionalAttrs (options ? nixpkgs && options.nixpkgs ? source) {
+                source = hostNixpkgs.outPath;
+              };
             }
           )
         ];
