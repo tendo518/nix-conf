@@ -139,6 +139,9 @@
     {
       home.packages = [ pkgs.llm-agents.pi ];
 
+      # Start Pi with the codemode tool enabled by default.
+      home.shellAliases.pi-code = "pi --tools +codemode";
+
       home.file."./.pi/agent/models.json" = {
         force = true;
         text = modelsJson;
