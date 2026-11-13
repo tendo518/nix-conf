@@ -9,7 +9,6 @@ _: {
       system.defaults.smb.NetBIOSName = "laptop-solar-modoka";
 
       environment.systemPackages = with pkgs; [
-        telegram-desktop
         iina
         google-chrome
         obsidian
