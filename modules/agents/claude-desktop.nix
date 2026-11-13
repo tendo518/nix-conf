@@ -17,8 +17,11 @@
       isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
       homeDir = config.home.homeDirectory;
 
-      providers = import ./_providers.nix { inherit config lib; };
-      selected = providers.selectProviders "claudeDesktop";
+      providers = import ./_providers.nix {
+        inherit config lib;
+        agent = "claudeDesktop";
+      };
+      selected = providers.selectProviders;
       enabled = isDarwin && selected != { };
       provider = selected.${providers.defaultProvider selected};
       agentConfig = provider.agentConfig;

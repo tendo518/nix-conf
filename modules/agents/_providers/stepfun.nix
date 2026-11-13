@@ -6,12 +6,6 @@
     anthropic = "https://api.stepfun.com/step_plan";
     openai = "https://api.stepfun.com/step_plan/v1";
   };
-  agents = {
-    claudeCode.smallModel = "step_3_7_flash";
-    codex.disableWebSearch = true;
-    omp = { };
-    pi = { };
-  };
   models = {
     step_5_preview = {
       id = "step-5-preview";

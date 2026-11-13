@@ -1,20 +1,10 @@
 {
   name = "Volcengine Coding Plan";
   secret = "volcengine-codingplan-api-key";
-  enable = false;
   defaultModel = "glm_5_3_flash";
   endpoints = {
     anthropic = "https://ark.cn-beijing.volces.com/api/coding";
     openai = "https://ark.cn-beijing.volces.com/api/coding/v3";
-  };
-  agents = {
-    claudeCode = { };
-    codex = {
-      profile = "codex-volce";
-      reasoningSummaries = true;
-    };
-    omp = { };
-    pi.defaultModel = "glm_5_3";
   };
   models = {
     glm_5_3 = {

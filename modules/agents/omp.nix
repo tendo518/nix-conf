@@ -7,8 +7,11 @@
       ...
     }:
     let
-      providers = import ./_providers.nix { inherit config lib; };
-      selected = providers.selectProviders "omp";
+      providers = import ./_providers.nix {
+        inherit config lib;
+        agent = "omp";
+      };
+      selected = providers.selectProviders;
 
       defaultProvider = providers.defaultProvider selected;
       defaultProviderConfig = selected.${defaultProvider};

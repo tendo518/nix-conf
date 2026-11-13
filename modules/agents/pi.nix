@@ -7,8 +7,11 @@
       ...
     }:
     let
-      providers = import ./_providers.nix { inherit config lib; };
-      selected = providers.selectProviders "pi";
+      providers = import ./_providers.nix {
+        inherit config lib;
+        agent = "pi";
+      };
+      selected = providers.selectProviders;
 
       thinkingLevelMap =
         efforts:

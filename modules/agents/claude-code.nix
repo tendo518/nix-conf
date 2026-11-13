@@ -7,8 +7,11 @@
       ...
     }:
     let
-      providers = import ./_providers.nix { inherit config lib; };
-      selected = providers.selectProviders "claudeCode";
+      providers = import ./_providers.nix {
+        inherit config lib;
+        agent = "claudeCode";
+      };
+      selected = providers.selectProviders;
 
       # Allow near-million windows that reserve a small part of the context.
       claudeModelId = model: model.id + lib.optionalString (model.contextWindow >= 950000) "[1m]";

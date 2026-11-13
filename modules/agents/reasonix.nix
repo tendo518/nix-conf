@@ -7,8 +7,11 @@
       ...
     }:
     let
-      providers = import ./_providers.nix { inherit config lib; };
-      selected = providers.selectProviders "reasonix";
+      providers = import ./_providers.nix {
+        inherit config lib;
+        agent = "reasonix";
+      };
+      selected = providers.selectProviders;
       defaultProvider = providers.defaultProvider selected;
       provider = selected.${defaultProvider};
       agentConfig = provider.agentConfig;

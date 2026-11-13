@@ -7,8 +7,11 @@
       ...
     }:
     let
-      providers = import ../_providers.nix { inherit config lib; };
-      selected = providers.selectProviders "codex";
+      providers = import ./_providers.nix {
+        inherit config lib;
+        agent = "codex";
+      };
+      selected = providers.selectProviders;
       toml = pkgs.formats.toml { };
       defaultModel = "gpt-6-luna";
 

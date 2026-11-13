@@ -6,12 +6,6 @@
     anthropic = "https://api.senseaudio.cn";
     openai = "https://api.senseaudio.cn/v1";
   };
-  agents = {
-    claudeCode = { };
-    codex = { };
-    omp.default = true;
-    pi = { };
-  };
   models = {
     ds_v4_1flash = {
       id = "deepseek-v4.1-flash";

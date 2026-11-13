@@ -7,14 +7,6 @@
     openai = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1";
   };
   codexSupportsParallelToolCalls = false;
-  agents = {
-    claudeCode.smallModel = "qwen3_8_flash";
-    codex = { };
-    omp = { };
-    pi = {
-      api = "openai-responses";
-    };
-  };
   models = {
     qwen4_max_preview = {
       id = "qwen4-max-preview";

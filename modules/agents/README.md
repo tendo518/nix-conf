@@ -1,24 +1,25 @@
 # Agent modules
 
 Home-manager modules for the installed coding agents. Provider endpoints,
-credentials, model capabilities, and defaults live in [`_providers/`](./_providers).
-[`_providers.nix`](./_providers.nix) selects providers for each agent. Each agent
-module translates the same model fields into its native configuration.
+credentials, and model capabilities live in [`_providers/`](./_providers).
+Provider enablement and agent-specific adapter settings live together in
+[`_agents.nix`](./_agents.nix). Each agent module translates the joined data
+into its native configuration.
 
 | Path | Purpose |
 | --- | --- |
 | `_providers/*.nix` | Direct provider and model declarations. |
-| `_providers.nix` | Provider selection and runtime secret paths. |
+| `_agents.nix` | Per-agent provider enablement and adapter settings. |
+| `_providers.nix` | Provider/agent joining and runtime secret paths. |
 | `claude-code.nix` | Claude Code wrappers and settings. |
-| `codex/default.nix` | Codex base config, provider profiles, wrappers, and generated catalogs. |
+| `codex.nix` | Codex base config, provider profiles, wrappers, and generated catalogs. |
 | `omp.nix` | OMP model and runtime configuration. |
 | `pi.nix` | Pi model and runtime configuration. |
 | `reasonix.nix` | Reasonix configuration for its default provider. |
 | `base.nix`, `ccstatusline.nix` | Shared agent packages and Claude Code status line. |
 
 Files prefixed with `_` are private helpers/data; `import-tree` does not expose
-them as selectable modules. The Codex module stays selectable as `agents/codex`
-because it is registered by `codex/default.nix`.
+them as selectable modules.
 
 ## Provider registry
 
@@ -33,12 +34,6 @@ provider = {
   endpoints = {
     openai = "https://example.com/v1";
     anthropic = "https://example.com/anthropic";
-  };
-  agents = {
-    claudeCode = { };
-    codex = { };
-    omp = { };
-    pi = { };
   };
   models.model_key = {
     id = "upstream-model-id";
@@ -57,15 +52,40 @@ provider = {
 ```
 
 `secret` names an agenix secret; the file and runtime path are derived from it.
-An agent is enabled by declaring its settings, including an empty `{ }`. Omit
-an agent or set its `enable = false` to disable it. Provider-level
-`enable = false` disables all its integrations while retaining their settings.
+
+## Agent settings and provider selection
+
+`_agents.nix` is the single place that says whether an agent uses a provider
+and what provider-specific adapter settings it needs:
+
+```nix
+# modules/agents/_agents.nix
+{
+  codex = {
+    deepseek = {
+      enable = true;
+      disableWebSearch = true;
+      profile = "codex-ds";
+    };
+    gpu.enable = true;
+    qwen.enable = true;
+    senseaudio.enable = false;
+    stepfun.enable = false;
+    volces.enable = false;
+  };
+}
+```
+
+Each agent must list every provider with an explicit `enable = true` or
+`enable = false`. Unknown or missing provider keys fail evaluation instead of
+being silently ignored. Fields other than `enable` are passed to the agent
+adapter as its provider-specific settings; omitted adapter fields use provider
+defaults.
 
 Pi, OMP, Reasonix, and Claude Desktop choose their default provider through
-`agents.<agent>.default = true`. Each of these agents requires exactly one
+the agent settings' `default = true`. Each of these agents requires exactly one
 enabled default when configured; a missing or duplicate default fails evaluation.
-For example, SenseAudio declares `agents.pi.default = true` and
-`agents.omp.default = true`. The agent modules do not name providers directly.
+The agent modules do not name providers directly.
 Codex keeps its official OpenAI login as the default and exposes other providers
 through profiles; Claude Code exposes provider/model wrapper commands.
 
@@ -169,8 +189,9 @@ the `[1m]` suffix from `contextWindow >= 950000`, independently of
    modalities and exact reasoning efforts.
 2. Set `claudeBehavesAs` to a built-in Claude model the current Claude Code
    release knows.
-3. Declare the agent settings and endpoints, and choose the provider default
-   model. Keep non-Claude agents on OpenAI-compatible endpoints.
+3. Set the provider's `enable = true`/`false` value in `_agents.nix`, adding
+   any agent-specific overrides in the same provider entry. Keep non-Claude
+   agents on OpenAI-compatible endpoints.
 4. Add an agenix secret under `secrets/` and register it in `secrets/secrets.nix`.
 5. Run `just fmt` and `just check`.
 

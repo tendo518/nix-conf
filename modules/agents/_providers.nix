@@ -1,33 +1,39 @@
-{ config, lib }:
+{ config, lib, agent }:
 let
   providers = import ./_providers;
+  agentSettings = (import ./_agents.nix).${agent};
+  providerNames = builtins.attrNames providers;
+  unknownSettings = builtins.attrNames (builtins.removeAttrs agentSettings providerNames);
+  missingSettings = builtins.attrNames (builtins.removeAttrs providers (builtins.attrNames agentSettings));
+  invalidEnable = builtins.filter (
+    name: !(agentSettings.${name} ? enable) || !builtins.isBool agentSettings.${name}.enable
+  ) (builtins.attrNames agentSettings);
 in
 {
-  # Models keep the same fields for every agent; adapters translate them.
+  # Agent settings include provider enablement and per-provider adapter options.
   selectProviders =
-    agent:
-    lib.mapAttrs
-      (
-        _name: provider:
-        builtins.removeAttrs provider [ "agents" ]
+    if unknownSettings != [ ] then
+      throw "agents: unknown provider setting: ${toString unknownSettings}"
+    else if missingSettings != [ ] then
+      throw "agents: missing provider setting: ${toString missingSettings}"
+    else if invalidEnable != [ ] then
+      throw "agents: missing or non-boolean provider enable setting: ${toString invalidEnable}"
+    else
+      lib.mapAttrs (
+        name: provider:
+        provider
         // {
-          agentConfig = provider.agents.${agent};
+          agentConfig = builtins.removeAttrs agentSettings.${name} [ "enable" ];
           secretPath = config.age.secrets.${provider.secret}.path;
         }
-      )
-      (
-        lib.filterAttrs (
-          _name: provider:
-          (provider.enable or true) && provider.agents ? ${agent} && (provider.agents.${agent}.enable or true)
-        ) providers
-      );
+      ) (lib.filterAttrs (name: _provider: agentSettings.${name}.enable) providers);
 
   # Agents with a global model choice declare one default among their providers.
   defaultProvider =
     selected:
     lib.findSingle (name: selected.${name}.agentConfig.default or false)
-      (throw "agents: select a default provider with agents.<agent>.default = true")
-      (throw "agents: multiple providers are marked as the default for one agent")
+      (throw "agents: select one default provider in the agent settings")
+      (throw "agents: multiple providers are marked as default in the agent settings")
       (builtins.attrNames selected);
 
   # Secrets stay encrypted in the store; adapters read their paths at runtime.
