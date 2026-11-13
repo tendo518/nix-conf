@@ -16,6 +16,26 @@
     };
   };
   models = {
+    qwen4_max_preview = {
+      id = "qwen4-max-preview";
+      displayName = "Qwen4 Max Preview";
+      contextWindow = 1000000;
+      input = [
+        "text"
+        "image"
+      ];
+      thinking = {
+        efforts = [
+          "low"
+          "medium"
+          "xhigh"
+        ];
+        default = "xhigh";
+      };
+      claudeBehavesAs = "claude-opus-5-5";
+      codexPriority = 3;
+      codexSupportsOriginalImageDetail = true;
+    };
     qwen3_8_max = {
       id = "qwen3.8-max";
       displayName = "Qwen3.8 Max";
