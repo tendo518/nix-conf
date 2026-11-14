@@ -94,17 +94,28 @@ needs a different model. Claude Code's `smallModel` also falls back to that
 provider default; declare it only when a separate small model is wanted.
 
 Codex derives its provider ID from the registry key and its profile/command as
-`codex-<key>`. Only existing short aliases such as `profile = "codex-ds"` need an
-explicit profile. The human-readable provider label comes from `name`. Codex's
-reasoning effort comes from the chosen model's `thinking.default`.
+`codex-<key>`. A key that collides with a built-in Codex provider uses the
+agent setting `providerId` for the generated `model_providers` entry and
+profile, while the wrapper keeps the registry key name. Only existing short
+aliases such as `profile = "codex-ds"` need an explicit profile. The
+human-readable provider label comes from `name`. Codex's reasoning effort
+comes from the chosen model's `thinking.default`.
 Pi's startup thinking level also follows its selected default model's
 `thinking.default`, rather than Pi's built-in default.
 
-OMP, Pi, Reasonix, and Codex use `endpoints.openai`; Codex speaks Responses,
-while the others use Chat Completions. Claude Code and Desktop use
-`endpoints.anthropic`. Model IDs always remain the provider's actual IDs;
-Claude Code adds `[1m]` when `contextWindow >= 950000`, treating near-million
-windows as the 1M tier. Claude Desktop derives its native `supports1m` flag
+OMP, Pi, Reasonix, and Codex use `endpoints.openai`; Codex always speaks
+Responses, OMP and Pi default to Chat Completions and can select another wire
+API per provider with the agent setting `api`, and Reasonix uses its OpenAI
+provider kind.
+
+Codex reserves its built-in provider IDs; overriding `openai` is rejected.
+The `openai` registry provider therefore sets `providerId = "openai-api"` for
+Codex, and the `codex-openai` wrapper selects that API-key profile. The default
+`codex` command keeps the official OpenAI login.
+
+Claude Code and Desktop use `endpoints.anthropic`. Model IDs always remain the
+provider's actual IDs; Claude Code adds `[1m]` when
+`contextWindow >= 950000`, treating near-million windows as the 1M tier. Claude Desktop derives its native `supports1m` flag
 using the same threshold.
 
 | Model field | Meaning |

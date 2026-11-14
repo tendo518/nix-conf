@@ -104,6 +104,7 @@
         name: provider:
         let
           agentConfig = provider.agentConfig;
+          providerId = agentConfig.providerId or name;
           profile = agentConfig.profile or "codex-${name}";
           defaultModel = provider.models.${agentConfig.defaultModel or provider.defaultModel};
           catalog =
@@ -126,7 +127,7 @@
           profileConfig = toml.generate "${profile}.config.toml" (
             {
               model = defaultModel.id;
-              model_provider = name;
+              model_provider = providerId;
               model_catalog_json = toString catalog;
               # Experimental context management is for the official provider.
               features.context_management.experimental_mode = false;
@@ -159,20 +160,23 @@
         sandbox_mode = "workspace-write";
         check_for_update_on_startup = false;
         analytics.enabled = false;
-        model_providers = lib.mapAttrs (_name: provider: {
-          name = provider.name;
-          base_url = provider.endpoints.openai;
-          wire_api = "responses";
-          stream_idle_timeout_ms = 600000;
-          request_max_retries = 6;
-          auth.command = toString (
-            pkgs.writeShellScript "read-${provider.secret}" ''
-              [ -r "${provider.secretPath}" ] || exit 1
-              value="$(<"${provider.secretPath}")"
-              printf '%s' "$value"
-            ''
-          );
-        }) selected;
+        model_providers = lib.mapAttrs' (
+          name: provider:
+          lib.nameValuePair (provider.agentConfig.providerId or name) {
+            name = provider.name;
+            base_url = provider.endpoints.openai;
+            wire_api = "responses";
+            stream_idle_timeout_ms = 600000;
+            request_max_retries = 6;
+            auth.command = toString (
+              pkgs.writeShellScript "read-${provider.secret}" ''
+                [ -r "${provider.secretPath}" ] || exit 1
+                value="$(<"${provider.secretPath}")"
+                printf '%s' "$value"
+              ''
+            );
+          }
+        ) selected;
         features.context_management.experimental_mode = true;
         tui = {
           status_line = [

@@ -22,7 +22,7 @@
 
       toOmpProvider = _name: provider: {
         baseUrl = provider.endpoints.openai;
-        api = "openai-completions";
+        api = provider.agentConfig.api or "openai-completions";
         apiKey = ''!${pkgs.coreutils}/bin/cat "${provider.secretPath}"'';
         models = lib.mapAttrsToList (
           _model: model:

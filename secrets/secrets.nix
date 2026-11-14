@@ -31,4 +31,5 @@ in
   "stepfun-plan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "qwen-tokenplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "gpu-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
+  "openai-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
 }

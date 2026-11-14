@@ -5,6 +5,7 @@
       effortLevel = "max";
     };
     gpu.enable = false;
+    openai.enable = false;
     qwen = {
       enable = true;
       smallModel = "qwen3_8_flash";
@@ -27,6 +28,7 @@
       ];
     };
     gpu.enable = false;
+    openai.enable = false;
     qwen.enable = false;
     senseaudio.enable = false;
     stepfun.enable = false;
@@ -39,6 +41,10 @@
       profile = "codex-ds";
     };
     gpu.enable = true;
+    openai = {
+      enable = true;
+      providerId = "openai-api";
+    };
     qwen.enable = true;
     senseaudio.enable = false;
     stepfun = {
@@ -56,6 +62,10 @@
     default = true;
   };
   omp.gpu.enable = true;
+  omp.openai = {
+    enable = true;
+    api = "openai-responses";
+  };
   omp.qwen.enable = true;
   omp.senseaudio.enable = false;
   omp.stepfun.enable = false;
@@ -66,6 +76,10 @@
       default = true;
     };
     gpu.enable = true;
+    openai = {
+      enable = true;
+      api = "openai-responses";
+    };
     qwen = {
       enable = true;
       api = "openai-responses";
@@ -83,6 +97,7 @@
       default = true;
     };
     gpu.enable = false;
+    openai.enable = false;
     qwen.enable = false;
     senseaudio.enable = false;
     stepfun.enable = false;
