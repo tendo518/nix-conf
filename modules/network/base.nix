@@ -20,8 +20,21 @@
       };
       # Desktop/laptop policy; the server configures its firewall separately.
       networking.firewall = {
-        enable = false;
+        enable = true;
         allowPing = true;
+        # Keep privileged ports restricted while allowing workstation services.
+        allowedTCPPortRanges = [
+          {
+            from = 1024;
+            to = 65535;
+          }
+        ];
+        allowedUDPPortRanges = [
+          {
+            from = 1024;
+            to = 65535;
+          }
+        ];
       };
 
       # Avahi/mDNS for local hostname discovery
