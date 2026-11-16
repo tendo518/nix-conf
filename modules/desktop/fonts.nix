@@ -17,8 +17,17 @@ let
       inriafonts
       newcomputermodern
 
-      # monospace font with Chinese + Nerd Font support
-      maple-mono.NF-CN
+      # Install on both platforms; only NixOS sets default sans/serif below.
+      (ibm-plex.override {
+        families = [
+          "mono"
+          "sans"
+          "sans-sc"
+          "serif"
+        ];
+      })
+
+      # monospace fonts; Sarasa and Nerd Fonts provide Chinese and symbols
       # iosevka-slab
       # iosevka-term
       fira-code
@@ -31,17 +40,7 @@ in
   flake.modules.nixos."desktop/fonts" =
     { pkgs, ... }:
     {
-      # IBM Plex 只替换 Linux 上的 sans/serif;monospace 仍用 Maple Mono NF CN。
-      # macOS 不装 IBM Plex,避免影响系统字体栈。
-      fonts.packages = sharedPackages pkgs ++ [
-        (pkgs.ibm-plex.override {
-          families = [
-            "sans"
-            "sans-sc"
-            "serif"
-          ];
-        })
-      ];
+      fonts.packages = sharedPackages pkgs;
 
       fonts.fontconfig = {
         enable = true;
@@ -58,7 +57,7 @@ in
             "Noto Color Emoji"
           ];
           monospace = [
-            "Maple Mono NF CN"
+            "IBM Plex Mono"
             "Symbols Nerd Font"
             "Sarasa Mono SC"
             "Noto Color Emoji"

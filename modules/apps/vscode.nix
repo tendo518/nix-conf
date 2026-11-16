@@ -13,10 +13,7 @@
             "workbench.experimental.modernUI" = true;
             # Editor
             "editor.fontFamily" =
-              if pkgs.stdenv.hostPlatform.isDarwin then
-                "\"Maple Mono NF CN\", monospace, \"Symbols Nerd Font\", \"等距更纱黑体 SC\", \"Noto Color Emoji\""
-              else
-                "monospace, \"Symbols Nerd Font\", \"等距更纱黑体 SC\", \"Noto Color Emoji\"";
+              "\"IBM Plex Mono\", \"Sarasa Mono SC\", \"Symbols Nerd Font\", \"Noto Color Emoji\", monospace";
             "editor.fontLigatures" = true;
             "editor.fontSize" = 14;
             "editor.smoothScrolling" = true;

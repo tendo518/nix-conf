@@ -60,7 +60,6 @@
         imagemagick
         moonlight-qt
         ghostty
-        maple-mono.NF-CN
       ];
 
     };

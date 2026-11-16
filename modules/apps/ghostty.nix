@@ -10,7 +10,11 @@
         enableFishIntegration = true;
         settings = {
           font-size = if pkgs.stdenv.hostPlatform.isDarwin then 14 else 12;
-          font-family = "Maple Mono NF CN";
+          font-family = [
+            "IBM Plex Mono"
+            "Sarasa Mono SC"
+            "Symbols Nerd Font"
+          ];
           theme = "Dark Modern";
           # Force dark window chrome (tabs/titlebar) instead of following system light/dark
           window-theme = "dark";
