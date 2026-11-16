@@ -59,9 +59,9 @@
       openai = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1";
     };
     models = {
-      qwen4_max_preview = {
-        id = "qwen4-max-preview";
-        model = "local/qwen4-max-preview";
+      qwen4_max = {
+        id = "qwen4-max";
+        model = "alibaba/qwen4-max";
       };
       qwen3_8_max = {
         id = "qwen3.8-max";

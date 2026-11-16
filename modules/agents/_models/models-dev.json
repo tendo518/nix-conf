@@ -60,6 +60,27 @@
     "reasoning": true,
     "tool_call": true
   },
+  "alibaba/qwen4-max": {
+    "description": "Flagship multimodal model for coding, office productivity, frontend design, and complex agentic tasks",
+    "limit": {
+      "context": 1000000,
+      "output": 262144
+    },
+    "modalities": {
+      "input": [
+        "text",
+        "image",
+        "video",
+        "pdf"
+      ],
+      "output": [
+        "text"
+      ]
+    },
+    "name": "Qwen4 Max",
+    "reasoning": true,
+    "tool_call": true
+  },
   "deepseek/deepseek-v4-pro": {
     "description": "Open MoE flagship with million-token context for coding and long agent runs",
     "limit": {

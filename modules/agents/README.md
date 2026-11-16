@@ -40,7 +40,7 @@ These are model capabilities, not a guarantee that every deployment serves the
 full window. There is deliberately no per-provider capability override system.
 
 Models absent from the independent catalog live in `_models/local.nix` under
-explicit `local/` keys. Currently these are Qwen4 Max Preview and Step Router V1.
+explicit `local/` keys. Currently this is Step Router V1.
 Their declarations are local knowledge, not inferred from a similar model or
 another provider. The router is not treated as a specific foundation model.
 
