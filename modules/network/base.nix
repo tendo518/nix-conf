@@ -18,8 +18,9 @@
           "publish-addresses" = true;
         };
       };
+      # Desktop/laptop policy; the server configures its firewall separately.
       networking.firewall = {
-        enable = lib.mkDefault true;
+        enable = false;
         allowPing = true;
       };
 
