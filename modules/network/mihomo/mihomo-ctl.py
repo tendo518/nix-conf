@@ -1533,6 +1533,34 @@ def create_cli(core: MihomoCore | None = None, console=None):
     return app
 
 
+def create_tray_icon():
+    """Prefer the desktop theme, with a self-contained proxy-arrow fallback."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
+
+    fallback = QIcon()
+    for size in (16, 22, 32, 48, 64):
+        pixmap = QPixmap(size, size)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        with QPainter(pixmap) as painter:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            painter.scale(size / 32, size / 32)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor("#2563eb"))
+            painter.drawRoundedRect(2, 2, 28, 28, 6, 6)
+            painter.setPen(QPen(
+                QColor("white"), 2.5, Qt.PenStyle.SolidLine,
+                Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin,
+            ))
+            for line in (
+                (9, 11, 23, 11), (19, 7, 23, 11), (23, 11, 19, 15),
+                (9, 21, 23, 21), (13, 17, 9, 21), (9, 21, 13, 25),
+            ):
+                painter.drawLine(*line)
+        fallback.addPixmap(pixmap)
+    return QIcon.fromTheme("network-workgroup", fallback)
+
+
 def run_tray(core: MihomoCore, settings_path: Path | None = None) -> None:
     """Run the desktop tray (requires a graphical session)."""
     if not (os.environ.get("WAYLAND_DISPLAY") or os.environ.get("DISPLAY")):
@@ -1544,10 +1572,8 @@ def run_tray(core: MihomoCore, settings_path: Path | None = None) -> None:
     from concurrent.futures import ThreadPoolExecutor
     try:
         from PyQt6.QtCore import QLockFile, QProcess, QProcessEnvironment, QTimer
-        from PyQt6.QtGui import QActionGroup, QIcon
-        from PyQt6.QtWidgets import (
-            QApplication, QMenu, QStyle, QSystemTrayIcon,
-        )
+        from PyQt6.QtGui import QActionGroup
+        from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
     except ImportError as error:
         raise MihomoError("Tray support is not installed on this host") from error
 
@@ -1557,11 +1583,7 @@ def run_tray(core: MihomoCore, settings_path: Path | None = None) -> None:
     lock.setStaleLockTime(0)
     if not lock.tryLock(0):
         raise MihomoError("Mihomo tray is already running")
-    icon = QIcon.fromTheme(
-        "network-workgroup",
-        application.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon),
-    )
-    indicator = QSystemTrayIcon(icon, application)
+    indicator = QSystemTrayIcon(create_tray_icon(), application)
     indicator.setToolTip("Mihomo")
     menu = QMenu()
     status_action = menu.addAction("Mihomo: checking…")

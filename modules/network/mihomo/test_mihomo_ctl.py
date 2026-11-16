@@ -491,6 +491,63 @@ assert not {'rich', 'typer', 'PyQt6'} & sys.modules.keys()
 
 @unittest.skipUnless(importlib.util.find_spec("PyQt6"), "requires optional PyQt6")
 class TrayBoundaryTests(unittest.TestCase):
+    def test_builtin_icon_renders_without_a_system_icon_theme(self):
+        from PyQt6.QtGui import QIcon
+        from PyQt6.QtWidgets import QApplication
+
+        with (
+            tempfile.TemporaryDirectory() as runtime,
+            patch.dict(os.environ, {
+                "QT_QPA_PLATFORM": "offscreen", "XDG_RUNTIME_DIR": runtime,
+            }),
+        ):
+            application = QApplication.instance() or QApplication([])
+            theme = QIcon.themeName()
+            fallback_theme = QIcon.fallbackThemeName()
+            search_paths = QIcon.themeSearchPaths()
+            fallback_paths = QIcon.fallbackSearchPaths()
+            try:
+                QIcon.setThemeSearchPaths([runtime])
+                QIcon.setFallbackSearchPaths([])
+                QIcon.setThemeName("missing-mihomo-test-theme")
+                QIcon.setFallbackThemeName("")
+                self.assertFalse(QIcon.hasThemeIcon("network-workgroup"))
+                icon = ctl.create_tray_icon()
+                self.assertFalse(icon.isNull())
+                for size in (16, 22, 32, 48, 64):
+                    with self.subTest(size=size):
+                        image = icon.pixmap(size, size).toImage()
+                        self.assertFalse(image.isNull())
+                        self.assertEqual(image.pixelColor(0, 0).alpha(), 0)
+                        self.assertGreater(image.pixelColor(size // 2, size // 2).alpha(), 0)
+            finally:
+                QIcon.setThemeName(theme)
+                QIcon.setFallbackThemeName(fallback_theme)
+                QIcon.setThemeSearchPaths(search_paths)
+                QIcon.setFallbackSearchPaths(fallback_paths)
+                # Keep the application alive until every pixmap has been read.
+                self.assertIsNotNone(application)
+
+    def test_available_theme_icon_is_preferred(self):
+        from PyQt6.QtGui import QIcon, QPixmap
+        from PyQt6.QtWidgets import QApplication
+
+        with (
+            tempfile.TemporaryDirectory() as runtime,
+            patch.dict(os.environ, {
+                "QT_QPA_PLATFORM": "offscreen", "XDG_RUNTIME_DIR": runtime,
+            }),
+        ):
+            application = QApplication.instance() or QApplication([])
+            pixmap = QPixmap(16, 16)
+            pixmap.fill()
+            themed = QIcon(pixmap)
+            with patch.object(QIcon, "fromTheme", return_value=themed) as load:
+                self.assertEqual(ctl.create_tray_icon().cacheKey(), themed.cacheKey())
+            self.assertEqual(load.call_args.args[0], "network-workgroup")
+            self.assertFalse(load.call_args.args[1].isNull())
+            self.assertIsNotNone(application)
+
     def test_real_qprocess_failures_recovery_and_noninteractive_input(self):
         from PyQt6 import QtCore, QtWidgets
 
@@ -762,6 +819,7 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
             def exercise():
                 nonlocal offline
                 indicator = indicators[0]
+                self.assertFalse(indicator.icon().isNull())
                 menu = indicator.contextMenu()
                 actions = {action.text(): action for action in menu.actions()}
                 nodes = actions["Proxy node"].menu()
