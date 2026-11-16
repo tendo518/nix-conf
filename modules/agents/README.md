@@ -1,211 +1,185 @@
-# Agent modules
+# Agent configuration
 
-Home-manager modules for the installed coding agents. Provider endpoints,
-credentials, and model capabilities live in [`_providers/`](./_providers).
-Provider enablement and agent-specific adapter settings live together in
-[`_agents.nix`](./_agents.nix). Each agent module translates the joined data
-into its native configuration.
+Three separate inputs feed the client modules:
 
-| Path | Purpose |
-| --- | --- |
-| `_providers/*.nix` | Direct provider and model declarations. |
-| `_agents.nix` | Per-agent provider enablement and adapter settings. |
-| `_providers.nix` | Provider/agent joining and runtime secret paths. |
-| `claude-code.nix` | Claude Code wrappers and settings. |
-| `codex.nix` | Codex base config, provider profiles, wrappers, and generated catalogs. |
-| `omp.nix` | OMP model and runtime configuration. |
-| `pi.nix` | Pi model and runtime configuration. |
-| `reasonix.nix` | Reasonix configuration for its default provider. |
-| `base.nix`, `ccstatusline.nix` | Shared agent packages and Claude Code status line. |
+- **Model facts** in `_models/`: names, modalities, reasoning/tool support, and
+  token limits. No endpoints, credentials, prices, or client compatibility hints.
+- **Connections** in `_providers.nix`: local endpoints, secret names, API model IDs,
+  and references to model facts.
+- **Agent policy** in `_agents.nix`: enabled connections, defaults, wire APIs,
+  profiles, and other client preferences.
 
-Files prefixed with `_` are private helpers/data; `import-tree` does not expose
-them as selectable modules.
-
-## Provider registry
-
-Each model lists its own specifications directly. Generated identifiers and
-client-specific request formats belong in the agent modules.
-
-```nix
-provider = {
-  name = "Provider name";
-  secret = "agenix-secret-name";
-  defaultModel = "model_key";
-  endpoints = {
-    openai = "https://example.com/v1";
-    anthropic = "https://example.com/anthropic";
-  };
-  models.model_key = {
-    id = "upstream-model-id";
-    displayName = "Model name";
-    contextWindow = 1000000;
-    input = [ "text" "image" ];
-    thinking = {
-      efforts = [ "low" "high" ];
-      default = "high";
-    };
-    claudeBehavesAs = "claude-opus-5-5";
-    codexSupportsOriginalImageDetail = true;
-    codexPriority = 1;
-  };
-};
+```text
+_models/ + _providers.nix + _agents.nix
+                 ↓
+          _context.nix          select, resolve, attach secret paths
+                 ↓
+     pi.nix / omp.nix / ...     native format, package, install
 ```
 
-`secret` names an agenix secret; the file and runtime path are derived from it.
+Private paths start with `_` so `import-tree` does not expose them as selectable
+modules. All existing `agents/*` Home Manager module names remain unchanged.
 
-## Agent settings and provider selection
+## Model facts
 
-`_agents.nix` is the single place that says whether an agent uses a provider
-and what provider-specific adapter settings it needs:
+`_models/models-dev.json` is a checked-in, selected snapshot of
+<https://models.dev/models.json>. It does **not** use models.dev's provider
+catalog. Model IDs such as `alibaba/qwen3.8-27b` identify the originating model,
+not the local connection used to serve it.
+
+Only these model fields are imported:
+
+- `name`, optional `description`
+- `reasoning`, `tool_call`
+- `modalities`
+- `limit.context`, optional `limit.input` and `limit.output`
+
+The snapshot retains the upstream limits and modalities. For example,
+GPT-6.1 Sol has a 1,050,000-token context; there is no separate local 272K cap.
+These are model capabilities, not a guarantee that every deployment serves the
+full window. There is deliberately no per-provider capability override system.
+
+Models absent from the independent catalog live in `_models/local.nix` under
+explicit `local/` keys. Currently these are Qwen4 Max Preview and Step Router V1.
+Their declarations are local knowledge, not inferred from a similar model or
+another provider. The router is not treated as a specific foundation model.
+
+Refresh the snapshot with:
+
+```bash
+scripts/update-agent-models.py
+# Or use an already downloaded models.json without network access:
+scripts/update-agent-models.py --source /path/to/models.json
+```
+
+The updater reads all references from `_providers.nix`, deduplicates
+shared models, skips `local/` declarations, and writes only referenced upstream
+facts. Missing upstream models fail instead of triggering a fuzzy match or
+preserving stale data. Review the resulting diff before switching.
+
+Only the updater uses the network. Nix evaluation and agent startup read the
+committed snapshot offline; they do not fetch models.dev.
+
+## Connections
+
+A provider model has exactly two fields:
 
 ```nix
-# modules/agents/_agents.nix
 {
-  codex = {
-    deepseek = {
-      enable = true;
-      disableWebSearch = true;
-      profile = "codex-ds";
-    };
-    gpu.enable = true;
-    qwen.enable = true;
-    senseaudio.enable = false;
-    stepfun.enable = false;
-    volces.enable = false;
+  name = "OpenAI";
+  secret = "openai-api-key";
+  endpoints.openai = "https://api.openai.com/v1";
+  defaultModel = "sol";
+  models.sol = {
+    id = "gpt-6.1-sol";           # ID sent to this connection
+    model = "openai/gpt-6.1-sol"; # Model facts to use
   };
 }
 ```
 
-Each agent must list every provider with an explicit `enable = true` or
-`enable = false`. Unknown or missing provider keys fail evaluation instead of
-being silently ignored. Fields other than `enable` are passed to the agent
-adapter as its provider-specific settings; omitted adapter fields use provider
-defaults.
+The same model facts can serve several connections with different API IDs.
+Aliases are explicit: `deepseek-flash`, for example, references the declared
+`deepseek/deepseek-v4.1-flash-1017` model. No ID is guessed from a display name.
 
-Pi, OMP, Reasonix, and Claude Desktop choose their default provider through
-the agent settings' `default = true`. Each of these agents requires exactly one
-enabled default when configured; a missing or duplicate default fails evaluation.
-The agent modules do not name providers directly.
-Codex keeps its official OpenAI login as the default and exposes other providers
-through profiles; Claude Code exposes provider/model wrapper commands.
+Secrets are declared from `secrets/<secret>.age`. Plaintext keys are read at
+runtime and are never copied into the model snapshot or generated store files.
 
-`defaultModel` is declared once per provider. An agent may override it when it
-needs a different model. Claude Code's `smallModel` also falls back to that
-provider default; declare it only when a separate small model is wanted.
+## Agent policy and resolution
 
-Codex derives its provider ID from the registry key and its profile/command as
-`codex-<key>`. A key that collides with a built-in Codex provider uses the
-agent setting `providerId` for the generated `model_providers` entry and
-profile, while the wrapper keeps the registry key name. Only existing short
-aliases such as `profile = "codex-ds"` need an explicit profile. The
-human-readable provider label comes from `name`. Codex's reasoning effort
-comes from the chosen model's `thinking.default`.
-Pi's startup thinking level also follows its selected default model's
-`thinking.default`, rather than Pi's built-in default.
+An omitted provider is disabled. Listed entries require a boolean `enable`;
+unknown provider names are rejected, including disabled misspellings.
 
-OMP, Pi, Reasonix, and Codex use `endpoints.openai`; Codex always speaks
-Responses, OMP and Pi default to Chat Completions and can select another wire
-API per provider with the agent setting `api`, and Reasonix uses its OpenAI
-provider kind.
+```nix
+pi = {
+  deepseek = { enable = true; default = true; };
+  openai = { enable = true; api = "openai-responses"; };
+};
+```
 
-Codex reserves its built-in provider IDs; overriding `openai` is rejected.
-The `openai` registry provider therefore sets `providerId = "openai-api"` for
-Codex, and the `codex-openai` wrapper selects that API-key profile. The default
-`codex` command keeps the official OpenAI login.
+`_context.nix` is the only shared helper. It accepts `{ lib, config, settings }`,
+reads the local model/provider declarations, resolves references and defaults,
+and attaches runtime secret paths. Each client passes its own `_agents.nix`
+settings. The helper exposes:
 
-Claude Code and Desktop use `endpoints.anthropic`. Model IDs always remain the
-provider's actual IDs; Claude Code adds `[1m]` when
-`contextWindow >= 950000`, treating near-million windows as the 1M tier. Claude Desktop derives its native `supports1m` flag
-using the same threshold.
+- `selected`: enabled providers. Each model contains its facts plus the API
+  `id`; each provider has `agentConfig`, `defaultModelKey`, and the resolved
+  `defaultModel` record.
+- `defaultProvider`, `defaultModel`: the global choice, evaluated only when a
+  client needs it. Pi, OMP, Reasonix, and Claude Desktop require one enabled
+  `default = true`; wrapper-based clients need no global default.
+- `ageSecrets`: declarations for enabled providers only.
 
-| Model field | Meaning |
-| --- | --- |
-| `id` | Actual provider model identifier. |
-| `displayName`, `description` | Shared display metadata; `description` is optional. |
-| `contextWindow`, `maxOutputTokens` | Explicit token limits; output limit is optional and becomes `maxTokens` in Pi and OMP. |
-| `input` | Accepted modalities; defaults to `[ "text" ]` when omitted. |
-| `thinking.efforts`, `thinking.default` | Exact supported reasoning levels and default. |
-| `claudeBehavesAs` | Claude model used for Code's client-side handling and Desktop's gateway route. |
-| `codexPriority` | Optional picker ordering, translated into the Codex catalog. |
-| `codexSupportsOriginalImageDetail` | Explicit original-image-detail support, translated into the Codex catalog. |
-| `codexSupportsSearchTool` | Explicit search-tool support, translated into the Codex catalog. |
+Agent `defaultModel` overrides use the provider-local model key. Claude Code's
+optional `smallModel` falls back to that resolved default. Codex keeps official
+OpenAI login for the base `codex` command and uses API-key profiles for configured
+connections; `openai` uses the non-reserved provider ID `openai-api`.
 
-Provider-level `codexSupportsParallelToolCalls` describes a serving limitation shared
-by its models. Optional capabilities are only set when explicitly declared;
-image-detail support is independent of accepting image input.
+## Client output
 
-Claude Desktop's provider settings list the model keys to expose in `models`.
-The direct integration uses each model's `claudeBehavesAs` as its gateway
-alias, sharing the mapping used by Claude Code. All clients use `displayName`.
+- **Pi / OMP** declare their own small serializers directly. They receive names, limits,
+  `reasoning`, and the intersection of model inputs with their `text`/`image`
+  schema. PDF/video capabilities remain in the model facts, not in invalid
+  client configuration fields.
+- **Reasoning controls** use client/server defaults. The independent model feed
+  does not supply effort lists, so we do not invent them, declare `ultra`, or
+  emit thinking-level maps. Claude Code's explicit effort preference, if any,
+  belongs to agent policy, not model facts.
+- **Codex** gets the required custom model catalogs and instructions extracted
+  offline from the installed client's bundled catalog. Custom catalogs expose
+  no guessed effort levels, parallel calls, verbosity control, original-image
+  detail, or built-in search support. API-key profiles disable built-in web
+  search. The official-login catalog is unchanged.
+- **Claude Code / Desktop** use actual API model IDs. There are no `behavesAs`
+  mappings, Claude-name substitutions, or synthetic `[1m]` suffixes. Code gets
+  the declared context through `CLAUDE_CODE_MAX_CONTEXT_TOKENS`; Desktop gets
+  its native `supports1m` field. The gateway must accept the actual model IDs.
+- **Reasonix** uses the default connection and its declared token limits. Its
+  activation/wrapper refresh the protected `.env`, preserving unrelated keys.
+- **DSH** uses its native DeepSeek Messages adapter (`deepseek-official`), plus
+  the bundled pi-ai adapter for OpenAI (Responses) and Qwen Token Plan (Chat
+  Completions). Model names, limits, and text/image inputs come from the same
+  model facts. No effort lists are synthesized; native adapter/catalog defaults
+  apply. The `dsh` wrapper reads the three agenix keys into environment variables
+  at launch; generated configuration contains only their names.
 
-## Agent outputs
+### DSH usage
 
-| Module | Generated command/configuration |
-| --- | --- |
-| Claude Code | One `cc-<provider>-<model>` wrapper per enabled provider model. The provider's optional `effortLevel` is exported as `CLAUDE_CODE_EFFORT_LEVEL`. A generated `modelPicker` lineup in `~/.claude/settings.json` maps each exposed model ID onto a built-in model via `behavesAs`. |
-| Codex | `codex` plus one `codex-<provider>` wrapper per enabled provider. Profiles and generated catalogs are installed below `$XDG_CONFIG_HOME/codex`; `~/.codex` is linked there. |
-| OMP | `~/.omp/agent/models.yml` and `config.yml`; model thinking entries carry the declared efforts and default level. |
-| Pi | `~/.pi/agent/models.json` and `settings.json`; supported Pi levels are mapped from each model's declared effort list. |
-| Reasonix | `$XDG_CONFIG_HOME/reasonix/config.toml` for its default provider, currently DeepSeek. Activation and the CLI wrapper refresh the managed key in its protected `.env`, retaining other keys and comments. |
+`agents/dsh` installs DSH and its plugin-manager dependency, pnpm. Start the Web
+UI with `dsh web`, or use `dsh headless --help` for the headless interface.
+In the Web UI, choose a configured model from the model picker.
 
-Codex's adapter declares the required catalog fields and client behavior directly
-in Nix. Model IDs, limits, modalities, reasoning levels, and capability overrides
-come from the provider registry. The generated catalogs remain necessary for
-third-party model names; they are not copies of an OpenAI model's capabilities.
+Home Manager owns `~/.dsh/cordis.patch.yml`, which applies the provider declarations
+above every profile's own patch. Change these providers in `_agents.nix` or
+`_providers.nix`, not in the Models settings page: DSH refuses UI edits shadowed
+by the home-level patch. Other profile settings remain editable. The bundled
+DeepSeek Flash default is left unpatched so the picker can save a different
+default for new sessions. Existing sessions retain their selected model.
 
-At build time, `codex debug models --bundled` exports the installed client's
-catalog offline. The adapter extracts `base_instructions` from its official
-default model and adds that prompt to each generated entry. Instructions follow
-the locked Codex package version, without maintaining a JSON baseline or a second
-copy in `model_messages`. OpenAI-specific tool modes are not inherited. This
-requires the Codex package to run on the build machine.
+DSH defaults to `~/.dsh`. A custom `DSH_HOME` needs the same `cordis.patch.yml`
+(or an explicit `--patch ~/.dsh/cordis.patch.yml`). Saved keys in DSH's own
+`.credentials.yaml` take precedence over the wrapper's environment; remove a
+saved override to return to agenix-managed authentication. Rotated agenix keys
+are picked up on the next launch.
 
-Codex and Reasonix configurations use Nix's native TOML generator, so provider
-names, model lists, paths, and optional settings are serialized as data.
-Claude Code's model picker deduplicates identical rows across providers, and its
-wrappers stop if their provider secret cannot be read. Claude Desktop requires
-explicit model keys and Claude mappings; invalid entries fail evaluation instead
-of disappearing from the generated configuration. Its default effort follows
-the selected model's `thinking.default`.
+Client serialization, runtime settings, wrappers, and activation all live in the
+corresponding `*.nix` module. A little repetition is preferable to an adapter
+framework: reading one client should not require following formatter files.
+There is no `_lib` directory or common schema for unrelated client settings.
 
-## Claude Code model mapping
+## Changes and checks
 
-Claude Code checks every model ID against the model catalog compiled into the
-release. A third-party ID is not in that catalog, so an unmapped session prints
-`"<id>" isn't described by this version's model catalog`, writes a
-`[claude-code:unrecognized_model]` diagnostic line, and treats the model as
-unknown for prompt assembly and for the auto-compact window it assumes.
+To add a model, add a provider reference, refresh the snapshot (or write an
+explicit `local/` declaration), and enable the connection for the intended
+agents. Add new connections directly to `_providers.nix` and register their
+encrypted secrets in `secrets/secrets.nix`.
 
-`claudeBehavesAs` names a built-in Claude model whose client-side handling
-the third-party model borrows. The Claude Code module turns each declared
-mapping into a `modelPicker` row, which is the only settings source that
-carries `behavesAs` and is honored from user settings. Rows are matched
-case-insensitively with any `[1m]` suffix stripped, so one row covers both the
-bare ID and its `[1m]` spelling, and the ID sent to the provider never changes.
+```bash
+just fmt
+nix build .#checks.x86_64-linux.agent-config
+nix flake check --no-build --all-systems
+```
 
-Pick the built-in model with the closest capability tier, preferring a recent
-release: an Opus-class ID for a provider's flagship and a Sonnet-class ID for
-everything else. Haiku-class targets carry no effort levels, so mapping a model
-that declares its own efforts onto one drops them.
-
-A resolved mapping changes which context window Claude Code assumes: a model
-without a mapping follows `CLAUDE_CODE_MAX_CONTEXT_TOKENS`, while a mapped model
-ignores it and falls back to the default window. Claude Code's adapter generates
-the `[1m]` suffix from `contextWindow >= 950000`, independently of
-`claudeBehavesAs`; the registry has no separate 1M flag.
-
-## Adding or changing a model
-
-1. Add or update the model in `_providers/<provider>.nix`, including its documented input
-   modalities and exact reasoning efforts.
-2. Set `claudeBehavesAs` to a built-in Claude model the current Claude Code
-   release knows.
-3. Set the provider's `enable = true`/`false` value in `_agents.nix`, adding
-   any agent-specific overrides in the same provider entry. Keep non-Claude
-   agents on OpenAI-compatible endpoints.
-4. Add an agenix secret under `secrets/` and register it in `secrets/secrets.nix`.
-5. Run `just fmt` and `just check`.
-
-New Nix files must be staged with `git add` before flake evaluation. The files
-in this directory deliberately share the registry; do not duplicate provider
-URLs, credential paths, model IDs, or capability lists in an agent module.
+The check covers pure resolution, schema boundaries, model references, client
+serialization, and the updater's selection/deduplication/failure behavior.
+It does not test credentials, remote deployment limits, or API availability.
+New files must be staged with `git add` before flake evaluation.

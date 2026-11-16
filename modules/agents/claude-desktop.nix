@@ -1,10 +1,5 @@
-# Configure Claude Desktop's Cowork 3P gateway from the same provider table
-# used by the CLI agents.
-#
-# DeepSeek accepts Anthropic-looking gateway routes and maps claude-sonnet-*
-# to deepseek-flash server-side, so no local proxy is needed. The API key comes
-# from the provider's agenix secret at runtime and is never embedded in the Nix
-# store. App-managed settings are preserved by merging with jq.
+# Configure the Cowork 3P gateway with actual provider model IDs.
+# Credentials are read at activation; unrelated app-managed settings are preserved.
 {
   flake.modules.home."agents/claude-desktop" =
     {
@@ -17,20 +12,19 @@
       isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
       homeDir = config.home.homeDirectory;
 
-      providers = import ./_providers.nix {
+      providers = import ./_context.nix {
         inherit config lib;
-        agent = "claudeDesktop";
+        settings = (import ./_agents.nix).claudeDesktop;
       };
-      selected = providers.selectProviders;
+      inherit (providers) selected;
       enabled = isDarwin && selected != { };
-      provider = selected.${providers.defaultProvider selected};
+      provider = selected.${providers.defaultProvider};
       agentConfig = provider.agentConfig;
       profileName = agentConfig.profileName or provider.name;
-      defaultModelName = agentConfig.defaultModel or provider.defaultModel;
-      defaultModel = provider.models.${defaultModelName};
-      modelNames = agentConfig.models or [ defaultModelName ];
+      modelNames = agentConfig.models or [ provider.defaultModelKey ];
       orderedModelNames = lib.unique (
-        lib.optional (builtins.elem defaultModelName modelNames) defaultModelName ++ modelNames
+        lib.optional (builtins.elem provider.defaultModelKey modelNames) provider.defaultModelKey
+        ++ modelNames
       );
 
       jq = lib.getExe pkgs.jq;
@@ -41,10 +35,10 @@
           model = provider.models.${modelName};
         in
         {
-          name = model.claudeBehavesAs;
-          labelOverride = model.displayName;
+          name = model.id;
+          labelOverride = model.name;
         }
-        // lib.optionalAttrs (model.contextWindow >= 950000) {
+        // lib.optionalAttrs (model.limit.context >= 950000) {
           supports1m = true;
         }
       ) orderedModelNames;
@@ -101,16 +95,14 @@
         "${jq}" \
           --arg base "${provider.endpoints.anthropic}" \
           --rawfile key "$secretPath" \
-          --argjson models ${lib.escapeShellArg (builtins.toJSON inferenceModels)} \
-          --arg effort "${defaultModel.thinking.default}" '
+          --argjson models ${lib.escapeShellArg (builtins.toJSON inferenceModels)} '
             .inferenceProvider = "gateway"
             | .inferenceCredentialKind = "static"
             | .inferenceGatewayBaseUrl = $base
             | .inferenceGatewayApiKey = ($key | rtrimstr("\n"))
             | .skipWebFetchPreflight = true
             | .coworkEgressAllowedHosts = ["*"]
-            | .modelPrefer1mContext = false
-            | .defaultModelEffort = $effort
+            | del(.modelPrefer1mContext, .defaultModelEffort)
             | .inferenceModels = $models
           ' "$profile" > "$tmp"
         mv "$tmp" "$profile"
@@ -124,7 +116,7 @@
         }
       ];
 
-      age.secrets = providers.ageSecrets selected;
+      age.secrets = providers.ageSecrets;
 
       home.activation.configureClaudeDesktop = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         (

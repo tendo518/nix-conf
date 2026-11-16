@@ -7,57 +7,28 @@
       ...
     }:
     let
-      providers = import ./_providers.nix {
+      providers = import ./_context.nix {
         inherit config lib;
-        agent = "pi";
+        settings = (import ./_agents.nix).pi;
       };
-      selected = providers.selectProviders;
-
-      thinkingLevelMap =
-        efforts:
-        let
-          levels = [
-            "minimal"
-            "low"
-            "medium"
-            "high"
-            "xhigh"
-            "max"
-          ];
-        in
-        lib.genAttrs levels (level: if builtins.elem level efforts then level else null);
-
-      defaultProvider = providers.defaultProvider selected;
-      defaultProviderConfig = selected.${defaultProvider};
-      defaultModel =
-        defaultProviderConfig.models.${
-          defaultProviderConfig.agentConfig.defaultModel or defaultProviderConfig.defaultModel
-        };
-
-      toPiProvider = _name: provider: {
+      inherit (providers) selected defaultProvider defaultModel;
+      piProviders = lib.mapAttrs (_name: provider: {
         inherit (provider) name;
         baseUrl = provider.endpoints.openai;
         api = provider.agentConfig.api or "openai-completions";
         apiKey = ''!${pkgs.coreutils}/bin/cat "${provider.secretPath}"'';
         models = lib.mapAttrsToList (
-          _model: model:
+          _key: model:
           {
-            id = model.id;
-            name = model.displayName;
-            inherit (model) contextWindow;
-            input = model.input or [ "text" ];
+            inherit (model) id name reasoning;
+            contextWindow = model.limit.context;
+            input = lib.intersectLists [ "text" "image" ] model.modalities.input;
           }
-          // lib.optionalAttrs (model ? maxOutputTokens) {
-            maxTokens = model.maxOutputTokens;
-          }
-          // lib.optionalAttrs (model ? thinking) {
-            reasoning = true;
-            thinkingLevelMap = thinkingLevelMap model.thinking.efforts;
+          // lib.optionalAttrs (model.limit ? output) {
+            maxTokens = model.limit.output;
           }
         ) provider.models;
-      };
-
-      piProviders = lib.mapAttrs toPiProvider selected;
+      }) selected;
 
       modelsJson = builtins.toJSON {
         providers = piProviders;
@@ -78,25 +49,20 @@
         "npm:pi-web-access"
       ];
 
-      settingsJson = builtins.toJSON (
-        {
-          "$schema" = "https://pi.dev/schemas/settings.schema.json";
-          inherit defaultProvider;
-          defaultModel = defaultModel.id;
-          packages = piPackages;
-          quietStartup = true;
-          enableInstallTelemetry = false;
-          retry.provider.maxRetries = 0;
-          theme = "dark";
-          hideThinkingBlock = true;
-          tuiMode = "fullscreen";
-          fullscreenWheelScrollLines = "auto";
-          terminal.showTerminalProgress = true;
-        }
-        // lib.optionalAttrs (defaultModel ? thinking) {
-          defaultThinkingLevel = defaultModel.thinking.default;
-        }
-      );
+      settingsJson = builtins.toJSON {
+        "$schema" = "https://pi.dev/schemas/settings.schema.json";
+        inherit defaultProvider;
+        defaultModel = defaultModel.id;
+        packages = piPackages;
+        quietStartup = true;
+        enableInstallTelemetry = false;
+        retry.provider.maxRetries = 0;
+        theme = "dark";
+        hideThinkingBlock = true;
+        tuiMode = "fullscreen";
+        fullscreenWheelScrollLines = "auto";
+        terminal.showTerminalProgress = true;
+      };
 
       piSettingsDefaults = pkgs.writeText "pi-settings.json" settingsJson;
 
@@ -164,6 +130,6 @@
         install -m 644 ${openTuiDefaults} "$openTui"
       '';
 
-      age.secrets = providers.ageSecrets selected;
+      age.secrets = providers.ageSecrets;
     };
 }

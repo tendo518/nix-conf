@@ -7,15 +7,12 @@
       ...
     }:
     let
-      providers = import ./_providers.nix {
+      providers = import ./_context.nix {
         inherit config lib;
-        agent = "reasonix";
+        settings = (import ./_agents.nix).reasonix;
       };
-      selected = providers.selectProviders;
-      defaultProvider = providers.defaultProvider selected;
+      inherit (providers) selected defaultProvider defaultModel;
       provider = selected.${defaultProvider};
-      agentConfig = provider.agentConfig;
-      defaultModel = provider.models.${agentConfig.defaultModel or provider.defaultModel};
       apiKeyEnv = "${lib.toUpper defaultProvider}_API_KEY";
       reasonixHome = "${config.xdg.configHome}/reasonix";
       secretPath = provider.secretPath;
@@ -91,14 +88,13 @@
               models = map (model: model.id) (lib.attrValues provider.models);
               default = defaultModel.id;
               api_key_env = apiKeyEnv;
-              effort = defaultModel.thinking.default;
-              context_window = defaultModel.contextWindow;
+              context_window = defaultModel.limit.context;
             }
             // lib.optionalAttrs (provider.endpoints ? balance) {
               balance_url = provider.endpoints.balance;
             }
-            // lib.optionalAttrs (defaultModel ? maxOutputTokens) {
-              max_output_tokens = defaultModel.maxOutputTokens;
+            // lib.optionalAttrs (defaultModel.limit ? output) {
+              max_output_tokens = defaultModel.limit.output;
             }
           )
         ];
@@ -130,6 +126,6 @@
 
       home.activation.setupReasonixEnv = lib.hm.dag.entryAfter [ "writeBoundary" ] syncReasonixEnv;
 
-      age.secrets = providers.ageSecrets selected;
+      age.secrets = providers.ageSecrets;
     };
 }

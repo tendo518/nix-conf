@@ -7,11 +7,11 @@
       ...
     }:
     let
-      providers = import ./_providers.nix {
+      providers = import ./_context.nix {
         inherit config lib;
-        agent = "codex";
+        settings = (import ./_agents.nix).codex;
       };
-      selected = providers.selectProviders;
+      inherit (providers) selected;
       toml = pkgs.formats.toml { };
       defaultModel = "gpt-6-luna";
 
@@ -32,61 +32,37 @@
               > "$out"
           '';
 
-      # Wording of the Codex CLI's own reasoning levels; a level the registry
-      # declares beyond these falls back to the level name.
-      reasoningLevelDescriptions = {
-        low = "Fast responses with lighter reasoning";
-        medium = "Balances speed and reasoning depth for everyday tasks";
-        high = "Greater reasoning depth for complex problems";
-        xhigh = "Extra high reasoning depth for complex problems";
-        max = "Maximum reasoning depth for the hardest problems";
-      };
-
-      mkCatalogModel =
-        provider: model:
-        let
-          thinking =
-            model.thinking or {
-              efforts = [ ];
-              default = null;
-            };
-        in
-        {
-          slug = model.id;
-          display_name = model.displayName;
-          description = model.description or "${model.displayName} via ${provider.name}";
-          default_reasoning_level = thinking.default;
-          supported_reasoning_levels = map (effort: {
-            inherit effort;
-            description = reasoningLevelDescriptions.${effort} or effort;
-          }) thinking.efforts;
-          input_modalities = model.input or [ "text" ];
-          context_window = model.contextWindow or null;
-          max_context_window = model.contextWindow or null;
-          shell_type = "shell_command";
-          visibility = "list";
-          supported_in_api = true;
-          priority = model.codexPriority or 1;
-          support_verbosity = true;
-          default_verbosity = "low";
-          apply_patch_tool_type = "freeform";
-          web_search_tool_type = "text";
-          truncation_policy = {
-            mode = "tokens";
-            limit = 10000;
-          };
-          experimental_supported_tools = [ ];
-          supports_parallel_tool_calls = provider.codexSupportsParallelToolCalls or true;
-          multi_agent_version = "v2";
-          effective_context_window_percent = 95;
-          comp_hash = "3000";
-          reasoning_summary_format = "experimental";
-          default_reasoning_summary = "none";
-          supports_search_tool = model.codexSupportsSearchTool or true;
-        }
-        // lib.optionalAttrs (model ? codexSupportsOriginalImageDetail) {
-          supports_image_detail_original = model.codexSupportsOriginalImageDetail;
+      # Required catalog fields. Model facts do not imply API-specific controls.
+      mkCatalogModel = model: {
+        slug = model.id;
+        display_name = model.name;
+        description = model.description or model.name;
+        default_reasoning_level = null;
+        supported_reasoning_levels = [ ];
+        input_modalities = lib.intersectLists [ "text" "image" ] model.modalities.input;
+        context_window = model.limit.context;
+        max_context_window = model.limit.context;
+        shell_type = "shell_command";
+        visibility = "list";
+        supported_in_api = true;
+        priority = 1;
+        support_verbosity = false;
+        default_verbosity = "low";
+        apply_patch_tool_type = "freeform";
+        web_search_tool_type = "text";
+        truncation_policy = {
+          mode = "tokens";
+          limit = 10000;
         };
+        experimental_supported_tools = [ ];
+        supports_parallel_tool_calls = false;
+        multi_agent_version = "v2";
+        effective_context_window_percent = 95;
+        comp_hash = "3000";
+        reasoning_summary_format = "experimental";
+        default_reasoning_summary = "none";
+        supports_search_tool = false;
+      };
 
       mkCodexWrapper =
         profile:
@@ -106,13 +82,13 @@
           agentConfig = provider.agentConfig;
           providerId = agentConfig.providerId or name;
           profile = agentConfig.profile or "codex-${name}";
-          defaultModel = provider.models.${agentConfig.defaultModel or provider.defaultModel};
+          inherit (provider) defaultModel;
           catalog =
             pkgs.runCommand "${profile}-models.json"
               {
                 nativeBuildInputs = [ pkgs.jq ];
                 models = builtins.toJSON {
-                  models = lib.mapAttrsToList (_model: model: mkCatalogModel provider model) provider.models;
+                  models = lib.mapAttrsToList (_model: mkCatalogModel) provider.models;
                 };
                 passAsFile = [ "models" ];
               }
@@ -124,30 +100,20 @@
         in
         {
           inherit catalog profile;
-          profileConfig = toml.generate "${profile}.config.toml" (
-            {
-              model = defaultModel.id;
-              model_provider = providerId;
-              model_catalog_json = toString catalog;
-              # Experimental context management is for the official provider.
-              features.context_management.experimental_mode = false;
-              tui.status_line = [
-                "model-with-reasoning"
-                "project-name"
-                "run-state"
-                "context-used"
-              ];
-            }
-            // lib.optionalAttrs (agentConfig.reasoningSummaries or false) {
-              model_reasoning_summary = "auto";
-            }
-            // lib.optionalAttrs (defaultModel ? thinking) {
-              model_reasoning_effort = defaultModel.thinking.default;
-            }
-            // lib.optionalAttrs (agentConfig.disableWebSearch or false) {
-              web_search = "disabled";
-            }
-          );
+          profileConfig = toml.generate "${profile}.config.toml" {
+            model = defaultModel.id;
+            model_provider = providerId;
+            model_catalog_json = toString catalog;
+            web_search = "disabled";
+            # Experimental context management is for the official provider.
+            features.context_management.experimental_mode = false;
+            tui.status_line = [
+              "model-with-reasoning"
+              "project-name"
+              "run-state"
+              "context-used"
+            ];
+          };
           wrapper = mkCodexWrapper profile;
         }
       ) selected;
@@ -224,6 +190,6 @@
         ${profileInstallLines}
       '';
 
-      age.secrets = providers.ageSecrets selected;
+      age.secrets = providers.ageSecrets;
     };
 }

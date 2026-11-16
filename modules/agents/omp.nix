@@ -7,46 +7,27 @@
       ...
     }:
     let
-      providers = import ./_providers.nix {
+      providers = import ./_context.nix {
         inherit config lib;
-        agent = "omp";
+        settings = (import ./_agents.nix).omp;
       };
-      selected = providers.selectProviders;
-
-      defaultProvider = providers.defaultProvider selected;
-      defaultProviderConfig = selected.${defaultProvider};
-      defaultModel =
-        defaultProviderConfig.models.${
-          defaultProviderConfig.agentConfig.defaultModel or defaultProviderConfig.defaultModel
-        }.id;
-
-      toOmpProvider = _name: provider: {
+      inherit (providers) selected defaultProvider defaultModel;
+      ompProviders = lib.mapAttrs (_name: provider: {
         baseUrl = provider.endpoints.openai;
         api = provider.agentConfig.api or "openai-completions";
         apiKey = ''!${pkgs.coreutils}/bin/cat "${provider.secretPath}"'';
         models = lib.mapAttrsToList (
-          _model: model:
+          _key: model:
           {
-            id = model.id;
-            name = model.displayName;
-            inherit (model) contextWindow;
-            input = model.input or [ "text" ];
+            inherit (model) id name reasoning;
+            contextWindow = model.limit.context;
+            input = lib.intersectLists [ "text" "image" ] model.modalities.input;
           }
-          // lib.optionalAttrs (model ? maxOutputTokens) {
-            maxTokens = model.maxOutputTokens;
-          }
-          // lib.optionalAttrs (model ? thinking) {
-            reasoning = true;
-            thinking = {
-              mode = "effort";
-              efforts = model.thinking.efforts;
-              defaultLevel = model.thinking.default;
-            };
+          // lib.optionalAttrs (model.limit ? output) {
+            maxTokens = model.limit.output;
           }
         ) provider.models;
-      };
-
-      ompProviders = lib.mapAttrs toOmpProvider selected;
+      }) selected;
 
       modelsYml = builtins.toJSON {
         providers = ompProviders;
@@ -54,7 +35,7 @@
 
       configYml = builtins.toJSON {
         setupVersion = 1;
-        modelRoles.default = "${defaultProvider}/${defaultModel}";
+        modelRoles.default = "${defaultProvider}/${defaultModel.id}";
         startup = {
           checkUpdate = false;
           setupWizard = false;
@@ -133,6 +114,6 @@
         text = configYml;
       };
 
-      age.secrets = providers.ageSecrets selected;
+      age.secrets = providers.ageSecrets;
     };
 }
