@@ -139,8 +139,9 @@ connections; `openai` uses the non-reserved provider ID `openai-api`.
   the bundled pi-ai adapter for OpenAI (Responses) and Qwen Token Plan (Chat
   Completions). Model names, limits, and text/image inputs come from the same
   model facts. No effort lists are synthesized; native adapter/catalog defaults
-  apply. The `dsh` wrapper reads the three agenix keys into environment variables
-  at launch; generated configuration contains only their names.
+  apply. Home activation seeds DSH's native local credential store
+  (`~/.dsh/.credentials.yaml`) from the enabled agenix secrets; generated
+  configuration contains only their credential names.
 
 ### DSH usage
 
@@ -155,11 +156,19 @@ by the home-level patch. Other profile settings remain editable. The bundled
 DeepSeek Flash default is left unpatched so the picker can save a different
 default for new sessions. Existing sessions retain their selected model.
 
+DSH's credential store is shared by the CLI, Web UI, TUI, and Desktop app, so
+the agenix keys work without exporting them in a GUI launch environment. The
+CLI and Desktop app both run the packaged DSH directly; Home Manager refreshes
+the shared store during activation. DSH watches the file and applies changed
+keys to the next request, including while the Desktop app is running.
+
 DSH defaults to `~/.dsh`. A custom `DSH_HOME` needs the same `cordis.patch.yml`
-(or an explicit `--patch ~/.dsh/cordis.patch.yml`). Saved keys in DSH's own
-`.credentials.yaml` take precedence over the wrapper's environment; remove a
-saved override to return to agenix-managed authentication. Rotated agenix keys
-are picked up on the next launch.
+(or an explicit `--patch ~/.dsh/cordis.patch.yml`) and agenix-managed
+`.credentials.yaml`. Keys saved through DSH's Models page remain useful for
+providers not managed by this module; activation overwrites the references for
+enabled agenix providers. Rotated agenix keys are picked up by the next
+activation. DSH stores the values in an owner-only file; its maintainers note
+that an OS-keychain credential provider is not yet shipped.
 
 Client serialization, runtime settings, wrappers, and activation all live in the
 corresponding `*.nix` module. A little repetition is preferable to an adapter

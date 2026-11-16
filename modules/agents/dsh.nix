@@ -13,6 +13,32 @@
       };
       inherit (providers) selected;
       apiKeyEnv = name: "${lib.toUpper name}_API_KEY";
+      # DSH resolves this shared store before launch environment, so seeding it
+      # makes the CLI and Desktop app use the same agenix-managed credentials.
+      credentialFile = "${config.home.homeDirectory}/.dsh/.credentials.yaml";
+      credentialSyncLines = lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (name: provider: ''
+          if [ -r "${provider.secretPath}" ]; then
+            key="$(${pkgs.coreutils}/bin/cat "${provider.secretPath}")"
+            if [ -n "$key" ]; then
+              export ${apiKeyEnv name}="$key"
+              ${pkgs.yq-go}/bin/yq -i '.version = 1 | .refs.${apiKeyEnv name} = strenv(${apiKeyEnv name})' "${credentialFile}" 2>/dev/null
+              unset ${apiKeyEnv name}
+            fi
+          fi
+        '') selected
+      );
+      syncDshCredentials = pkgs.writeShellScript "dsh-sync-credentials" ''
+        set -e
+        umask 077
+        mkdir -p "$(${pkgs.coreutils}/bin/dirname "${credentialFile}")"
+        if [ ! -s "${credentialFile}" ]; then
+          printf 'version: 1\n' > "${credentialFile}"
+        fi
+        chmod 600 "${credentialFile}"
+        ${credentialSyncLines}
+        chmod 600 "${credentialFile}"
+      '';
       modelConfig =
         model:
         {
@@ -59,26 +85,19 @@
             }) (builtins.removeAttrs selected [ "deepseek" ]);
           }
         ];
-      dshWrapped = pkgs.writeShellScriptBin "dsh" ''
-        set -e
-        : "''${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
-        ${lib.concatStringsSep "\n" (
-          lib.mapAttrsToList (name: provider: ''
-            ${apiKeyEnv name}="$(${pkgs.coreutils}/bin/cat "${provider.secretPath}")"
-            export ${apiKeyEnv name}
-          '') selected
-        )}
-        exec ${lib.getExe pkgs.llm-agents.dsh} "$@"
-      '';
     in
     {
       home.packages = [
-        dshWrapped
+        pkgs.llm-agents.dsh
         pkgs.pnpm # needed for dsh plugin
       ];
 
       # Home-level patches apply to every profile; JSON is also valid YAML.
       home.file.".dsh/cordis.patch.yml".text = builtins.toJSON patches;
+
+      home.activation.setupDshCredentials = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        ${syncDshCredentials}
+      '';
 
       age.secrets = providers.ageSecrets;
     };
