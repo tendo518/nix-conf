@@ -32,4 +32,5 @@ in
   "qwen-tokenplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "gpu-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "openai-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
+  "ssh-hosts.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
 }
