@@ -137,27 +137,6 @@
     "reasoning": true,
     "tool_call": true
   },
-  "openai/gpt-6-astra": {
-    "description": "GPT-6 Astra is OpenAI's most capable model for complex reasoning, coding, computer use, research, and document creation.",
-    "limit": {
-      "context": 1050000,
-      "input": 922000,
-      "output": 128000
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "pdf"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "GPT-6 Astra",
-    "reasoning": true,
-    "tool_call": true
-  },
   "openai/gpt-6-luna": {
     "description": "OpenAI's most efficient model for focused, high-volume tasks",
     "limit": {
@@ -179,8 +158,8 @@
     "reasoning": true,
     "tool_call": true
   },
-  "openai/gpt-6.1-sol": {
-    "description": "Near-Astra performance for complex coding, computer use, and professional work at a lower cost.",
+  "openai/gpt-6.2-astra": {
+    "description": "A frontier reasoning model for coding, computer use, and professional work such as slides, spreadsheets, and documents.",
     "limit": {
       "context": 1050000,
       "input": 922000,
@@ -196,7 +175,28 @@
         "text"
       ]
     },
-    "name": "GPT-6.1 Sol",
+    "name": "GPT-6.2 Astra",
+    "reasoning": true,
+    "tool_call": true
+  },
+  "openai/gpt-6.2-sol": {
+    "description": "An efficient reasoning model for everyday work, multistep agentic workflows, and coding.",
+    "limit": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "modalities": {
+      "input": [
+        "text",
+        "image",
+        "pdf"
+      ],
+      "output": [
+        "text"
+      ]
+    },
+    "name": "GPT-6.2 Sol",
     "reasoning": true,
     "tool_call": true
   },

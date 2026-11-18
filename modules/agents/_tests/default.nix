@@ -34,7 +34,7 @@ let
   omp = builtins.fromJSON ompModule.home.file."./.omp/agent/models.yml".text;
   dsh = builtins.fromJSON dshModule.home.file.".dsh/cordis.patch.yml".text;
   dshEntry = id: lib.findFirst (entry: entry.id == id) (throw "missing DSH entry ${id}") dsh;
-  sol = models: lib.findFirst (model: model.id == "gpt-6.1-sol") (throw "missing Sol") models;
+  sol = models: lib.findFirst (model: model.id == "gpt-6.2-sol") (throw "missing Sol") models;
 in
 lib.runTests {
   testOmittedProvidersAreDisabled = {
@@ -93,8 +93,8 @@ lib.runTests {
   };
   testDefaultResolvesModelFactsAndApiId = {
     expr = selected.defaultModel;
-    expected = catalog."openai/gpt-6.1-sol" // {
-      id = "gpt-6.1-sol";
+    expected = catalog."openai/gpt-6.2-sol" // {
+      id = "gpt-6.2-sol";
     };
   };
   testAgentDefaultOverride = {
@@ -134,8 +134,8 @@ lib.runTests {
   testPiNativeModelSchema = {
     expr = sol pi.providers.openai.models;
     expected = {
-      id = "gpt-6.1-sol";
-      name = catalog."openai/gpt-6.1-sol".name;
+      id = "gpt-6.2-sol";
+      name = catalog."openai/gpt-6.2-sol".name;
       reasoning = true;
       contextWindow = 1050000;
       maxTokens = 128000;

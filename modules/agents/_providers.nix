@@ -33,16 +33,16 @@
   openai = {
     name = "OpenAI";
     secret = "openai-api-key";
-    defaultModel = "gpt_6_1_sol";
+    defaultModel = "gpt_6_2_sol";
     endpoints.openai = "https://api.openai.com/v1";
     models = {
-      gpt_6_1_sol = {
-        id = "gpt-6.1-sol";
-        model = "openai/gpt-6.1-sol";
+      gpt_6_2_sol = {
+        id = "gpt-6.2-sol";
+        model = "openai/gpt-6.2-sol";
       };
-      gpt_6_astra = {
-        id = "gpt-6-astra";
-        model = "openai/gpt-6-astra";
+      gpt_6_2_astra = {
+        id = "gpt-6.2-astra";
+        model = "openai/gpt-6.2-astra";
       };
       gpt_6_luna = {
         id = "gpt-6-luna";

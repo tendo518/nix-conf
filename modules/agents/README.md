@@ -35,7 +35,7 @@ Only these model fields are imported:
 - `limit.context`, optional `limit.input` and `limit.output`
 
 The snapshot retains the upstream limits and modalities. For example,
-GPT-6.1 Sol has a 1,050,000-token context; there is no separate local 272K cap.
+GPT-6.2 Sol has a 1,050,000-token context; there is no separate local 272K cap.
 These are model capabilities, not a guarantee that every deployment serves the
 full window. There is deliberately no per-provider capability override system.
 
@@ -71,8 +71,8 @@ A provider model has exactly two fields:
   endpoints.openai = "https://api.openai.com/v1";
   defaultModel = "sol";
   models.sol = {
-    id = "gpt-6.1-sol";           # ID sent to this connection
-    model = "openai/gpt-6.1-sol"; # Model facts to use
+    id = "gpt-6.2-sol";           # ID sent to this connection
+    model = "openai/gpt-6.2-sol"; # Model facts to use
   };
 }
 ```
