@@ -7,9 +7,9 @@
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-      extraConfig = ''
-        SetEnv TERM=xterm-256color
-      '';
+      # extraConfig = ''
+      #   SetEnv TERM=xterm-256color
+      # '';
       includes = [ "${config.home.homeDirectory}/.ssh/ssh-hosts.conf" ];
       settings."*" = {
         ControlMaster = "auto";
