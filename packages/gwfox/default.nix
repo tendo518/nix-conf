@@ -5,13 +5,13 @@
 }:
 stdenvNoCC.mkDerivation rec {
   pname = "gwfox";
-  version = "unstable-2026-11-12";
+  version = "unstable-2026-11-18";
 
   src = fetchFromGitHub {
     owner = "akkva";
     repo = "gwfox";
-    rev = "62c36553c5aa7269674947d59a25b92da10fdc0f";
-    hash = "sha256-O8Htonzua6do+P4UFZMa7FEI9bY8lHsbKzVf8hZOuHg=";
+    rev = "208c243f6282298aa947dd823acb474894a271d5";
+    hash = "sha256-HRrgvb0MjSexIXnNkDNn4+p+SoTG28eBQxUgT/Y5sl8=";
   };
 
   installPhase = ''
