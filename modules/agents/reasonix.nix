@@ -16,6 +16,17 @@
       apiKeyEnv = "${lib.toUpper defaultProvider}_API_KEY";
       reasonixHome = "${config.xdg.configHome}/reasonix";
       secretPath = provider.secretPath;
+      effortValues =
+        model:
+        lib.concatMap (option: option.values or [ ]) (
+          lib.filter (option: option.type == "effort") (model.reasoning_options or [ ])
+        );
+      defaultEffort =
+        let
+          efforts = effortValues defaultModel;
+        in
+        if builtins.elem "high" efforts then "high" else lib.head efforts;
+      supportedEfforts = lib.filter (effort: effort != "none") (effortValues defaultModel);
 
       # agenix mounts secrets in a separate user service. Sync both during
       # activation and at launch, when the latest secret is available.
@@ -95,6 +106,14 @@
             }
             // lib.optionalAttrs (defaultModel.limit ? output) {
               max_output_tokens = defaultModel.limit.output;
+            }
+            // lib.optionalAttrs (defaultModel ? reasoning_options) {
+              effort = defaultEffort;
+              supported_efforts = supportedEfforts;
+              reasoning_protocol =
+                if defaultProvider == "deepseek" then "deepseek"
+                else if defaultProvider == "volces" then "glm"
+                else "openai";
             }
           )
         ];

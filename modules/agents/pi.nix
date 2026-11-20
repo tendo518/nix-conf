@@ -12,11 +12,37 @@
         settings = (import ./_agents.nix).pi;
       };
       inherit (providers) selected defaultProvider defaultModel;
+      thinkingLevels = [
+        "minimal"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+      effortValues =
+        model:
+        lib.concatMap (option: option.values or [ ]) (
+          lib.filter (option: option.type == "effort") (model.reasoning_options or [ ])
+        );
+      thinkingLevelMap =
+        model:
+        let
+          efforts = effortValues model;
+        in
+        {
+          off = if builtins.elem "none" efforts then "none" else null;
+        }
+        // lib.genAttrs thinkingLevels (level: if builtins.elem level efforts then level else null);
       piProviders = lib.mapAttrs (_name: provider: {
         inherit (provider) name;
         baseUrl = provider.endpoints.openai;
         api = provider.agentConfig.api or "openai-completions";
         apiKey = ''!${pkgs.coreutils}/bin/cat "${provider.secretPath}"'';
+        compat = lib.optionalAttrs ((provider.agentConfig.api or "openai-completions") == "openai-completions") {
+          supportsReasoningEffort = true;
+          thinkingFormat = provider.thinkingFormat or "openai";
+        };
         models = lib.mapAttrsToList (
           _key: model:
           {
@@ -26,6 +52,9 @@
           }
           // lib.optionalAttrs (model.limit ? output) {
             maxTokens = model.limit.output;
+          }
+          // lib.optionalAttrs (model ? reasoning_options) {
+            thinkingLevelMap = thinkingLevelMap model;
           }
         ) provider.models;
       }) selected;

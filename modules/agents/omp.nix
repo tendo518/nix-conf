@@ -12,10 +12,57 @@
         settings = (import ./_agents.nix).omp;
       };
       inherit (providers) selected defaultProvider defaultModel;
+      thinkingLevels = [
+        "minimal"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+      effortValues =
+        model:
+        lib.concatMap (option: option.values or [ ]) (
+          lib.filter (option: option.type == "effort") (model.reasoning_options or [ ])
+        );
+      ompThinking =
+        model:
+        let
+          efforts = effortValues model;
+          supportsOff = builtins.elem "none" efforts;
+          levels = lib.filter (level: builtins.elem level efforts) thinkingLevels;
+        in
+        {
+          mode = "effort";
+          efforts = levels;
+          # Preserve the declared wire spelling. OMP otherwise applies its
+          # generic family fallback (for example Qwen xhigh -> high).
+          effortMap = lib.genAttrs levels (level: level);
+        }
+        // lib.optionalAttrs supportsOff {
+          # OMP's off selector is separate from its effort ladder. Keep the
+          # ladder limited to values the endpoint accepts, and allow an
+          # explicit off request instead of normalizing it to the lowest tier.
+          requiresEffort = false;
+          suppressWhenOff = true;
+        };
       ompProviders = lib.mapAttrs (_name: provider: {
         baseUrl = provider.endpoints.openai;
         api = provider.agentConfig.api or "openai-completions";
         apiKey = ''!${pkgs.coreutils}/bin/cat "${provider.secretPath}"'';
+        compat = lib.optionalAttrs ((provider.agentConfig.api or "openai-completions") == "openai-completions") (
+          {
+            supportsReasoningEffort = true;
+          }
+          # OMP has no explicit DeepSeek enum value; its endpoint detector
+          # supplies that dialect. Keep the shared connection fact for Pi/DSH.
+          // lib.optionalAttrs (provider.thinkingFormat or "openai" != "deepseek") {
+            thinkingFormat = provider.thinkingFormat or "openai";
+          }
+          // lib.optionalAttrs (provider.thinkingFormat or "openai" == "qwen") {
+            qwenTemplateReasoningEffort = true;
+          }
+        );
         models = lib.mapAttrsToList (
           _key: model:
           {
@@ -25,6 +72,9 @@
           }
           // lib.optionalAttrs (model.limit ? output) {
             maxTokens = model.limit.output;
+          }
+          // lib.optionalAttrs (model ? reasoning_options) {
+            thinking = ompThinking model;
           }
         ) provider.models;
       }) selected;

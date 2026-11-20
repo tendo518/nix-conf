@@ -49,6 +49,31 @@
           maxTokens = model.limit.output;
         };
       inputTypes = model: lib.intersectLists [ "text" "image" ] model.modalities.input;
+      thinkingLevels = [
+        "off"
+        "minimal"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+      effortValues =
+        model:
+        lib.concatMap (option: option.values or [ ]) (
+          lib.filter (option: option.type == "effort") (model.reasoning_options or [ ])
+        );
+      reasoningEfforts =
+        model:
+        let
+          efforts = effortValues model;
+        in
+        # DSH accepts a wire value for every offered level. Omit unsupported
+        # levels instead of sending null, which its resolver rejects.
+        lib.optionalAttrs (builtins.elem "none" efforts) { off = "none"; }
+        // lib.genAttrs (lib.filter (level: builtins.elem level efforts) (lib.tail thinkingLevels)) (
+          level: level
+        );
 
       # The native adapter owns DeepSeek's protocol and reasoning controls.
       # Leave agent-default-model unpatched so the picker can save selections.
@@ -75,11 +100,18 @@
               apiKeyEnv = apiKeyEnv name;
               baseURL = provider.endpoints.openai;
               api = provider.agentConfig.api or "openai-completions";
+              compat = lib.optionalAttrs ((provider.agentConfig.api or "openai-completions") == "openai-completions") {
+                supportsReasoningEffort = true;
+                thinkingFormat = provider.thinkingFormat or "openai";
+              };
               models = map (
                 model:
                 (modelConfig model)
                 // {
                   input = inputTypes model;
+                }
+                // lib.optionalAttrs (model ? reasoning_options) {
+                  reasoningEfforts = reasoningEfforts model;
                 }
               ) (lib.attrValues provider.models);
             }) (builtins.removeAttrs selected [ "deepseek" ]);

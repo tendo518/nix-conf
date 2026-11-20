@@ -1,2 +1,5 @@
-# Model facts only. No endpoints, credentials, prices, or client-specific hints.
-(builtins.fromJSON (builtins.readFile ./models-dev.json)) // import ./local.nix
+# Subscribed provider facts plus explicit local connection facts.
+(builtins.fromJSON (builtins.readFile ./models-dev.json))
+// {
+  local = import ./local.nix;
+}

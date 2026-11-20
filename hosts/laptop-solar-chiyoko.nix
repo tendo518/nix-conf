@@ -7,6 +7,7 @@
       "agents"
       "apps"
       "network"
+      "services/rex"
       "desktop"
       "hosts/laptop-solar-chiyoko"
       "hardware"

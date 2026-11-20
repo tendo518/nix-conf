@@ -14,6 +14,18 @@
       inherit (providers) selected;
       toml = pkgs.formats.toml { };
       defaultModel = "gpt-6-luna";
+      reasoningLevelDescriptions = {
+        low = "Fast responses with lighter reasoning";
+        medium = "Balances speed and reasoning depth for everyday tasks";
+        high = "Greater reasoning depth for complex problems";
+        xhigh = "Extra high reasoning depth for complex problems";
+        max = "Maximum reasoning depth for the hardest problems";
+      };
+      effortValues =
+        model:
+        lib.concatMap (option: option.values or [ ]) (
+          lib.filter (option: option.type == "effort") (model.reasoning_options or [ ])
+        );
 
       # Keep agent instructions in step with the installed Codex. Export only
       # its prompt; OpenAI-specific tool modes and capabilities do not apply
@@ -32,13 +44,17 @@
               > "$out"
           '';
 
-      # Required catalog fields. Model facts do not imply API-specific controls.
+      # Required catalog fields. Reasoning levels come from the connection;
+      # other API-specific controls remain conservative defaults.
       mkCatalogModel = model: {
         slug = model.id;
         display_name = model.name;
         description = model.description or model.name;
         default_reasoning_level = null;
-        supported_reasoning_levels = [ ];
+        supported_reasoning_levels = map (effort: {
+          inherit effort;
+          description = reasoningLevelDescriptions.${effort} or effort;
+        }) (lib.filter (effort: effort != "none") (effortValues model));
         input_modalities = lib.intersectLists [ "text" "image" ] model.modalities.input;
         context_window = model.limit.context;
         max_context_window = model.limit.context;

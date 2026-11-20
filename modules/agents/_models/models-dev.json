@@ -1,284 +1,400 @@
 {
-  "alibaba/qwen3.8-27b": {
-    "description": "Dense 27B vision-language model for coding, agent tasks, and image and video understanding",
-    "limit": {
-      "context": 262144,
-      "output": 32768
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "video"
+  "deepseek": {
+    "deepseek-flash": {
+      "description": "October 17 update of DeepSeek V4.1 Flash with improved reasoning, coding, agentic tasks, and visual understanding",
+      "limit": {
+        "context": 1048576,
+        "output": 393216
+      },
+      "modalities": {
+        "input": [
+          "text",
+          "image"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "DeepSeek V4.1 Flash 1017",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "toggle"
+        },
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "high",
+            "max"
+          ]
+        }
       ],
-      "output": [
-        "text"
-      ]
+      "tool_call": true
     },
-    "name": "Qwen3.8 27B",
-    "reasoning": true,
-    "tool_call": true
+    "deepseek-v4-pro": {
+      "description": "DeepSeek V4 Pro snapshot with million-token context and support for thinking and non-thinking modes",
+      "limit": {
+        "context": 1048576,
+        "output": 393216
+      },
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "DeepSeek V4 Pro",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "toggle"
+        },
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "high",
+            "max"
+          ]
+        }
+      ],
+      "tool_call": true
+    }
   },
-  "alibaba/qwen3.8-flash": {
-    "description": "Qwen vision-language model for visual reasoning, documents, and agent tasks",
-    "limit": {
-      "context": 1000000,
-      "output": 131072
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "video"
+  "openai": {
+    "gpt-6-luna": {
+      "description": "OpenAI's most efficient model for focused, high-volume tasks",
+      "limit": {
+        "context": 1050000,
+        "input": 922000,
+        "output": 128000
+      },
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "GPT-6 Luna",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "effort",
+          "values": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        }
       ],
-      "output": [
-        "text"
-      ]
+      "tool_call": true
     },
-    "name": "Qwen3.8 Flash",
-    "reasoning": true,
-    "tool_call": true
+    "gpt-6.2-astra": {
+      "description": "A frontier reasoning model for coding, computer use, and professional work such as slides, spreadsheets, and documents.",
+      "limit": {
+        "context": 1050000,
+        "input": 922000,
+        "output": 128000
+      },
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "GPT-6.2 Astra",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        }
+      ],
+      "tool_call": true
+    },
+    "gpt-6.2-sol": {
+      "description": "An efficient reasoning model for everyday work, multistep agentic workflows, and coding.",
+      "limit": {
+        "context": 1050000,
+        "input": 922000,
+        "output": 128000
+      },
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "GPT-6.2 Sol",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        }
+      ],
+      "tool_call": true
+    }
   },
-  "alibaba/qwen3.8-max": {
-    "description": "2.4-trillion-parameter MoE flagship for coding, professional work, multimodal understanding, and long-horizon agentic workflows",
-    "limit": {
-      "context": 1000000,
-      "output": 131072
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "video",
-        "pdf"
+  "qwen": {
+    "deepseek-v4.1-flash": {
+      "description": "DeepSeek V4.1 Flash model for reasoning and agentic coding",
+      "limit": {
+        "context": 1000000,
+        "output": 384000
+      },
+      "modalities": {
+        "input": [
+          "text",
+          "image"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "DeepSeek V4.1 Flash",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "toggle"
+        },
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "high",
+            "max"
+          ]
+        }
       ],
-      "output": [
-        "text"
-      ]
+      "tool_call": true
     },
-    "name": "Qwen3.8 Max",
-    "reasoning": true,
-    "tool_call": true
+    "deepseek-v4.1-flash-1017": {
+      "description": "October 17 update of DeepSeek V4.1 Flash with improved reasoning, coding, agentic tasks, and visual understanding",
+      "limit": {
+        "context": 1000000,
+        "output": 384000
+      },
+      "modalities": {
+        "input": [
+          "text",
+          "image"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "DeepSeek V4.1 Flash 1017",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "toggle"
+        },
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "high",
+            "max"
+          ]
+        }
+      ],
+      "tool_call": true
+    },
+    "glm-5.3": {
+      "description": "Flagship GLM model for long-horizon coding, agents, and complex project delivery",
+      "limit": {
+        "context": 1000000,
+        "output": 131072
+      },
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "GLM-5.3",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "high",
+            "max"
+          ]
+        }
+      ],
+      "tool_call": true
+    },
+    "qwen3.8-flash": {
+      "description": "Qwen vision-language model for visual reasoning, documents, and agent tasks",
+      "limit": {
+        "context": 1000000,
+        "output": 131072
+      },
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "Qwen3.8 Flash",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "toggle"
+        },
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "medium",
+            "xhigh"
+          ]
+        },
+        {
+          "max": 262144,
+          "type": "budget_tokens"
+        }
+      ],
+      "tool_call": true
+    },
+    "qwen3.8-max": {
+      "description": "2.4-trillion-parameter MoE flagship for coding, professional work, multimodal understanding, and long-horizon agentic workflows",
+      "limit": {
+        "context": 1000000,
+        "output": 131072
+      },
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "Qwen3.8 Max",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "toggle"
+        },
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "medium",
+            "xhigh"
+          ]
+        },
+        {
+          "max": 262144,
+          "min": 0,
+          "type": "budget_tokens"
+        }
+      ],
+      "tool_call": true
+    }
   },
-  "alibaba/qwen4-max": {
-    "description": "Flagship multimodal model for coding, office productivity, frontend design, and complex agentic tasks",
-    "limit": {
-      "context": 1000000,
-      "output": 262144
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "video",
-        "pdf"
+  "volces": {
+    "glm-5.3": {
+      "description": "Flagship GLM model for long-horizon coding, agents, and complex project delivery",
+      "limit": {
+        "context": 1000000,
+        "output": 131072
+      },
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "GLM-5.3",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "high",
+            "max"
+          ]
+        }
       ],
-      "output": [
-        "text"
-      ]
+      "tool_call": true
     },
-    "name": "Qwen4 Max",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "deepseek/deepseek-v4-pro": {
-    "description": "Open MoE flagship with million-token context for coding and long agent runs",
-    "limit": {
-      "context": 1000000,
-      "output": 384000
-    },
-    "modalities": {
-      "input": [
-        "text"
+    "glm-5.3-flash": {
+      "description": "Native multimodal GLM model for efficient coding and long-horizon agent tasks",
+      "limit": {
+        "context": 1000000,
+        "output": 131072
+      },
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "name": "GLM-5.3-Flash",
+      "reasoning": true,
+      "reasoning_options": [
+        {
+          "type": "effort",
+          "values": [
+            "low",
+            "high",
+            "max"
+          ]
+        }
       ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "DeepSeek V4 Pro",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "deepseek/deepseek-v4.1-flash": {
-    "description": "DeepSeek V4.1 Flash model for reasoning and agentic coding",
-    "limit": {
-      "context": 1000000,
-      "output": 384000
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "DeepSeek V4.1 Flash",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "deepseek/deepseek-v4.1-flash-1017": {
-    "description": "October 17 update of DeepSeek V4.1 Flash with improved reasoning, coding, agentic tasks, and visual understanding",
-    "limit": {
-      "context": 1000000,
-      "output": 384000
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "DeepSeek V4.1 Flash 1017",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "openai/gpt-6-luna": {
-    "description": "OpenAI's most efficient model for focused, high-volume tasks",
-    "limit": {
-      "context": 1050000,
-      "input": 922000,
-      "output": 128000
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "pdf"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "GPT-6 Luna",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "openai/gpt-6.2-astra": {
-    "description": "A frontier reasoning model for coding, computer use, and professional work such as slides, spreadsheets, and documents.",
-    "limit": {
-      "context": 1050000,
-      "input": 922000,
-      "output": 128000
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "pdf"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "GPT-6.2 Astra",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "openai/gpt-6.2-sol": {
-    "description": "An efficient reasoning model for everyday work, multistep agentic workflows, and coding.",
-    "limit": {
-      "context": 1050000,
-      "input": 922000,
-      "output": 128000
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "pdf"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "GPT-6.2 Sol",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "stepfun/step-3.7-flash": {
-    "description": "Newer StepFun flash model for faster agents, coding, and multimodal prompts",
-    "limit": {
-      "context": 256000,
-      "input": 256000,
-      "output": 256000
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "video"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "Step 3.7 Flash",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "stepfun/step-5-preview": {
-    "description": "StepFun's next-generation flagship base model for coding and professional knowledge work, with native text, image, and video input and a 1M-token context window",
-    "limit": {
-      "context": 1000000,
-      "input": 1000000,
-      "output": 1000000
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "video"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "Step 5 Preview",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "zhipuai/glm-5.3": {
-    "description": "Flagship GLM model for long-horizon coding, agents, and complex project delivery",
-    "limit": {
-      "context": 1000000,
-      "output": 131072
-    },
-    "modalities": {
-      "input": [
-        "text"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "GLM-5.3",
-    "reasoning": true,
-    "tool_call": true
-  },
-  "zhipuai/glm-5.3-flash": {
-    "description": "Native multimodal GLM model for efficient coding and long-horizon agent tasks",
-    "limit": {
-      "context": 1000000,
-      "output": 131072
-    },
-    "modalities": {
-      "input": [
-        "text",
-        "image",
-        "video",
-        "pdf"
-      ],
-      "output": [
-        "text"
-      ]
-    },
-    "name": "GLM-5.3-Flash",
-    "reasoning": true,
-    "tool_call": true
+      "tool_call": true
+    }
   }
 }

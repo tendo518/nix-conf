@@ -23,15 +23,24 @@ let
         let
           provider = registry.${name};
           agentConfig = builtins.removeAttrs selection [ "enable" ];
-          models = lib.mapAttrs (
-            key: declaration:
-            (catalog.${declaration.model}
-              or (throw "agents: unknown model declaration: ${name}/${key} -> ${declaration.model}")
-            )
-            // {
-              inherit (declaration) id;
-            }
+          modelList = map (
+            id:
+            let
+              local = lib.hasPrefix "local/" id;
+              facts =
+                if local then
+                  catalog.local.${id} or (throw "agents: unknown local model declaration: ${name}/${id}")
+                else
+                  catalog.${name}.${id} or (throw "agents: missing subscribed model facts: ${name}/${id}");
+            in
+            facts // { id = if local then facts.id else id; }
           ) provider.models;
+          modelIds = map (model: model.id) modelList;
+          models =
+            if lib.unique modelIds != modelIds then
+              throw "agents: duplicate model ID in ${name}"
+            else
+              lib.listToAttrs (map (model: lib.nameValuePair model.id model) modelList);
           defaultModelKey = agentConfig.defaultModel or provider.defaultModel;
         in
         provider

@@ -7,7 +7,7 @@
     };
     qwen = {
       enable = true;
-      smallModel = "qwen3_8_flash";
+      smallModel = "qwen3.8-flash";
     };
   };
   claudeDesktop.deepseek = {
@@ -15,8 +15,8 @@
     default = true;
     profileId = "00000000-0000-4000-8000-00000000d335";
     models = [
-      "ds_v4flash"
-      "ds_v4pro"
+      "deepseek-flash"
+      "deepseek-v4-pro"
     ];
   };
   codex = {

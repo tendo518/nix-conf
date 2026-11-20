@@ -3,9 +3,13 @@
 Three separate inputs feed the client modules:
 
 - **Model facts** in `_models/`: names, modalities, reasoning/tool support, and
-  token limits. No endpoints, credentials, prices, or client compatibility hints.
-- **Connections** in `_providers.nix`: local endpoints, secret names, API model IDs,
-  and references to model facts.
+  token limits. Explicitly selected models use matching models.dev provider
+  entries; unmatched services use local facts. No endpoints, credentials, prices,
+  or client hints.
+- **Connections** in `_providers.nix`: local endpoints, secret names, defaults,
+  explicit model ID lists, and the Chat Completions thinking dialect.
+  `modelsDevProvider` identifies the source for subscribed model facts; it does
+  not expose the provider's entire catalog.
 - **Agent policy** in `_agents.nix`: enabled connections, defaults, wire APIs,
   profiles, and other client preferences.
 
@@ -22,64 +26,61 @@ modules. All existing `agents/*` Home Manager module names remain unchanged.
 
 ## Model facts
 
-`_models/models-dev.json` is a checked-in, selected snapshot of
-<https://models.dev/models.json>. It does **not** use models.dev's provider
-catalog. Model IDs such as `alibaba/qwen3.8-27b` identify the originating model,
-not the local connection used to serve it.
-
-Only these model fields are imported:
+`_models/models-dev.json` is a checked-in snapshot of explicitly selected models
+from <https://models.dev/api.json>. Its keys are local connection names, then
+the actual API model IDs. The updater imports these model fields:
 
 - `name`, optional `description`
-- `reasoning`, `tool_call`
+- `reasoning`, optional `reasoning_options`, `tool_call`
 - `modalities`
 - `limit.context`, optional `limit.input` and `limit.output`
 
-The snapshot retains the upstream limits and modalities. For example,
-GPT-6.2 Sol has a 1,050,000-token context; there is no separate local 272K cap.
-These are model capabilities, not a guarantee that every deployment serves the
-full window. There is deliberately no per-provider capability override system.
+The snapshot retains the selected provider entry's limits, modalities, and
+reasoning options. For example, GPT-6.2 Sol has a 1,050,000-token context; there is no separate
+local 272K cap. These are serving-connection capabilities, not a guarantee that
+every deployment serves the full window.
 
-Models absent from the independent catalog live in `_models/local.nix` under
-explicit `local/` keys. Currently this is Step Router V1.
-Their declarations are local knowledge, not inferred from a similar model or
-another provider. The router is not treated as a specific foundation model.
+Services without a matching models.dev provider entry declare their models in
+`_models/local.nix` under explicit `local/` keys. Currently these are the GPU
+Qwen endpoint and Qwen4 Max on the local Token Plan gateway. Their declarations
+are local knowledge, not inferred from a similar model or another provider.
 
 Refresh the snapshot with:
 
 ```bash
 scripts/update-agent-models.py
-# Or use an already downloaded models.json without network access:
-scripts/update-agent-models.py --source /path/to/models.json
+# Or use an already downloaded api.json without network access:
+scripts/update-agent-models.py --source /path/to/api.json
 ```
 
-The updater reads all references from `_providers.nix`, deduplicates
-shared models, skips `local/` declarations, and writes only referenced upstream
-facts. Missing upstream models fail instead of triggering a fuzzy match or
-preserving stale data. Review the resulting diff before switching.
+The updater reads each explicit model ID from `_providers.nix`. For a non-local
+ID, it uses `modelsDevProvider` to select one provider entry. Local IDs are
+skipped. Missing providers or models
+fail instead of preserving stale data. Review the resulting diff before switching.
 
 Only the updater uses the network. Nix evaluation and agent startup read the
 committed snapshot offline; they do not fetch models.dev.
 
 ## Connections
 
-A provider model has exactly two fields:
+A connection lists only the models it actually serves:
 
 ```nix
 {
   name = "OpenAI";
+  modelsDevProvider = "openai";
   secret = "openai-api-key";
   endpoints.openai = "https://api.openai.com/v1";
-  defaultModel = "sol";
-  models.sol = {
-    id = "gpt-6.2-sol";           # ID sent to this connection
-    model = "openai/gpt-6.2-sol"; # Model facts to use
-  };
+  defaultModel = "gpt-6.2-sol";
+  models = [
+    "gpt-6.2-sol"
+  ];
 }
 ```
 
-The same model facts can serve several connections with different API IDs.
-Aliases are explicit: `deepseek-flash`, for example, references the declared
-`deepseek/deepseek-v4.1-flash-1017` model. No ID is guessed from a display name.
+Each list item is the API model ID. A local exception uses its `local/...` key;
+the local declaration supplies the actual wire ID. No ID is guessed from a
+display name.
 
 Secrets are declared from `secrets/<secret>.age`. Plaintext keys are read at
 runtime and are never copied into the model snapshot or generated store files.
@@ -97,21 +98,21 @@ pi = {
 ```
 
 `_context.nix` is the only shared helper. It accepts `{ lib, config, settings }`,
-reads the local model/provider declarations, resolves references and defaults,
-and attaches runtime secret paths. Each client passes its own `_agents.nix`
+reads the selected and local model facts, resolves defaults, and attaches
+runtime secret paths. Each client passes its own `_agents.nix`
 settings. The helper exposes:
 
-- `selected`: enabled providers. Each model contains its facts plus the API
-  `id`; each provider has `agentConfig`, `defaultModelKey`, and the resolved
+- `selected`: enabled providers. Each model contains its facts and API `id`;
+  each provider has `agentConfig`, `defaultModelKey`, and the resolved
   `defaultModel` record.
 - `defaultProvider`, `defaultModel`: the global choice, evaluated only when a
   client needs it. Pi, OMP, Reasonix, and Claude Desktop require one enabled
   `default = true`; wrapper-based clients need no global default.
 - `ageSecrets`: declarations for enabled providers only.
 
-Agent `defaultModel` overrides use the provider-local model key. Claude Code's
-optional `smallModel` falls back to that resolved default. Codex keeps official
-OpenAI login for the base `codex` command and uses API-key profiles for configured
+Agent `defaultModel` overrides use the API model ID.
+Claude Code's optional `smallModel` falls back to that resolved default. Codex
+keeps official OpenAI login for the base `codex` command and uses API-key profiles for configured
 connections; `openai` uses the non-reserved provider ID `openai-api`.
 
 ## Client output
@@ -120,27 +121,36 @@ connections; `openai` uses the non-reserved provider ID `openai-api`.
   `reasoning`, and the intersection of model inputs with their `text`/`image`
   schema. PDF/video capabilities remain in the model facts, not in invalid
   client configuration fields.
-- **Reasoning controls** use client/server defaults. The independent model feed
-  does not supply effort lists, so we do not invent them, declare `ultra`, or
-  emit thinking-level maps. Claude Code's explicit effort preference, if any,
-  belongs to agent policy, not model facts.
+- **Reasoning controls** come from the selected or local model's
+  `reasoning_options` when available. Pi emits `thinkingLevelMap`; OMP emits
+  `thinking.efforts` and maps its `minimal` selector to a supported `none` wire
+  value; DSH emits only supported `reasoningEfforts` entries. Chat Completions
+  adapters receive the connection's thinking dialect: Qwen uses
+  `enable_thinking` plus effort, DeepSeek uses `thinking.type` plus effort, and
+  GLM uses the Z.ai-style thinking object. OMP detects DeepSeek from its endpoint
+  because its configuration schema has no explicit DeepSeek format value.
+  Responses connections use `reasoning.effort` directly. Unmapped connections
+  use client/server defaults. Claude Code's explicit effort preference belongs
+  to agent policy.
 - **Codex** gets the required custom model catalogs and instructions extracted
   offline from the installed client's bundled catalog. Custom catalogs expose
-  no guessed effort levels, parallel calls, verbosity control, original-image
-  detail, or built-in search support. API-key profiles disable built-in web
-  search. The official-login catalog is unchanged.
+  declared effort levels, but no guessed parallel calls, verbosity control,
+  original-image detail, or built-in search support. API-key profiles disable
+  built-in web search. The official-login catalog is unchanged.
 - **Claude Code / Desktop** use actual API model IDs. There are no `behavesAs`
   mappings, Claude-name substitutions, or synthetic `[1m]` suffixes. Code gets
   the declared context through `CLAUDE_CODE_MAX_CONTEXT_TOKENS`; Desktop gets
   its native `supports1m` field. The gateway must accept the actual model IDs.
-- **Reasonix** uses the default connection and its declared token limits. Its
-  activation/wrapper refresh the protected `.env`, preserving unrelated keys.
+- **Reasonix** uses the default connection, its declared token limits, and its
+  supported effort list. It selects the matching reasoning protocol explicitly.
+  Its activation/wrapper refresh the protected `.env`, preserving unrelated keys.
 - **DSH** uses its native DeepSeek Messages adapter (`deepseek-official`), plus
   the bundled pi-ai adapter for OpenAI (Responses) and Qwen Token Plan (Chat
   Completions). Model names, limits, and text/image inputs come from the same
-  model facts. No effort lists are synthesized; native adapter/catalog defaults
-  apply. Home activation seeds DSH's native local credential store
-  (`~/.dsh/.credentials.yaml`) from the enabled agenix secrets; generated
+  model facts. Declared effort lists are translated to the pi-ai adapter;
+  unmapped models use native adapter/catalog defaults. Home activation seeds
+  DSH's native local credential store (`~/.dsh/.credentials.yaml`) from the
+  enabled agenix secrets; generated
   configuration contains only their credential names.
 
 ### DSH usage
@@ -177,9 +187,10 @@ There is no `_lib` directory or common schema for unrelated client settings.
 
 ## Changes and checks
 
-To add a model, add a provider reference, refresh the snapshot (or write an
-explicit `local/` declaration), and enable the connection for the intended
-agents. Add new connections directly to `_providers.nix` and register their
+To add a model, add its explicit connection reference, set `modelsDevProvider`
+when its facts come from models.dev, and refresh the snapshot. For an unmatched
+service, write an explicit `local/` declaration and reference it from the connection.
+Add new connections directly to `_providers.nix` and register their
 encrypted secrets in `secrets/secrets.nix`.
 
 ```bash
@@ -188,7 +199,7 @@ nix build .#checks.x86_64-linux.agent-config
 nix flake check --no-build --all-systems
 ```
 
-The check covers pure resolution, schema boundaries, model references, client
-serialization, and the updater's selection/deduplication/failure behavior.
+The check covers pure resolution, schema boundaries, local references, client
+serialization, and the updater's model selection/failure behavior.
 It does not test credentials, remote deployment limits, or API availability.
 New files must be staged with `git add` before flake evaluation.
