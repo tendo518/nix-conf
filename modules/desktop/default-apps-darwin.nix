@@ -9,9 +9,44 @@ _: {
     }:
     let
       primaryUser = lib.escapeShellArg config.system.primaryUser;
+      typeBundle = "Nix Development File Types.app";
+      typeNamespace = "local.nix-conf.development-file-types";
+      undeclaredExtensions = [
+        "nix"
+        "vim"
+        "tsx"
+        "jsx"
+        "scss"
+        "sass"
+        "less"
+        "config"
+        "env"
+        "dockerfile"
+        "dockerignore"
+        "gitignore"
+        "gitattributes"
+      ];
+      developmentTypes = pkgs.writeTextDir "Applications/${typeBundle}/Contents/Info.plist" (
+        lib.generators.toPlist { escape = true; } {
+          CFBundleIdentifier = typeNamespace;
+          CFBundleName = "Nix Development File Types";
+          CFBundlePackageType = "APPL";
+          CFBundleVersion = "1";
+          LSBackgroundOnly = true;
+          # Imported types serve as a fallback when no installed app exports a type.
+          UTImportedTypeDeclarations = map (extension: {
+            UTTypeIdentifier = "${typeNamespace}.${extension}";
+            UTTypeConformsTo = [ "public.plain-text" ];
+            UTTypeTagSpecification."public.filename-extension" = [ extension ];
+          }) undeclaredExtensions;
+        }
+      );
     in
     {
-      environment.systemPackages = [ pkgs.duti ];
+      environment.systemPackages = [
+        pkgs.duti
+        developmentTypes
+      ];
 
       system.activationScripts.postActivation.text = lib.mkAfter ''
         echo "Setting default applications..."
@@ -23,6 +58,12 @@ _: {
             /usr/bin/sudo --user=${primaryUser} -- "$@"
         }
 
+        # duti needs a declared UTI to set a default for an extension.
+        lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+        if ! run_as_user "$lsregister" -f ${lib.escapeShellArg "/Applications/Nix Apps/${typeBundle}"}; then
+          echo "warning: failed to register development file types" >&2
+        fi
+
         # Set default app by UTI
         set_default() {
           local bundle_id="$1"
@@ -32,7 +73,7 @@ _: {
           fi
         }
 
-        # For file types with dynamic UTIs, set the extension handler directly.
+        # Resolve the preferred UTI for a filename extension.
         set_ext() {
           local bundle_id="$1"
           local ext="$2"
@@ -64,28 +105,18 @@ _: {
         set_default "$VSCODE" "net.daringfireball.markdown"  # .md
 
         # Programming languages by extension
-        set_ext "$VSCODE" "nix"
+        for extension in ${lib.escapeShellArgs undeclaredExtensions}; do
+          set_ext "$VSCODE" "$extension"
+        done
         set_ext "$VSCODE" "rs"
         set_ext "$VSCODE" "go"
         set_ext "$VSCODE" "lua"
-        set_ext "$VSCODE" "vim"
         set_ext "$VSCODE" "toml"
         set_ext "$VSCODE" "ts"
-        set_ext "$VSCODE" "tsx"
         set_ext "$VSCODE" "js"
-        set_ext "$VSCODE" "jsx"
         set_ext "$VSCODE" "css"
-        set_ext "$VSCODE" "scss"
-        set_ext "$VSCODE" "sass"
-        set_ext "$VSCODE" "less"
         set_ext "$VSCODE" "conf"
-        set_ext "$VSCODE" "config"
         set_ext "$VSCODE" "ini"
-        set_ext "$VSCODE" "env"
-        set_ext "$VSCODE" "dockerfile"
-        set_ext "$VSCODE" "dockerignore"
-        set_ext "$VSCODE" "gitignore"
-        set_ext "$VSCODE" "gitattributes"
 
         # ============================================================
         # Skim - PDF reader

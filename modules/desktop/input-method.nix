@@ -4,26 +4,33 @@
     let
       source = "${pkgs.fcitx5-macos}/Applications/Fcitx5.app";
       destination = "/Library/Input Methods/Fcitx5.app";
-      stagingRoot = "/Library/Input Methods/.fcitx5-nix-staging";
-      staging = "${stagingRoot}/Fcitx5.app";
+      move = "${pkgs.coreutils}/bin/mv";
     in
     {
       # Install only the app bundle. macOS owns input-source registration and
       # the user enables Fcitx5 from System Settings; doing that automatically
       # would modify per-user input preferences from a system activation.
       system.activationScripts.postActivation.text = lib.mkAfter ''
-        echo "Installing Fcitx5 macOS input method..." >&2
-        /bin/mkdir -p "/Library/Input Methods"
-        /bin/rm -rf ${lib.escapeShellArg stagingRoot}
-        /bin/mkdir -p ${lib.escapeShellArg stagingRoot}
-        /usr/bin/ditto ${lib.escapeShellArg source} ${lib.escapeShellArg staging}
-        /usr/bin/codesign --verify --deep --strict ${lib.escapeShellArg staging}
-        /usr/bin/killall Fcitx5 2>/dev/null || true
-        /bin/rm -rf ${lib.escapeShellArg destination}
-        /bin/mv ${lib.escapeShellArg staging} ${lib.escapeShellArg destination}
-        /bin/rmdir ${lib.escapeShellArg stagingRoot}
-        /usr/bin/killall Fcitx5 2>/dev/null || true
-        echo "Fcitx5 installed. On first install, log out and back in, then add it in System Settings > Keyboard > Input Sources." >&2
+        # Leave the live input method alone when the store bundle is unchanged.
+        if ! /usr/bin/diff -qr --no-dereference ${lib.escapeShellArg source} ${lib.escapeShellArg destination} >/dev/null 2>&1; then
+          (
+            /bin/mkdir -p "/Library/Input Methods"
+            staging_root="$(/usr/bin/mktemp -d "/Library/Input Methods/.fcitx5-nix-staging.XXXXXX")"
+            trap '/bin/rm -rf "$staging_root"' EXIT
+            staging="$staging_root/Fcitx5.app"
+            /usr/bin/ditto ${lib.escapeShellArg source} "$staging"
+            /usr/bin/codesign --verify --deep --strict "$staging"
+
+            if [[ -e ${lib.escapeShellArg destination} || -L ${lib.escapeShellArg destination} ]]; then
+              # Keep the registered bundle path present throughout the upgrade.
+              ${move} --exchange --no-copy -T "$staging" ${lib.escapeShellArg destination}
+              echo "Fcitx5 updated. Choose Restart in the Fcitx5 menu to load the update." >&2
+            else
+              ${move} --no-copy --update=none-fail -T "$staging" ${lib.escapeShellArg destination}
+              echo "Fcitx5 installed. Log out and back in, then add it in System Settings > Keyboard > Input Sources." >&2
+            fi
+          )
+        fi
       '';
     };
 
