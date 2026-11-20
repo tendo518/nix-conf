@@ -63,4 +63,16 @@
       ];
 
     };
+
+  flake.modules.home."hosts/laptop-solar-chiyoko" =
+    {
+      pkgs,
+      lib,
+      ...
+    }:
+    {
+      home.packages = [ pkgs.papirus-icon-theme ];
+
+      dconf.settings."org/gnome/desktop/interface".icon-theme = lib.mkForce "Papirus-Dark";
+    };
 }
