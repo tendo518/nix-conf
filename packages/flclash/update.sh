@@ -8,20 +8,18 @@ NIX_FILE="$SCRIPT_DIR/default.nix"
 echo "Fetching latest FlClash release from GitHub..."
 RELEASE_JSON=$(curl -sS https://api.github.com/repos/chen08209/FlClash/releases/latest)
 VERSION=$(echo "$RELEASE_JSON" | jq -r '.tag_name | sub("^v"; "")')
-SUMS_URL=$(echo "$RELEASE_JSON" | jq -r '.assets[] | select(.name == "SHA256SUMS") | .browser_download_url')
 
-if [ -z "$VERSION" ] || [ "$VERSION" = "null" ] || [ -z "$SUMS_URL" ] || [ "$SUMS_URL" = "null" ]; then
-  echo "Could not find the FlClash release version or SHA256SUMS asset" >&2
+if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+  echo "Could not find the FlClash release version" >&2
   exit 1
 fi
 
 echo "Version: $VERSION"
-SUMS=$(curl -sS -L "$SUMS_URL")
-ARM_SHA_HEX=$(echo "$SUMS" | awk '/macos-arm64\.dmg$/ { print $1 }')
-INTEL_SHA_HEX=$(echo "$SUMS" | awk '/macos-amd64\.dmg$/ { print $1 }')
+ARM_SHA_HEX=$(echo "$RELEASE_JSON" | jq -r '.assets[] | select(.name | endswith("-macos-arm64.dmg")) | .digest | sub("^sha256:"; "")')
+INTEL_SHA_HEX=$(echo "$RELEASE_JSON" | jq -r '.assets[] | select(.name | endswith("-macos-amd64.dmg")) | .digest | sub("^sha256:"; "")')
 
 if [ -z "$ARM_SHA_HEX" ] || [ -z "$INTEL_SHA_HEX" ]; then
-  echo "Could not find macOS hashes in SHA256SUMS" >&2
+  echo "Could not find macOS asset hashes in the FlClash release" >&2
   exit 1
 fi
 

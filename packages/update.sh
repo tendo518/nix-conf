@@ -26,7 +26,9 @@ for script in "${scripts[@]}"; do
   package="$(basename "$(dirname "$script")")"
   echo
   echo "===== updating package: $package ====="
-  if ! bash "$script"; then
+  if bash "$script"; then
+    :
+  else
     status=$?
     echo "error: package update failed: $package (exit $status)" >&2
     failures=$((failures + 1))
