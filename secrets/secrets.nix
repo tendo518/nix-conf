@@ -19,16 +19,9 @@ in
 {
   # List all public keys that should be able to decrypt each secret.
   # Include: your user key (for editing) + host keys (for decryption at boot).
-  "deepseek-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
-  "volcengine-codingplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "tendo-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
-  "pengwy-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "root-password.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
-  "telegram-userid.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "tailscale-authkey.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "github-nix-token.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
-  "qwen-tokenplan-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
-  "gpu-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
-  "openai-api-key.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
   "ssh-hosts.age".publicKeys = [ tendo ] ++ host-ssh-pubkeys;
 }

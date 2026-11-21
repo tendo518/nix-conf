@@ -7,66 +7,16 @@
       ...
     }:
     let
-      providers = import ./_context.nix {
-        inherit config lib;
-        settings = (import ./_agents.nix).reasonix;
-      };
-      inherit (providers) selected defaultProvider defaultModel;
-      provider = selected.${defaultProvider};
-      apiKeyEnv = "${lib.toUpper defaultProvider}_API_KEY";
-      reasonixHome = "${config.xdg.configHome}/reasonix";
-      secretPath = provider.secretPath;
-      effortValues =
-        model:
-        lib.concatMap (option: option.values or [ ]) (
-          lib.filter (option: option.type == "effort") (model.reasoning_options or [ ])
-        );
-      defaultEffort =
-        let
-          efforts = effortValues defaultModel;
-        in
-        if builtins.elem "high" efforts then "high" else lib.head efforts;
-      supportedEfforts = lib.filter (effort: effort != "none") (effortValues defaultModel);
-
-      # agenix mounts secrets in a separate user service. Sync both during
-      # activation and at launch, when the latest secret is available.
-      syncReasonixEnv = ''
-        # agenix exposes home secrets under $XDG_RUNTIME_DIR, which the
-        # system-level home-manager service does not export while it runs
-        # activation. It always runs as the owning user, so default to that
-        # user's runtime dir (same idiom home-manager uses for reloadSystemd).
-        : "''${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
-        if [ -r "${secretPath}" ]; then
-          (
-            set -e
-            umask 077
-            mkdir -p "${reasonixHome}"
-            envFile="${reasonixHome}/.env"
-            tmp="$(mktemp "$envFile.XXXXXX")"
-            trap 'rm -f "$tmp"' EXIT
-            if [ -f "$envFile" ]; then
-              ${pkgs.gnused}/bin/sed -E \
-                -e '/^[[:space:]]*(export[[:space:]]+)?${apiKeyEnv}[[:space:]]*=/d' \
-                -e '/^# reasonix-cleared ${apiKeyEnv}$/d' \
-                "$envFile" > "$tmp"
-            fi
-            key="$(cat "${secretPath}")"
-            printf '${apiKeyEnv}=%s\n' "$key" >> "$tmp"
-            mv "$tmp" "$envFile"
-          )
-        fi
-      '';
+      reasonixHome = "${config.home.homeDirectory}/.reasonix";
 
       reasonixWrapped = pkgs.writeShellScriptBin "reasonix" ''
         set -e
         export REASONIX_HOME="${reasonixHome}"
-        ${syncReasonixEnv}
         exec ${lib.getExe pkgs.llm-agents.reasonix} "$@"
       '';
 
       reasonixConfig = (pkgs.formats.toml { }).generate "reasonix-config.toml" {
         config_version = 5;
-        default_model = defaultProvider;
         language = "zh";
         ui = {
           theme = "auto";
@@ -90,33 +40,6 @@
           compact_ratio = 0.8;
           compact_force_ratio = 0.9;
         };
-        providers = [
-          (
-            {
-              name = defaultProvider;
-              kind = "openai";
-              base_url = provider.endpoints.openai;
-              models = map (model: model.id) (lib.attrValues provider.models);
-              default = defaultModel.id;
-              api_key_env = apiKeyEnv;
-              context_window = defaultModel.limit.context;
-            }
-            // lib.optionalAttrs (provider.endpoints ? balance) {
-              balance_url = provider.endpoints.balance;
-            }
-            // lib.optionalAttrs (defaultModel.limit ? output) {
-              max_output_tokens = defaultModel.limit.output;
-            }
-            // lib.optionalAttrs (defaultModel ? reasoning_options) {
-              effort = defaultEffort;
-              supported_efforts = supportedEfforts;
-              reasoning_protocol =
-                if defaultProvider == "deepseek" then "deepseek"
-                else if defaultProvider == "volces" then "glm"
-                else "openai";
-            }
-          )
-        ];
         tools = {
           enabled = [ ];
           bash_timeout_seconds = 120;
@@ -140,11 +63,12 @@
         reasonixWrapped
       ];
 
-      xdg.configFile."reasonix/config.toml".force = true;
-      xdg.configFile."reasonix/config.toml".source = reasonixConfig;
-
-      home.activation.setupReasonixEnv = lib.hm.dag.entryAfter [ "writeBoundary" ] syncReasonixEnv;
-
-      age.secrets = providers.ageSecrets;
+      # default_model, providers, and credentials are injected by Magpie.
+      home.activation.setupReasonixConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        cfg="$HOME/.reasonix/config.toml"
+        mkdir -p "$(dirname "$cfg")"
+        rm -f "$cfg"
+        install -m 600 ${reasonixConfig} "$cfg"
+      '';
     };
 }

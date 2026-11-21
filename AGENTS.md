@@ -416,7 +416,7 @@ included in the run.
 
 ```bash
 # Edit any secret file (opens in editor)
-just edit-secret secrets/deepseek-api-key.age
+just edit-secret secrets/tailscale-authkey.age
 
 # Edit password secret (automatically hashes with sha-512, strips newlines)
 just edit-password secrets/tendo-password.age

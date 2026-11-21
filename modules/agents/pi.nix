@@ -1,70 +1,11 @@
 {
   flake.modules.home."agents/pi" =
     {
-      config,
       pkgs,
       lib,
       ...
     }:
     let
-      providers = import ./_context.nix {
-        inherit config lib;
-        settings = (import ./_agents.nix).pi;
-      };
-      inherit (providers) selected defaultProvider defaultModel;
-      thinkingLevels = [
-        "minimal"
-        "low"
-        "medium"
-        "high"
-        "xhigh"
-        "max"
-      ];
-      effortValues =
-        model:
-        lib.concatMap (option: option.values or [ ]) (
-          lib.filter (option: option.type == "effort") (model.reasoning_options or [ ])
-        );
-      thinkingLevelMap =
-        model:
-        let
-          efforts = effortValues model;
-        in
-        {
-          off = if builtins.elem "none" efforts then "none" else null;
-        }
-        // lib.genAttrs thinkingLevels (level: if builtins.elem level efforts then level else null);
-      piProviders = lib.mapAttrs (_name: provider: {
-        inherit (provider) name;
-        baseUrl = provider.endpoints.openai;
-        api = provider.agentConfig.api or "openai-completions";
-        apiKey = ''!${pkgs.coreutils}/bin/cat "${provider.secretPath}"'';
-        compat = lib.optionalAttrs ((provider.agentConfig.api or "openai-completions") == "openai-completions") {
-          supportsReasoningEffort = true;
-          thinkingFormat = provider.thinkingFormat or "openai";
-        };
-        models = lib.mapAttrsToList (
-          _key: model:
-          {
-            inherit (model) id name reasoning;
-            contextWindow = model.limit.context;
-            input = lib.intersectLists [ "text" "image" ] model.modalities.input;
-          }
-          // lib.optionalAttrs (model.limit ? output) {
-            maxTokens = model.limit.output;
-          }
-          // lib.optionalAttrs (model ? reasoning_options) {
-            thinkingLevelMap = thinkingLevelMap model;
-          }
-        ) provider.models;
-      }) selected;
-
-      modelsJson = builtins.toJSON {
-        providers = piProviders;
-      };
-
-      # Intentionally unpinned: Pi resolves these when installing or updating,
-      # and the selected versions are recorded in ~/.pi/agent/npm.
       piPackages = [
         "npm:@ff-labs/pi-fff"
         "npm:@narumitw/pi-btw"
@@ -80,8 +21,6 @@
 
       settingsJson = builtins.toJSON {
         "$schema" = "https://pi.dev/schemas/settings.schema.json";
-        inherit defaultProvider;
-        defaultModel = defaultModel.id;
         packages = piPackages;
         quietStartup = true;
         enableInstallTelemetry = false;
@@ -95,7 +34,6 @@
 
       piSettingsDefaults = pkgs.writeText "pi-settings.json" settingsJson;
 
-      # pi-open-tui keeps its own config outside settings.json.
       openTuiConfig = {
         enabled = true;
         inlineFooter = true;
@@ -137,28 +75,18 @@
       # Start Pi with the codemode tool enabled by default.
       home.shellAliases.pi-code = "pi --tools +codemode";
 
-      home.file."./.pi/agent/models.json" = {
-        force = true;
-        text = modelsJson;
-      };
-
-      # Rewrite Pi's settings from the Nix defaults on every activation. The
-      # files stay writable so `pi install`, `pi config`, and extension UIs work
-      # at runtime, but their changes are discarded on the next switch.
+      # Keep editable settings writable. Provider and model files are owned by
+      # Magpie and are deliberately not written here.
       home.activation.setupPiSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         piSettings="$HOME/.pi/agent/settings.json"
         openTui="$HOME/.pi/agent/open-tui.json"
         mkdir -p "$(dirname "$piSettings")"
 
-        # Drop any previous file, including the read-only home-manager symlink
-        # from earlier generations.
         rm -f "$piSettings"
         install -m 600 ${piSettingsDefaults} "$piSettings"
 
         rm -f "$openTui"
         install -m 644 ${openTuiDefaults} "$openTui"
       '';
-
-      age.secrets = providers.ageSecrets;
     };
 }

@@ -259,19 +259,11 @@
         lib.hm.dag.entryAfter [ "copyApps" ] ''
           run /bin/launchctl setenv MOZ_LEGACY_PROFILES 1
 
+          # macOS 26+ requires user confirmation for default-app changes.
+          # Register the bundle here; choose the browser in System Settings
+          # (or through Firefox's own default-browser prompt).
           lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
           run "$lsregister" -f "$HOME/${firefoxApp}"
-
-          set_default_firefox() {
-            if ! run ${lib.getExe pkgs.duti} -s org.mozilla.firefox "$1" all; then
-              echo "warning: failed to set $1 handler to org.mozilla.firefox" >&2
-            fi
-          }
-
-          set_default_firefox com.apple.default-app.web-browser
-          set_default_firefox https
-          set_default_firefox http
-          set_default_firefox public.html
         ''
       );
     };
