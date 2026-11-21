@@ -8,20 +8,21 @@
     }:
     let
       # macOS 27+ only lets Mozilla-signed Firefox builds use the traditional
-      # data directory, so the wrapper's MOZ_APP_DATA and home-manager's
-      # profile directory have to move together.
+      # data directory.
       # Upstream: nixpkgs#559515, nixpkgs#556611, home-manager#9852.
       isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-      darwinDataDir = "Library/Application Support/org.nixos.firefox";
+      darwinDataDir = "Library/Application Support/Firefox";
+      firefoxApp = "Applications/Home Manager Apps/Firefox.app";
     in
     {
       programs.firefox = {
         enable = true;
-        package = lib.mkIf isDarwin (
-          pkgs.firefox.override {
-            appDataDir = "${config.home.homeDirectory}/${darwinDataDir}";
-          }
-        );
+        # wrapFirefox execs ".firefox-old", which LaunchServices does not
+        # identify as the bundle executable. On macOS every external URL then
+        # starts another wrapper instead of reaching the running instance.
+        # Use Mozilla's signed bundle unwrapped and set its data directory
+        # at Firefox's traditional location instead.
+        package = lib.mkIf isDarwin null;
         configPath = lib.mkIf isDarwin darwinDataDir;
         # configPath = "${config.xdg.configHome}/mozilla/firefox";
 
@@ -109,13 +110,6 @@
             SponsoredSuggestions = false;
             ImproveSuggest = false;
             Locked = true;
-          };
-
-          # Custom Support Menu
-          SupportMenu = {
-            Title = "Lan Tian @ Blog";
-            URL = "https://lantian.pub";
-            AccessKey = "S";
           };
         };
 
@@ -258,5 +252,27 @@
           '';
         };
       };
+
+      home.packages = lib.optionals isDarwin [ pkgs.firefox-bin-unwrapped ];
+
+      home.activation.configureFirefoxMacOS = lib.mkIf isDarwin (
+        lib.hm.dag.entryAfter [ "copyApps" ] ''
+          run /bin/launchctl setenv MOZ_LEGACY_PROFILES 1
+
+          lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+          run "$lsregister" -f "$HOME/${firefoxApp}"
+
+          set_default_firefox() {
+            if ! run ${lib.getExe pkgs.duti} -s org.mozilla.firefox "$1" all; then
+              echo "warning: failed to set $1 handler to org.mozilla.firefox" >&2
+            fi
+          }
+
+          set_default_firefox com.apple.default-app.web-browser
+          set_default_firefox https
+          set_default_firefox http
+          set_default_firefox public.html
+        ''
+      );
     };
 }
