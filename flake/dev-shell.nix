@@ -23,6 +23,8 @@ in
           nixd
           nixfmt
           statix
+          nvfetcher
+          python3
           nixos-anywhere
           git
           nh

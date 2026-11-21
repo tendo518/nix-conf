@@ -2,17 +2,15 @@
   stdenvNoCC,
   lib,
   undmg,
-  fetchurl,
+  sources,
 }:
-stdenvNoCC.mkDerivation rec {
-  pname = "Skim";
-  version = "1.7.19";
 
-  src = fetchurl {
-    name = "Skim-${version}.dmg";
-    url = "mirror://sourceforge/project/skim-app/Skim/Skim-${version}/Skim-${version}.dmg";
-    hash = "sha256-VZqt+GpgZhUX7VIyifD4HLToWczbtUGRzGTUvj13gdw=";
-  };
+let
+  source = sources.skimpdf;
+in
+stdenvNoCC.mkDerivation {
+  pname = "Skim";
+  inherit (source) version src;
 
   nativeBuildInputs = [ undmg ];
 

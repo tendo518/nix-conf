@@ -1,22 +1,18 @@
 {
   stdenvNoCC,
   lib,
-  fetchurl,
   makeWrapper,
   _7zz,
+  sources,
 }:
 
 let
   appname = "TickTick";
+  source = sources.ticktick;
 in
 stdenvNoCC.mkDerivation {
   pname = "ticktick";
-  version = "8.2.50";
-
-  src = fetchurl {
-    url = "https://download.ticktick.app/download/mac/TickTick_8.2.50_926.dmg";
-    hash = "sha256-8pQxVwrA9OJfKgz9NrHtX2ze6q6Y3xkcPa/+uR0F2oM=";
-  };
+  inherit (source) version src;
 
   sourceRoot = "${appname}/${appname}.app";
   nativeBuildInputs = [

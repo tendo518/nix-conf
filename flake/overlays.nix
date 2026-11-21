@@ -1,22 +1,27 @@
 # Custom overlays for the flake
 { inputs, ... }:
+let
+  sourcesFor = final: import ../packages/sources.nix { pkgs = final; };
+in
 {
   flake.overlays = {
     # gwfox Firefox theme (Linux)
     "gwfox" = final: _prev: {
-      "gwfox" = final.callPackage ../packages/gwfox { };
+      "gwfox" =
+        (final.callPackage ../packages/gwfox.nix { sources = sourcesFor final; }).gwfox;
     };
 
     # GWfox-T Firefox theme (macOS)
     "gwfox-t" = final: _prev: {
-      "gwfox-t" = final.callPackage ../packages/gwfox-t { };
+      "gwfox-t" =
+        (final.callPackage ../packages/gwfox.nix { sources = sourcesFor final; }).gwfox-t;
     };
 
     # Fcitx5 macOS input method with Rime (prebuilt Apple Silicon app bundle)
     fcitx5-macos =
       final: prev:
       if prev.stdenv.hostPlatform.isDarwin && prev.stdenv.hostPlatform.isAarch64 then
-        { fcitx5-macos = final.callPackage ../packages/fcitx5-macos { }; }
+        { fcitx5-macos = final.callPackage ../packages/fcitx5-macos.nix { sources = sourcesFor final; }; }
       else
         { };
 
@@ -24,7 +29,7 @@
     ticktick = final: prev: {
       ticktick =
         if prev.stdenv.hostPlatform.isDarwin then
-          final.callPackage ../packages/ticktick { }
+          final.callPackage ../packages/ticktick.nix { sources = sourcesFor final; }
         else
           prev.ticktick;
     };
@@ -33,7 +38,7 @@
     skimpdf = final: prev: {
       skimpdf =
         if prev.stdenv.hostPlatform.isDarwin then
-          final.callPackage ../packages/skimpdf { }
+          final.callPackage ../packages/skimpdf.nix { sources = sourcesFor final; }
         else
           prev.skimpdf;
     };
@@ -42,7 +47,7 @@
     deskflow = final: prev: {
       deskflow =
         if prev.stdenv.hostPlatform.isDarwin then
-          final.callPackage ../packages/deskflow { }
+          final.callPackage ../packages/deskflow.nix { sources = sourcesFor final; }
         else
           prev.deskflow;
     };
@@ -51,7 +56,7 @@
     flclash =
       final: prev:
       if prev.stdenv.hostPlatform.isDarwin then
-        { flclash = final.callPackage ../packages/flclash { }; }
+        { flclash = final.callPackage ../packages/flclash.nix { sources = sourcesFor final; }; }
       else
         # FlClash is not packaged in nixpkgs.
         { };
@@ -60,7 +65,7 @@
     coteditor =
       final: prev:
       if prev.stdenv.hostPlatform.isDarwin then
-        { coteditor = final.callPackage ../packages/coteditor { }; }
+        { coteditor = final.callPackage ../packages/coteditor.nix { sources = sourcesFor final; }; }
       else
         { };
 
@@ -68,7 +73,11 @@
     tencent-meeting =
       final: prev:
       if prev.stdenv.hostPlatform.isDarwin then
-        { tencent-meeting = final.callPackage ../packages/tencent-meeting { }; }
+        {
+          tencent-meeting = final.callPackage ../packages/tencent-meeting.nix {
+            sources = sourcesFor final;
+          };
+        }
       else
         { };
 
@@ -76,21 +85,32 @@
     keepingyouawake =
       final: prev:
       if prev.stdenv.hostPlatform.isDarwin then
-        { keepingyouawake = final.callPackage ../packages/keepingyouawake { }; }
+        {
+          keepingyouawake = final.callPackage ../packages/keepingyouawake.nix {
+            sources = sourcesFor final;
+          };
+        }
       else
         { };
 
     # Zotero overlay: official universal DMG on macOS, upstream source build elsewhere
     zotero = final: prev: {
       zotero =
-        if prev.stdenv.hostPlatform.isDarwin then final.callPackage ../packages/zotero { } else prev.zotero;
+        if prev.stdenv.hostPlatform.isDarwin then
+          final.callPackage ../packages/zotero.nix { sources = sourcesFor final; }
+        else
+          prev.zotero;
     };
 
     # Tencent WorkBuddy overlay with macOS (Apple Silicon) support (Pin version)
     workbuddy-cn =
       final: prev:
       if prev.stdenv.hostPlatform.isDarwin then
-        { workbuddy-cn = final.callPackage ../packages/workbuddy-cn { }; }
+        {
+          workbuddy-cn = final.callPackage ../packages/workbuddy-cn.nix {
+            sources = sourcesFor final;
+          };
+        }
       else
         { };
 
@@ -98,7 +118,11 @@
     deepseek-harness =
       final: prev:
       if prev.stdenv.hostPlatform.isDarwin then
-        { deepseek-harness = final.callPackage ../packages/deepseek-harness { }; }
+        {
+          deepseek-harness = final.callPackage ../packages/deepseek-harness.nix {
+            sources = sourcesFor final;
+          };
+        }
       else
         { };
 

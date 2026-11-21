@@ -2,25 +2,16 @@
   stdenvNoCC,
   lib,
   undmg,
-  fetchurl,
+  sources,
 }:
 
 let
   isArm = stdenvNoCC.hostPlatform.isAarch64;
-  arch = if isArm then "arm64" else "x86_64";
-  # sha256 from https://github.com/deskflow/homebrew-tap (Casks/d/deskflow.rb)
-  armHash = "sha256-3SHnnlZjFDlCFJBtMzjFBdM3r1NvxYDAIu4/rf+tDJc=";
-  intelHash = "sha256-iso8d6Gxa5o9a4o4Dl44oOar9tJBuzLc88+LZ6u/9dg=";
+  source = if isArm then sources.deskflow-arm64 else sources.deskflow-amd64;
 in
-stdenvNoCC.mkDerivation rec {
+stdenvNoCC.mkDerivation {
   pname = "deskflow";
-  version = "1.27.0";
-
-  src = fetchurl {
-    name = "deskflow-${version}-macos-${arch}.dmg";
-    url = "https://github.com/deskflow/deskflow/releases/download/v${version}/deskflow-${version}-macos-${arch}.dmg";
-    hash = if isArm then armHash else intelHash;
-  };
+  inherit (source) version src;
 
   nativeBuildInputs = [ undmg ];
 

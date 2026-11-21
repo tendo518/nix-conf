@@ -2,17 +2,15 @@
   stdenvNoCC,
   lib,
   unzip,
-  fetchurl,
+  sources,
 }:
-stdenvNoCC.mkDerivation rec {
-  pname = "keepingyouawake";
-  version = "1.6.8";
 
-  src = fetchurl {
-    name = "KeepingYouAwake-${version}.zip";
-    url = "https://github.com/newmarcel/KeepingYouAwake/releases/download/${version}/KeepingYouAwake-${version}.zip";
-    hash = "sha256-gAGhSbRJDACP2sGYmLzpkC1RbEqmQSp+sPmjdEOxXGs=";
-  };
+let
+  source = sources.keepingyouawake;
+in
+stdenvNoCC.mkDerivation {
+  pname = "keepingyouawake";
+  inherit (source) version src;
 
   nativeBuildInputs = [ unzip ];
 

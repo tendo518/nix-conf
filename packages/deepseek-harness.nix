@@ -1,24 +1,16 @@
 {
   stdenvNoCC,
   lib,
-  fetchurl,
   unzip,
+  sources,
 }:
 
-# DeepSeek Harness (dsh) desktop client. Upstream ships an Apple Silicon build
-# only, and the download page hands out an unversioned "latest" DMG
-# (dsh-latest-macos-arm64.dmg). The versioned .zip below is the same app from
-# the same CDN; version + sha256 are tracked via the Homebrew cask
-# (https://github.com/Homebrew/homebrew-cask, Casks/d/deepseek-harness.rb).
-stdenvNoCC.mkDerivation rec {
+let
+  source = sources."deepseek-harness";
+in
+stdenvNoCC.mkDerivation {
   pname = "deepseek-harness";
-  version = "0.2.2-rc.5";
-
-  src = fetchurl {
-    name = "deepseek-harness-${version}-mac-arm64.zip";
-    url = "https://download.deepseek.com/dsh-desk/bin/mac-arm64/deepseek-harness-${version}-mac-arm64.zip";
-    hash = "sha256-wWmXWDGJfuCSXbwjpmGJNRHv8pv2RaeEKuHC0rXVuKA=";
-  };
+  inherit (source) version src;
 
   nativeBuildInputs = [ unzip ];
 

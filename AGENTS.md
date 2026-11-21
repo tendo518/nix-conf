@@ -287,10 +287,13 @@ secrets/                # Agenix encrypted secrets
 └── secrets.nix         # Public keys mapping for each secret
 
 packages/               # Custom package definitions; platform guards per package where needed
-├── ticktick/           # TickTick app with macOS support
-├── skimpdf/            # Skim PDF with macOS support
-├── deskflow/           # Deskflow with macOS support
-└── flclash/            # FlClash with macOS support
+├── _sources/           # nvfetcher's generated.nix/json
+├── nvfetcher/          # static/dynamic source manifests
+├── sources.nix         # Loads generated sources for package derivations
+├── ticktick.nix        # TickTick app with macOS support
+├── skimpdf.nix         # Skim PDF with macOS support
+├── deskflow.nix        # Deskflow with macOS support
+└── flclash.nix         # FlClash with macOS support
 
 scripts/                # Helpers (check-nixpkgs-pr-channel.py)
 docs/                   # Runbooks and notes (agenix setup, hardware debugging)
@@ -326,80 +329,88 @@ docs/                   # Runbooks and notes (agenix setup, hardware debugging)
 
 Packages under `packages/` are custom pinned packages and can target one or
 more platforms. Platform guards belong in `packages/default.nix` or in the
-package derivation itself. Each package has two parts:
+package derivation itself. Source versions and hashes are managed by
+`nvfetcher`:
 
-- `packages/<name>/default.nix` - the Nix derivation with version/hash metadata
-- `packages/<name>/update.sh` - a small script that fetches the latest metadata
-  from Homebrew/upstream and rewrites the pinned fields
+- `packages/nvfetcher/base.toml` - static version and artifact source rules
+- `packages/nvfetcher/dynamic.py` - metadata adapters for vendor APIs whose URL
+  cannot be derived from the version alone
+- `packages/_sources/generated.nix` and `generated.json` - committed output
+  from `nvfetcher`
+- `packages/<name>.nix` - the derivation, consuming `sources.<name>`
 
-The shared helpers live in `packages/update-lib.sh`, and the scheduled workflow
-discovers update scripts by globbing `packages/*/update.sh`, so adding a new
-package does not require editing `.github/workflows/update-packages.yml`.
-
-1. Create `packages/<name>/default.nix` as a normal `callPackage`-compatible
-   derivation for the intended platform(s). Keep the fields the updater needs
-   as simple literal bindings: `version`, `hash` or
-   `armHash`/`intelHash`, and any optional `url`/token fields. Use `fetchurl`
-   for the artifact.
-
-2. Create executable `packages/<name>/update.sh`. Source the shared helpers,
-   fetch the newest metadata, then rewrite the matching fields:
-
-   ```bash
-   #!/usr/bin/env bash
-   set -euo pipefail
-
-   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-   source "$SCRIPT_DIR/../update-lib.sh"
-
-   NIX_FILE="$SCRIPT_DIR/default.nix"
-
-   # Fetch from Homebrew API, a cask file, GitHub releases, etc.
-   JSON=$(curl -sS 'https://formulae.brew.sh/api/cask/<name>.json')
-
-   VERSION=$(echo "$JSON" | jq -r '.version')
-   SHA_HEX=$(echo "$JSON" | jq -r '.sha256')
-   HASH=$(to_sri "$SHA_HEX")
-
-   sed_inplace "$NIX_FILE" \
-     -e "s|version = \".*\";|version = \"$VERSION\";|" \
-     -e "s|hash = \".*\";|hash = \"$HASH\";|"
-   ```
-
-   Use `to_sri` for hexadecimal Homebrew-style sha256 values, `hash_file` for
-   hashing a downloaded artifact, and `sed_inplace` for portable in-place
-   edits. Keep each script scoped to metadata replacement only.
-
-3. Register the package in `packages/default.nix`. For a package that builds
-   on all configured systems, use the direct form:
+1. Create `packages/<name>.nix` as a normal `callPackage`-compatible
+   derivation for the intended platform(s). It receives `sources` from the
+   package set and normally consumes:
 
    ```nix
-   name = pkgs.callPackage ./name { };
+   let
+     source = sources.example;
+   in
+   stdenvNoCC.mkDerivation {
+     inherit (source) version src;
+   }
+   ```
+
+   Packages with multiple architecture assets select the generated entry by
+   `stdenvNoCC.hostPlatform`.
+
+2. Add a rule to `packages/nvfetcher/base.toml`. Version discovery and artifact
+   fetching can use GitHub releases, GitHub tags, a git branch, a page regex,
+   or a command:
+
+   ```toml
+   [example]
+   src.github = "owner/repo"
+   fetch.url = "https://github.com/owner/repo/releases/download/$ver/example-$ver.zip"
+   ```
+
+   If a vendor API returns a URL/token that cannot be derived from `$ver`, add
+   a dynamic entry in `packages/nvfetcher/dynamic.py`. It should emit an
+   `src.manual` version, an explicit `fetch.url`, and `fetch.force = true`;
+   `nvfetcher` still calculates and owns the hash.
+
+3. Register the package in `packages/default.nix` and pass the generated
+   sources. For a package that builds on all configured systems:
+
+   ```nix
+   name = pkgs.callPackage ./name.nix { inherit sources; };
    ```
 
    For a platform-specific package, guard it by host platform:
 
    ```nix
-   name = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.callPackage ./name { } else null;
+   name =
+     if pkgs.stdenv.hostPlatform.isDarwin then
+       pkgs.callPackage ./name.nix { inherit sources; }
+     else
+       null;
    ```
 
-4. Make the updater executable and stage the new files before evaluating:
+4. Regenerate and stage the source files before evaluating:
 
    ```bash
-   chmod +x packages/<name>/update.sh
-   git add packages/<name>
+   python3 packages/nvfetcher/dynamic.py /tmp/nvfetcher.toml
+   nix run nixpkgs#nvfetcher -- \
+     --config /tmp/nvfetcher.toml \
+     --build-dir packages/_sources \
+     --retry 3
+   git add packages/_sources packages/nvfetcher packages/<name>.nix
    ```
 
 5. Verify locally on a system that matches the package's platform:
 
    ```bash
    nix build .#<name>
-   bash packages/update.sh <name>
-   git diff -- packages/<name>/default.nix
+   nix eval .#packages.<system>.<name>.version
+   git diff -- packages/<name>.nix
    ```
 
-The scheduled workflow (`update-packages.yml`) then picks the new package up
-automatically and includes it in the next update PR.
+The scheduled workflow (`update-packages.yml`) generates the combined config,
+runs `nvfetcher`, and includes `generated.nix`/`generated.json` in the update
+PR. Run the complete manifest rather than a filtered subset: `nvfetcher`
+regenerates the source file and would otherwise remove entries that were not
+included in the run.
 
 ### Editing Secrets
 

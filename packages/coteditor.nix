@@ -1,19 +1,16 @@
 {
   stdenvNoCC,
   lib,
-  fetchurl,
   _7zz,
+  sources,
 }:
-stdenvNoCC.mkDerivation rec {
-  pname = "coteditor";
-  version = "7.1.3";
 
-  # version + sha256 from https://formulae.brew.sh/cask/coteditor
-  src = fetchurl {
-    name = "CotEditor_${version}.dmg";
-    url = "https://github.com/coteditor/CotEditor/releases/download/${version}/CotEditor_${version}.dmg";
-    hash = "sha256-yMvmQ3Q0UWuyP5Pv4Ff9BYrVbe1VI6wRMIGormjasYQ=";
-  };
+let
+  source = sources.coteditor;
+in
+stdenvNoCC.mkDerivation {
+  pname = "coteditor";
+  inherit (source) version src;
 
   # CotEditor's DMG uses APFS; undmg only supports HFS.
   nativeBuildInputs = [ _7zz ];
