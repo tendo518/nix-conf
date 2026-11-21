@@ -21,6 +21,16 @@
           scrollback-limit = 200000000;
           background-opacity = 0.90;
           unfocused-split-opacity = 1; # disable unfocus darken
+          copy-on-select = "clipboard";
+          clipboard-paste-protection = false;
+          shell-integration-features = "cursor,sudo,title,ssh-env,ssh-terminfo";
+          window-padding-x = 8;
+          window-padding-y = 8;
+          window-padding-balance = true;
+          focus-follows-mouse = true;
+          window-new-tab-position = "end";
+          quit-after-last-window-closed = true;
+          minimum-contrast = 1.1;
           # notify
           notify-on-command-finish = "unfocused";
           notify-on-command-finish-action = "no-bell, notify";
@@ -35,8 +45,12 @@
         }
         // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
           # macOS only
+          auto-update = "off";
+          font-thicken = true;
           macos-option-as-alt = true;
+          macos-titlebar-style = "tabs";
           window-save-state = "always";
+          window-step-resize = true;
         };
       };
     };
