@@ -4,6 +4,7 @@
     {
       home.packages = [
         pkgs.magpie-cli
+        pkgs.bun
       ]
       ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [ pkgs.magpie ];
     };
