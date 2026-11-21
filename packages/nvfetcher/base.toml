@@ -56,6 +56,36 @@ git.date_format = "%Y-%m-%d"
 src.github = "newmarcel/KeepingYouAwake"
 fetch.url = "https://github.com/newmarcel/KeepingYouAwake/releases/download/$ver/KeepingYouAwake-$ver.zip"
 
+[magpie-amd64]
+src.github = "yetone/magpie-releases"
+src.prefix = "v"
+fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-darwin-amd64.dmg"
+
+[magpie-arm64]
+src.github = "yetone/magpie-releases"
+src.prefix = "v"
+fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-darwin-arm64.dmg"
+
+[magpie-cli-amd64]
+src.github = "yetone/magpie-releases"
+src.prefix = "v"
+fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-cli-darwin-amd64"
+
+[magpie-cli-arm64]
+src.github = "yetone/magpie-releases"
+src.prefix = "v"
+fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-cli-darwin-arm64"
+
+[magpie-cli-linux-amd64]
+src.github = "yetone/magpie-releases"
+src.prefix = "v"
+fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-cli-linux-amd64"
+
+[magpie-cli-linux-arm64]
+src.github = "yetone/magpie-releases"
+src.prefix = "v"
+fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-cli-linux-arm64"
+
 [skimpdf]
 src.webpage = "https://skim-app.sourceforge.io/relnotes.html"
 src.regex = "Version ([0-9]+(?:\\.[0-9]+)+)"

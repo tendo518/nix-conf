@@ -93,6 +93,24 @@ in
       else
         { };
 
+    # Magpie desktop app on macOS and terminal build on macOS/Linux
+    magpie =
+      final: prev:
+      if prev.stdenv.hostPlatform.isDarwin || prev.stdenv.hostPlatform.isLinux then
+        let
+          packages = final.callPackage ../packages/magpie.nix {
+            sources = sourcesFor final;
+          };
+        in
+        {
+          magpie-cli = packages.magpie-cli;
+        }
+        // prev.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+          magpie = packages.magpie;
+        }
+      else
+        { };
+
     # Zotero overlay: official universal DMG on macOS, upstream source build elsewhere
     zotero = final: prev: {
       zotero =

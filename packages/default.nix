@@ -8,6 +8,14 @@
 let
   sources = import ./sources.nix { inherit pkgs; };
   gwfoxThemes = pkgs.callPackage ./gwfox.nix { inherit sources; };
+  magpiePackages =
+    if pkgs.stdenv.hostPlatform.isDarwin || pkgs.stdenv.hostPlatform.isLinux then
+      pkgs.callPackage ./magpie.nix { inherit sources; }
+    else
+      {
+        magpie = null;
+        magpie-cli = null;
+      };
 in
 {
   # gwfox Firefox theme (Linux)
@@ -71,6 +79,10 @@ in
       pkgs.callPackage ./zotero.nix { inherit sources; }
     else
       null;
+
+  # Magpie desktop app on macOS and terminal build on macOS/Linux
+  magpie = if pkgs.stdenv.hostPlatform.isDarwin then magpiePackages.magpie else null;
+  "magpie-cli" = magpiePackages.magpie-cli;
 
   # workbuddy-cn: Tencent WorkBuddy, arm64-only DMG on darwin
   workbuddy-cn =
