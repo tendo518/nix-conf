@@ -6,12 +6,6 @@ on:
     # one hour after the dependabot nix update cron.
     - cron: "0 19 * * *"
   workflow_dispatch:
-    inputs:
-      package:
-        description: "Optional package directory to update (leave empty for all)"
-        required: false
-        type: string
-        default: ""
 
 permissions:
   contents: write
@@ -61,16 +55,24 @@ jobs:
       - name: Enable Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v8
 
-      - name: Update package metadata
+      - name: Update package sources
         env:
-          GH_TOKEN: ${{ github.token }}
-          PACKAGE: ${{ github.event.inputs.package || '' }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          if [ -n "${PACKAGE:-}" ]; then
-            bash packages/update.sh "$PACKAGE"
-          else
-            bash packages/update.sh
-          fi
+          python3 packages/nvfetcher/dynamic.py "$RUNNER_TEMP/nvfetcher.toml"
+
+          printf '[keys]\ngithub = "%s"\n' "$GITHUB_TOKEN" \
+            > "$RUNNER_TEMP/nvchecker-key.toml"
+
+          nix run nixpkgs#nvfetcher -- \
+            --config "$RUNNER_TEMP/nvfetcher.toml" \
+            --build-dir packages/_sources \
+            --keyfile "$RUNNER_TEMP/nvchecker-key.toml" \
+            --retry 3 \
+            --keep-going
+
+      - name: Validate generated package set
+        run: nix flake check --no-build --all-systems
 
       - name: Create or update pull request
         id: cpr

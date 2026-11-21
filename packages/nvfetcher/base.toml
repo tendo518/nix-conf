@@ -1,0 +1,81 @@
+[coteditor]
+src.github = "coteditor/CotEditor"
+fetch.url = "https://github.com/coteditor/CotEditor/releases/download/$ver/CotEditor_$ver.dmg"
+
+[deepseek-harness]
+src.cmd = "git ls-remote --tags --refs --sort=-version:refname https://github.com/deepseek-ai/deepseek-harness | sed -n 's#.*refs/tags/dsh-v##p' | head -1"
+fetch.url = "https://download.deepseek.com/dsh-desk/bin/mac-arm64/deepseek-harness-$ver-mac-arm64.zip"
+
+[deskflow-arm64]
+src.github = "deskflow/deskflow"
+src.prefix = "v"
+fetch.url = "https://github.com/deskflow/deskflow/releases/download/v$ver/deskflow-$ver-macos-arm64.dmg"
+
+[deskflow-amd64]
+src.github = "deskflow/deskflow"
+src.prefix = "v"
+fetch.url = "https://github.com/deskflow/deskflow/releases/download/v$ver/deskflow-$ver-macos-x86_64.dmg"
+
+[fcitx5-macos]
+src.github = "fcitx/fcitx5-macos"
+fetch.url = "https://github.com/fcitx/fcitx5-macos/releases/download/$ver/Fcitx5-arm64.tar.bz2"
+
+[fcitx5-rime-native]
+src.github = "fcitx-contrib/fcitx5-plugins"
+src.prefix = "macos-"
+fetch.url = "https://github.com/fcitx-contrib/fcitx5-plugins/releases/download/macos-$ver/rime-arm64.tar.bz2"
+
+[fcitx5-rime-data]
+src.github = "fcitx-contrib/fcitx5-plugins"
+src.prefix = "macos-"
+fetch.url = "https://github.com/fcitx-contrib/fcitx5-plugins/releases/download/macos-$ver/rime-any.tar.bz2"
+
+[flclash-arm64]
+src.github = "chen08209/FlClash"
+src.prefix = "v"
+fetch.url = "https://github.com/chen08209/FlClash/releases/download/v$ver/FlClash-$ver-macos-arm64.dmg"
+
+[flclash-amd64]
+src.github = "chen08209/FlClash"
+src.prefix = "v"
+fetch.url = "https://github.com/chen08209/FlClash/releases/download/v$ver/FlClash-$ver-macos-amd64.dmg"
+
+[gwfox]
+src.git = "https://github.com/akkva/gwfox.git"
+src.branch = "main"
+fetch.github = "akkva/gwfox"
+git.date_format = "%Y-%m-%d"
+
+[gwfox-t]
+src.git = "https://github.com/akkva/GWfox-T.git"
+src.branch = "main"
+fetch.github = "akkva/GWfox-T"
+git.date_format = "%Y-%m-%d"
+
+[keepingyouawake]
+src.github = "newmarcel/KeepingYouAwake"
+fetch.url = "https://github.com/newmarcel/KeepingYouAwake/releases/download/$ver/KeepingYouAwake-$ver.zip"
+
+[magpie-x86_64-linux]
+src.github = "yetone/magpie-releases"
+src.prefix = "v"
+fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-cli-linux-amd64"
+
+[magpie-aarch64-linux]
+src.github = "yetone/magpie-releases"
+src.prefix = "v"
+fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-cli-linux-arm64"
+
+[magpie-aarch64-darwin]
+src.github = "yetone/magpie-releases"
+src.prefix = "v"
+fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-cli-darwin-arm64"
+
+[skimpdf]
+src.webpage = "https://skim-app.sourceforge.io/relnotes.html"
+src.regex = "Version ([0-9]+(?:\\.[0-9]+)+)"
+fetch.url = "https://downloads.sourceforge.net/skim-app/Skim/Skim-$ver/Skim-$ver.dmg"
+
+[zotero]
+src.github_tag = "zotero/zotero"
+fetch.url = "https://download.zotero.org/client/release/$ver/Zotero-$ver.dmg"

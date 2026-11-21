@@ -1,21 +1,19 @@
 {
   stdenvNoCC,
   lib,
-  fetchurl,
   _7zz,
+  sources,
 }:
 
 # WorkBuddy (腾讯 WorkBuddy) ships only as a macOS DMG from Tencent's CDN and
 # currently only for Apple Silicon. The release metadata behind the version and
 # URL below comes from https://www.codebuddy.cn/v2/update?platform=workbuddy-darwin-arm64
-stdenvNoCC.mkDerivation rec {
+let
+  source = sources.workbuddy-cn;
+in
+stdenvNoCC.mkDerivation {
   pname = "workbuddy-cn";
-  version = "5.11.3.43806934";
-
-  src = fetchurl {
-    url = "https://download.codebuddy.cn/workbuddy/saas/darwin-arm64/WorkBuddy-darwin-arm64-5.11.3.43806934-ecace0f7.dmg";
-    hash = "sha256-87mZl7Cuv+Iq9PjABws3lGufg5tRz5UQ62qXyeRapjk=";
-  };
+  inherit (source) version src;
 
   # Extract with 7zz like the nixpkgs wechat package: undmg silently drops
   # files from Tencent's DMGs.

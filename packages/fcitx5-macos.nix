@@ -1,8 +1,8 @@
 {
   stdenvNoCC,
   lib,
-  fetchurl,
   bzip2,
+  sources,
 }:
 
 # Upstream publishes the macOS host and its input engines separately. We bundle
@@ -13,29 +13,13 @@
 # be installed at that system path to run; keeping it only in the Nix store is
 # not enough for macOS to load it as an input method.
 let
-  version = "0.4.2";
-
-  rimeNative = fetchurl {
-    name = "rime-arm64.tar.bz2";
-    url = "https://github.com/fcitx-contrib/fcitx5-plugins/releases/download/macos-${version}/rime-arm64.tar.bz2";
-    hash = "sha256-RG7Baarrkkxgrbm3XTvOcGYCAxc8SNfZKwNYKUBEm7I=";
-  };
-
-  rimeData = fetchurl {
-    name = "rime-any.tar.bz2";
-    url = "https://github.com/fcitx-contrib/fcitx5-plugins/releases/download/macos-${version}/rime-any.tar.bz2";
-    hash = "sha256-5ngjF2NNYqkcvtrJ1qsW8czVloJU7wrifuvPwHvgVj4=";
-  };
+  source = sources.fcitx5-macos;
+  rimeNative = sources."fcitx5-rime-native".src;
+  rimeData = sources."fcitx5-rime-data".src;
 in
 stdenvNoCC.mkDerivation {
   pname = "fcitx5-macos";
-  inherit version;
-
-  src = fetchurl {
-    name = "Fcitx5-arm64.tar.bz2";
-    url = "https://github.com/fcitx/fcitx5-macos/releases/download/${version}/Fcitx5-arm64.tar.bz2";
-    hash = "sha256-3yFFdYUxlk2CVepDs0CTjqNVVHGSF/8wZVcmMRrqdII=";
-  };
+  inherit (source) version src;
 
   nativeBuildInputs = [ bzip2 ];
 

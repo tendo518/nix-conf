@@ -1,30 +1,17 @@
 {
   stdenvNoCC,
   lib,
-  fetchurl,
   _7zz,
+  sources,
 }:
 
 let
   isArm = stdenvNoCC.hostPlatform.isAarch64;
-  arch = if isArm then "arm64" else "x86_64";
-  # build tokens + sha256 from https://formulae.brew.sh/cask/tencent-meeting
-  version = "3.48.1.401";
-  armToken = "3243fe53565109349a347594d6ad42e9";
-  armHash = "sha256-OHH5V9A/ucJJKvAgy2X/PiBonU2FtTyOxkOnpY3sABY=";
-  intelToken = "d453425bc9c5f92ef3f63dc6545be76d";
-  intelHash = "sha256-B+2cwJ66lyM+dIoH+AAIO/AjpX9M5xIvaED9/Hs53qo=";
-  token = if isArm then armToken else intelToken;
+  source = if isArm then sources."tencent-meeting-arm64" else sources."tencent-meeting-amd64";
 in
 stdenvNoCC.mkDerivation rec {
   pname = "tencent-meeting";
-  inherit version;
-
-  src = fetchurl {
-    name = "TencentMeeting_${version}_${arch}.dmg";
-    url = "https://updatecdn.meeting.qq.com/cos/${token}/TencentMeeting_0300000000_${version}.publish.${arch}.officialwebsite.dmg";
-    hash = if isArm then armHash else intelHash;
-  };
+  inherit (source) version src;
 
   # Extract with 7zz like the nixpkgs wechat package: undmg (libdmg) silently
   # drops files from this DMG, and hdiutil+ditto copies get flagged as damaged
