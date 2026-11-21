@@ -26,10 +26,12 @@ _: {
         settings.WebService.LoginTo = false;
       };
 
-      # Cockpit uses systemd socket activation and binds all interfaces by
-      # default; override its listen stream so it only answers on loopback.
-      # Bind on all interfaces; access is restricted by the firewall.
-      systemd.sockets.cockpit.listenStreams = lib.mkForce [ "0.0.0.0:9090" ];
+      # Cockpit uses systemd socket activation. Reset the upstream listen
+      # stream, then bind all interfaces; access is restricted by the firewall.
+      systemd.sockets.cockpit.listenStreams = lib.mkForce [
+        "" # reset the upstream unit's ListenStream=9090 before adding ours
+        "0.0.0.0:9090"
+      ];
       networking.firewall.interfaces.lan0.allowedTCPPorts = [ 9090 ];
       networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 9090 ];
     };
