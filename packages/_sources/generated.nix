@@ -18,8 +18,8 @@
     pname = "deepseek-harness";
     version = "0.2.2-rc.5";
     src = fetchurl {
-      url = "https://download.deepseek.com/dsh-desk/bin/mac-arm64/deepseek-harness-0.2.2-rc.5-mac-arm64.zip";
-      sha256 = "sha256-wWmXWDGJfuCSXbwjpmGJNRHv8pv2RaeEKuHC0rXVuKA=";
+      url = "https://download.deepseek.com/dsh-desk/bin/mac-arm64/stable/deepseek-harness-0.2.2-rc.5-mac-arm64.zip";
+      sha256 = "sha256-OI5q+69g3z4emHGiW2sQWSCoK1asZtzUURd67HDgSwk=";
     };
   };
   deskflow-amd64 = {

@@ -3,8 +3,11 @@ src.github = "coteditor/CotEditor"
 fetch.url = "https://github.com/coteditor/CotEditor/releases/download/$ver/CotEditor_$ver.dmg"
 
 [deepseek-harness]
-src.cmd = "git ls-remote --tags --refs --sort=-version:refname https://github.com/deepseek-ai/deepseek-harness | sed -n 's#.*refs/tags/dsh-v##p' | head -1"
-fetch.url = "https://download.deepseek.com/dsh-desk/bin/mac-arm64/deepseek-harness-$ver-mac-arm64.zip"
+# The desktop updater's stable-channel manifest on the same origin as the zip;
+# GitHub tags run ahead of published artifacts, this feed does not.
+src.webpage = "https://download.deepseek.com/dsh-desk/feeds/mac-arm64/stable-mac.yml"
+src.regex = "version: ([0-9][0-9A-Za-z.+-]*)"
+fetch.url = "https://download.deepseek.com/dsh-desk/bin/mac-arm64/stable/deepseek-harness-$ver-mac-arm64.zip"
 
 [deskflow-arm64]
 src.github = "deskflow/deskflow"
