@@ -11,7 +11,7 @@
         settings = {
           font-size = if pkgs.stdenv.hostPlatform.isDarwin then 14 else 12;
           font-family = [
-            "IBM Plex Mono"
+            "Intel One Mono"
             "Sarasa Mono SC"
             "Symbols Nerd Font"
           ];

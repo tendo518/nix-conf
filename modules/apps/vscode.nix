@@ -13,7 +13,7 @@
             "workbench.experimental.modernUI" = true;
             # Editor
             "editor.fontFamily" =
-              "\"IBM Plex Mono\", \"Sarasa Mono SC\", \"Symbols Nerd Font\", \"Noto Color Emoji\", monospace";
+              "\"Intel One Mono\", \"Sarasa Mono SC\", \"Symbols Nerd Font\", \"Noto Color Emoji\", monospace";
             "editor.fontLigatures" = true;
             "editor.fontSize" = 14;
             "editor.smoothScrolling" = true;

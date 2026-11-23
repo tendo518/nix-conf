@@ -30,6 +30,8 @@ let
       # monospace fonts; Sarasa and Nerd Fonts provide Chinese and symbols
       # iosevka-slab
       # iosevka-term
+      intel-one-mono
+      victor-mono
       fira-code
       jetbrains-mono
       hack-font
@@ -57,7 +59,7 @@ in
             "Noto Color Emoji"
           ];
           monospace = [
-            "IBM Plex Mono"
+            "Intel One Mono"
             "Symbols Nerd Font"
             "Sarasa Mono SC"
             "Noto Color Emoji"

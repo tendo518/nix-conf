@@ -11,7 +11,7 @@
           shell_integration = "no-rc";
 
           # font
-          font_family = "IBM Plex Mono";
+          font_family = "Intel One Mono";
           bold_font = "auto";
           italic_font = "auto";
           bold_italic_font = "auto";
