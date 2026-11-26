@@ -158,14 +158,6 @@
       sha256 = "sha256-cZQCkA6LMrHKHaiwAtUtdgrFRszZ/q0xbF/OSYIDvCU=";
     };
   };
-  skimpdf = {
-    pname = "skimpdf";
-    version = "1.7.19";
-    src = fetchurl {
-      url = "https://downloads.sourceforge.net/skim-app/Skim/Skim-1.7.19/Skim-1.7.19.dmg";
-      sha256 = "sha256-VZqt+GpgZhUX7VIyifD4HLToWczbtUGRzGTUvj13gdw=";
-    };
-  };
   tencent-meeting-amd64 = {
     pname = "tencent-meeting-amd64";
     version = "3.48.1.401";

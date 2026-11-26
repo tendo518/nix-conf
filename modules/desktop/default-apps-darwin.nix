@@ -119,10 +119,10 @@ _: {
         set_ext "$VSCODE" "ini"
 
         # ============================================================
-        # Skim - PDF reader
+        # Firefox - PDF viewer
         # ============================================================
-        SKIM="net.sourceforge.skim-app.skim"
-        set_default "$SKIM" "com.adobe.pdf"
+        FIREFOX="org.mozilla.firefox"
+        set_default "$FIREFOX" "com.adobe.pdf"
 
         # ============================================================
         # IINA - Video player

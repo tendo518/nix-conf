@@ -38,13 +38,6 @@ in
     else
       null;
 
-  # skimpdf only available on darwin
-  skimpdf =
-    if pkgs.stdenv.hostPlatform.isDarwin then
-      pkgs.callPackage ./skimpdf.nix { inherit sources; }
-    else
-      null;
-
   # deskflow only available on darwin
   deskflow =
     if pkgs.stdenv.hostPlatform.isDarwin then

@@ -7,14 +7,12 @@ in
   flake.overlays = {
     # gwfox Firefox theme (Linux)
     "gwfox" = final: _prev: {
-      "gwfox" =
-        (final.callPackage ../packages/gwfox.nix { sources = sourcesFor final; }).gwfox;
+      "gwfox" = (final.callPackage ../packages/gwfox.nix { sources = sourcesFor final; }).gwfox;
     };
 
     # GWfox-T Firefox theme (macOS)
     "gwfox-t" = final: _prev: {
-      "gwfox-t" =
-        (final.callPackage ../packages/gwfox.nix { sources = sourcesFor final; }).gwfox-t;
+      "gwfox-t" = (final.callPackage ../packages/gwfox.nix { sources = sourcesFor final; }).gwfox-t;
     };
 
     # Fcitx5 macOS input method with Rime (prebuilt Apple Silicon app bundle)
@@ -32,15 +30,6 @@ in
           final.callPackage ../packages/ticktick.nix { sources = sourcesFor final; }
         else
           prev.ticktick;
-    };
-
-    # Skim PDF overlay with macOS support (Pin version)
-    skimpdf = final: prev: {
-      skimpdf =
-        if prev.stdenv.hostPlatform.isDarwin then
-          final.callPackage ../packages/skimpdf.nix { sources = sourcesFor final; }
-        else
-          prev.skimpdf;
     };
 
     # Deskflow overlay with macOS support (Pin version)
@@ -146,11 +135,9 @@ in
 
     # LLM agents overlay (claude-code, opencode, gemini-cli, etc.)
     # https://github.com/numtide/llm-agents.nix
-    llm-agents =
-      final: _prev:
-      {
-        llm-agents = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system};
-      };
+    llm-agents = final: _prev: {
+      llm-agents = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system};
+    };
 
   };
 }

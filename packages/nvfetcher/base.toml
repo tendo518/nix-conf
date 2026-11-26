@@ -89,11 +89,6 @@ src.github = "yetone/magpie-releases"
 src.prefix = "v"
 fetch.url = "https://github.com/yetone/magpie-releases/releases/download/v$ver/magpie-cli-linux-arm64"
 
-[skimpdf]
-src.webpage = "https://skim-app.sourceforge.io/relnotes.html"
-src.regex = "Version ([0-9]+(?:\\.[0-9]+)+)"
-fetch.url = "https://downloads.sourceforge.net/skim-app/Skim/Skim-$ver/Skim-$ver.dmg"
-
 [zotero]
 src.github_tag = "zotero/zotero"
 fetch.url = "https://download.zotero.org/client/release/$ver/Zotero-$ver.dmg"

@@ -281,21 +281,6 @@
         },
         "version": "0.1.4823"
     },
-    "skimpdf": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "skimpdf",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-VZqt+GpgZhUX7VIyifD4HLToWczbtUGRzGTUvj13gdw=",
-            "type": "url",
-            "url": "https://downloads.sourceforge.net/skim-app/Skim/Skim-1.7.19/Skim-1.7.19.dmg"
-        },
-        "version": "1.7.19"
-    },
     "tencent-meeting-amd64": {
         "cargoLock": null,
         "date": null,

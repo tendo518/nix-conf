@@ -13,7 +13,6 @@ _: {
         google-chrome
         obsidian
         coteditor
-        skimpdf
         deskflow
         llm-agents.herdr-app # desktop GUI, backed by herdr-core
         llm-agents.chatgpt
