@@ -6,12 +6,6 @@
       config,
       ...
     }:
-    let
-      starship_preset = "plain-text-symbols";
-      starship_settings = pkgs.runCommand "starship.toml" { } ''
-        ${pkgs.starship}/bin/starship preset ${starship_preset} > $out
-      '';
-    in
     {
 
       home.shellAliases = {
@@ -104,8 +98,12 @@
         enableBashIntegration = true;
         enableFishIntegration = true;
         enableZshIntegration = true;
+        # Merged with `settings` by the module; no hand-rolled `starship preset`.
+        presets = [ "plain-text-symbols" ];
+        # The preset keeps the default prompt format, so showing the hostname
+        # everywhere only needs `ssh_only` turned off.
+        settings.hostname.ssh_only = false;
       };
-      xdg.configFile."starship.toml".source = starship_settings;
 
       home.packages =
         with pkgs;
