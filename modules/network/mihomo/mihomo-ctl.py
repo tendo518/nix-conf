@@ -4,18 +4,22 @@ The core uses only the standard library: it returns data or raises MihomoError,
 without prompting, rendering, escalating privileges, or starting an event loop.
 create_cli() and run_tray() own those UI concerns and load their dependencies lazily.
 
+Exit nodes are runtime state, not deployment settings: the `exit`
+commands edit state_dir/exits.json and re-render the provider Mihomo reads.
+
 Linux/systemd deployment settings are supplied as JSON:
     mihomo-ctl --settings /path/to/settings.json status
 Priority: --settings > MIHOMO_CTL_SETTINGS > packaged default > Settings defaults.
 Relative paths resolve against the settings file. Executables use PATH unless
 overridden through commands. Subscription initialization requires template_path;
-the template substitutes $URL and $MODE. Legacy cleanup rules are opt-in.
+the template substitutes $MODE plus one provider and two groups per subscription.
+Legacy cleanup rules are opt-in.
 Other frontends can construct MihomoCore(Settings(...)) without loading a file.
 """
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import ExitStack, closing
-from dataclasses import dataclass, field, fields
+from dataclasses import asdict, dataclass, field, fields
 import json
 import math
 import os
@@ -24,6 +28,7 @@ import grp
 import re
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import tempfile
@@ -35,7 +40,20 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Annotated
 
-MODES = ("rule", "global", "direct", "script")
+# `script` is omitted: this deployment ships no routing script.
+MODES = ("rule", "global", "direct")
+
+# The outbound switch lists one group per subscription plus every exit node, so
+# both share one namespace and use distinct prefixes.
+EXIT_PROVIDER = "exit"
+EXIT_TYPES = ("socks5", "http")
+SUBSCRIPTION_GROUP_PREFIX = "sub-"
+AUTOMATIC_GROUP_PREFIX = "auto-"
+SUBSCRIPTION_PROVIDER_PREFIX = "subscription-"
+RESERVED_PROXY_NAMES = frozenset(
+    {"COMPATIBLE", "DIRECT", "GLOBAL", "PASS", "PASS-RULE", "REJECT", "REJECT-DROP", "OUTBOUND"}
+)
+HEALTH_CHECK_URL = "https://www.gstatic.com/generate_204"
 
 # Optional deployment default; the core never reads this value.
 DEFAULT_SETTINGS_PATH = None
@@ -55,6 +73,49 @@ class ProxySelection:
 
 
 @dataclass(frozen=True)
+class Exit:
+    """A remote proxy that OUTBOUND can select instead of the subscription."""
+
+    name: str
+    server: str
+    port: int = 7890
+    type: str = "socks5"
+    udp: bool = True
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not re.fullmatch(
+            r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", self.name
+        ):
+            raise MihomoError(
+                "Exit names must use letters, digits, dot, underscore, or "
+                "hyphen (maximum 64 characters)"
+            )
+        if self.type not in EXIT_TYPES:
+            raise MihomoError(f"Exit type must be one of: {', '.join(EXIT_TYPES)}")
+        for prefix in (
+            SUBSCRIPTION_GROUP_PREFIX, AUTOMATIC_GROUP_PREFIX, SUBSCRIPTION_PROVIDER_PREFIX
+        ):
+            if self.name.startswith(prefix):
+                raise MihomoError(
+                    f"Exit names must not start with `{prefix}` (reserved for subscriptions)"
+                )
+        if (
+            not isinstance(self.server, str)
+            or not self.server.strip()
+            or any(character.isspace() for character in self.server)
+        ):
+            raise MihomoError("Exit server must be a host or IP without whitespace")
+        if type(self.port) is not int or not 1 <= self.port <= 65535:
+            raise MihomoError("Exit port must be between 1 and 65535")
+        if type(self.udp) is not bool:
+            raise MihomoError("Exit udp must be a boolean")
+
+    @property
+    def endpoint(self) -> str:
+        return f"{self.server}:{self.port}"
+
+
+@dataclass(frozen=True)
 class MihomoStatus:
     daemon_active: bool
     routing_active: bool
@@ -62,6 +123,11 @@ class MihomoStatus:
     proxy: ProxySelection | None = None
     provider_count: int = 0
     error: str | None = None
+    outbound: ProxySelection | None = None
+    # Name and endpoint of every configured exit, for display without state reads.
+    exits: tuple[tuple[str, str], ...] = ()
+    # Only set when the outbound is an exit node.
+    exit_reachable: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -134,8 +200,7 @@ class Settings:
     template_path: Path | None = None
     controller_url: str = "http://127.0.0.1:9090"
     request_timeout: float = 5.0
-    proxy_group: str = "PROXY"
-    default_provider: str = "subscription"
+    outbound_group: str = "OUTBOUND"
     service_unit: str = "mihomo.service"
     routing_unit: str = "mihomo-routing.service"
     service_user: str = "mihomo"
@@ -158,7 +223,7 @@ class Settings:
             if not isinstance(value, Path) or not value.is_absolute():
                 raise MihomoError(f"{name} must be an absolute path")
         for name in (
-            "controller_url", "proxy_group", "default_provider", "service_unit",
+            "controller_url", "outbound_group", "service_unit",
             "routing_unit", "service_user", "service_group", "tun_device",
         ):
             value = getattr(self, name)
@@ -209,6 +274,14 @@ class Settings:
     @property
     def config_dir(self) -> Path:
         return self.config_path.parent
+
+    @property
+    def exits_state_path(self) -> Path:
+        return self.state_dir / "exits.json"
+
+    @property
+    def exits_path(self) -> Path:
+        return self.state_dir / "exits.yaml"
 
     @property
     def subscriptions_dir(self) -> Path:
@@ -317,6 +390,111 @@ def validate_subscription_name(name: str) -> None:
             "Subscription name must use only letters, digits, dot, underscore, "
             "or hyphen (maximum 64 characters)"
         )
+
+
+def parse_exits(value: object) -> tuple[Exit, ...]:
+    """Validate a decoded exit list from the runtime state file."""
+    if not isinstance(value, list):
+        raise MihomoError("exits must be a list")
+    parsed = []
+    for item in value:
+        if not isinstance(item, dict):
+            raise MihomoError("Each exit must be an object")
+        unknown = item.keys() - {field.name for field in fields(Exit)}
+        if unknown:
+            raise MihomoError(f"Unknown exit fields: {', '.join(sorted(unknown))}")
+        try:
+            parsed.append(Exit(**item))
+        except TypeError as error:
+            raise MihomoError(f"Invalid exit: {error}") from error
+    return tuple(parsed)
+
+
+def exit_document(exits: tuple[Exit, ...]) -> str:
+    """Render the file provider for the configured exit proxies."""
+    if not exits:
+        return "proxies: []\n"
+    lines = ["proxies:"]
+    for item in exits:
+        lines += [
+            f"  - name: {json.dumps(item.name)}",
+            f"    type: {item.type}",
+            f"    server: {json.dumps(item.server)}",
+            f"    port: {item.port}",
+            f"    udp: {'true' if item.udp else 'false'}",
+        ]
+    return "\n".join(lines) + "\n"
+
+
+def subscription_providers_document(subscriptions: Sequence[tuple[str, str]]) -> str:
+    """Render one provider per saved subscription; every URL is decrypted state."""
+    blocks = []
+    for name, url in subscriptions:
+        provider = f"{SUBSCRIPTION_PROVIDER_PREFIX}{name}"
+        blocks.append(
+            "\n".join((
+                f"  {provider}:",
+                "    type: http",
+                f"    url: {json.dumps(url)}",
+                f"    path: ./providers/{provider}.yaml",
+                "    interval: 21600",
+                "    health-check:",
+                "      enable: true",
+                f"      url: {HEALTH_CHECK_URL}",
+                "      interval: 300",
+                "      timeout: 5000",
+                "      lazy: true",
+            ))
+        )
+    return "\n\n".join(blocks)
+
+
+def outbound_subscriptions_document(subscriptions: Sequence[tuple[str, str]]) -> str:
+    """Render the subscription entries of the OUTBOUND group."""
+    return "\n".join(
+        f"      - {SUBSCRIPTION_GROUP_PREFIX}{name}" for name, _ in subscriptions
+    )
+
+
+def subscription_groups_document(subscriptions: Sequence[tuple[str, str]]) -> str:
+    """Render the per-subscription selectors and their automatic groups."""
+    blocks = []
+    for name, _ in subscriptions:
+        group = f"{SUBSCRIPTION_GROUP_PREFIX}{name}"
+        automatic = f"{AUTOMATIC_GROUP_PREFIX}{name}"
+        provider = f"{SUBSCRIPTION_PROVIDER_PREFIX}{name}"
+        blocks.append(
+            "\n".join((
+                f"  - name: {group}",
+                "    type: select",
+                "    proxies:",
+                f"      - {automatic}",
+                "      - DIRECT",
+                "    use:",
+                f"      - {provider}",
+                "",
+                f"  - name: {automatic}",
+                "    type: url-test",
+                "    use:",
+                f"      - {provider}",
+                f"    url: {HEALTH_CHECK_URL}",
+                "    interval: 300",
+                "    tolerance: 50",
+            ))
+        )
+    return "\n\n".join(blocks)
+
+
+def render_config(
+    template: str, subscriptions: Sequence[tuple[str, str]], mode: str
+) -> str:
+    """Render the config template for every saved subscription."""
+    return (
+        template.replace("$MODE", mode)
+        .replace("$SUBSCRIPTION_PROVIDERS", subscription_providers_document(subscriptions))
+        .replace("$OUTBOUND_SUBSCRIPTIONS", outbound_subscriptions_document(subscriptions))
+        .replace("$SUBSCRIPTION_GROUPS", subscription_groups_document(subscriptions))
+    )
 
 
 class MihomoCore:
@@ -491,11 +669,84 @@ class MihomoCore:
             if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", path.stem)
         )
 
-    def write_config(self, template: str, url: str, mode: str) -> None:
-        rendered = template.replace("$URL", url).replace("$MODE", mode)
+    def exits(self) -> tuple[Exit, ...]:
+        """Read the CLI-managed exit nodes."""
+        path = self.settings.exits_state_path
+        try:
+            data = json.loads(path.read_text())
+        except FileNotFoundError:
+            return ()
+        except (OSError, ValueError) as error:
+            raise MihomoError(f"Could not read exit state: {path}: {error}") from error
+        return parse_exits(data)
+
+    def save_exits(self, exits: tuple[Exit, ...]) -> None:
+        """Persist the exit state and re-render the provider Mihomo reads."""
+        require_root()
+        names = [item.name for item in exits]
+        if len(set(names)) != len(names):
+            raise MihomoError("Exit names must be unique")
+        reserved = RESERVED_PROXY_NAMES | {self.settings.outbound_group}
+        for name in names:
+            if name in reserved:
+                raise MihomoError(f"Exit name is reserved: {name}")
+        path = self.settings.exits_state_path
+        path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        # No secrets: the state is world-readable so `outbound` and `status`
+        # can show endpoints without privileges.
+        state = json.dumps([asdict(item) for item in exits], indent=2) + "\n"
+        atomic_write_text(path, state, mode=0o644)
+        self.write_exits(exits)
+
+    def add_exit(self, exit: Exit) -> None:
+        require_root()
+        current = self.exits()
+        if any(item.name == exit.name for item in current):
+            raise MihomoError(f"Exit already exists: {exit.name}")
+        self.save_exits((*current, exit))
+
+    def remove_exit(self, name: str) -> None:
+        require_root()
+        current = self.exits()
+        if not any(item.name == name for item in current):
+            raise MihomoError(f"Exit does not exist: {name}")
+        self.save_exits(tuple(item for item in current if item.name != name))
+
+    def write_exits(self, exits: tuple[Exit, ...] | None = None) -> None:
+        """Render the exit file provider for Mihomo."""
+        if exits is None:
+            exits = self.exits()
+        path = self.settings.exits_path
+        path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        atomic_write_text(
+            path, exit_document(exits), mode=0o640,
+            group=grp.getgrnam(self.settings.service_group).gr_gid,
+        )
+
+    def subscription_providers(self) -> list[tuple[str, str]]:
+        """Decrypt every saved subscription for config rendering."""
+        providers = [
+            (name, self.load_subscription(name)) for name in self.subscription_names()
+        ]
+        if not providers:
+            raise MihomoError(
+                "No saved subscriptions; run: sudo mihomo-ctl subscription add <name>"
+            )
+        return providers
+
+    def write_config(self, template: str, mode: str) -> None:
+        rendered = render_config(template, self.subscription_providers(), mode)
         atomic_write_text(
             self.settings.config_path, rendered, mode=0o640, group=grp.getgrnam(self.settings.service_group).gr_gid
         )
+        self.write_exits()
+
+    def reload_exits(self) -> None:
+        """Rewrite the exit provider and reload it without restarting Mihomo."""
+        require_root()
+        self.write_exits()
+        self.controller_check()
+        self.api(f"/providers/proxies/{urllib.parse.quote(EXIT_PROVIDER, safe='')}", "PUT")
 
     def template(self) -> str:
         if self.settings.template_path is None:
@@ -525,15 +776,25 @@ class MihomoCore:
 
     def _apply_subscription(self, config_template: str, name: str) -> None:
         require_root()
-        url = self.load_subscription(name)
+        self.load_subscription(name)
         self.set_active_subscription(name)
-        self.write_config(config_template, url, self.applied_mode())
+        self.write_config(config_template, self.applied_mode())
         self.cleanup_runtime("tun")
         self.restart_mihomo()
 
     def switch_subscription(self, name: str) -> None:
+        """Select a saved subscription; the config is re-rendered only if missing."""
         require_root()
-        self._apply_subscription(self.template(), name)
+        self.require_subscription(name)
+        self.controller_check()
+        group = f"{SUBSCRIPTION_GROUP_PREFIX}{name}"
+        if group not in self.outbound_selection().nodes:
+            # Added after the last render: materialize it before selecting.
+            self.write_config(self.template(), self.applied_mode())
+            self.cleanup_runtime("tun")
+            self.restart_mihomo()
+        self.select_outbound(group)
+        self.set_active_subscription(name)
 
     def init_runtime(self, name: str, url: str | None = None) -> None:
         """Initialize the runtime directory and apply a saved or supplied subscription."""
@@ -763,15 +1024,70 @@ class MihomoCore:
         providers = as_dict(as_dict(data).get("providers"))
         return sorted(providers)
 
-    def proxy_selection(self) -> ProxySelection:
-        data = as_dict(self.api(f"/proxies/{urllib.parse.quote(self.settings.proxy_group, safe='')}"))
+    def proxy_selection(self, group: str) -> ProxySelection:
+        data = as_dict(self.api(f"/proxies/{urllib.parse.quote(group, safe='')}"))
         return ProxySelection(
             selected=str(data.get("now", "(none)")),
             nodes=tuple(str(name) for name in as_list(data.get("all"))),
         )
 
-    def select_node(self, name: str) -> None:
-        self.api(f"/proxies/{urllib.parse.quote(self.settings.proxy_group, safe='')}", "PUT", {"name": name})
+    def select_node(self, name: str, group: str) -> None:
+        self.api(f"/proxies/{urllib.parse.quote(group, safe='')}", "PUT", {"name": name})
+
+    def outbound_selection(self) -> ProxySelection:
+        return self.proxy_selection(self.settings.outbound_group)
+
+    def select_outbound(self, name: str) -> None:
+        self.select_node(name, self.settings.outbound_group)
+
+    def node_selection(self, group: str | None = None) -> ProxySelection | None:
+        """Nodes of a subscription group; None when the name is a leaf proxy."""
+        name = group
+        if name is None:
+            name = self.outbound_selection().selected
+        # Group metadata lives in /proxies; provider nodes and plain proxies do
+        # not appear there, so a missing entry means "nothing to choose".
+        proxies = as_dict(as_dict(self.api("/proxies")).get("proxies"))
+        entry = as_dict(proxies.get(name))
+        if "all" not in entry:
+            return None
+        return ProxySelection(
+            selected=str(entry.get("now", "(none)")),
+            nodes=tuple(str(item) for item in as_list(entry.get("all"))),
+        )
+
+    def selected_subscription(self) -> str | None:
+        """Name of the subscription behind the current outbound, if it is one."""
+        try:
+            selected = self.outbound_selection().selected
+        except MihomoError:
+            return self.active_subscription()
+        if selected.startswith(SUBSCRIPTION_GROUP_PREFIX):
+            return selected[len(SUBSCRIPTION_GROUP_PREFIX):]
+        return self.active_subscription()
+
+    def exits_or_empty(self) -> tuple[Exit, ...]:
+        """Exit state for display paths that must not fail on a broken file."""
+        try:
+            return self.exits()
+        except MihomoError:
+            return ()
+
+    def selected_exit(self, name: str | None = None) -> Exit | None:
+        """Return the configured exit behind a name, tolerating an offline controller."""
+        if name is None:
+            try:
+                name = self.outbound_selection().selected
+            except MihomoError:
+                return None
+        return next((item for item in self.exits_or_empty() if item.name == name), None)
+
+    def exit_reachable(self, exit: Exit) -> bool:
+        try:
+            with socket.create_connection((exit.server, exit.port), timeout=2.0):
+                return True
+        except OSError:
+            return False
 
     def current_mode(self) -> str:
         return str(as_dict(self.api("/configs")).get("mode", "unknown"))
@@ -789,14 +1105,17 @@ class MihomoCore:
 
     def update_providers(self, provider: str | None = None, update_all: bool = False) -> list[str]:
         require_root()
-        name = self.active_subscription()
+        name = self.selected_subscription()
         if name is None:
             raise MihomoError(
-                "No active subscription; run: sudo mihomo-ctl subscription init"
+                "No selected subscription; run: sudo mihomo-ctl subscription init"
             )
-        self.switch_subscription(name)
         self.controller_check()
-        providers = self.provider_names("proxies") if update_all else [provider or self.settings.default_provider]
+        providers = (
+            self.provider_names("proxies")
+            if update_all
+            else [provider or f"{SUBSCRIPTION_PROVIDER_PREFIX}{name}"]
+        )
         for item in providers:
             self.api(f"/providers/proxies/{urllib.parse.quote(item, safe='')}", "PUT")
         return providers
@@ -894,11 +1213,21 @@ class MihomoCore:
         try:
             self.controller_check()
             mode = self.current_mode()
-            proxy = self.proxy_selection()
+            outbound = self.outbound_selection()
+            proxy = self.node_selection()
+            exits = tuple((item.name, item.endpoint) for item in self.exits_or_empty())
+            reachable = None
+            if proxy is None:
+                exit_node = self.selected_exit(outbound.selected)
+                if exit_node is not None:
+                    reachable = self.exit_reachable(exit_node)
             count = len(self.provider_names("proxies"))
         except MihomoError as error:
             return MihomoStatus(daemon_active, routing_active, error=str(error))
-        return MihomoStatus(daemon_active, routing_active, mode, proxy, count)
+        return MihomoStatus(
+            daemon_active, routing_active, mode, proxy, count, outbound=outbound,
+            exits=exits, exit_reachable=reachable,
+        )
 
     def route_snapshot(self) -> list[RouteSection]:
         sections = (
@@ -977,7 +1306,25 @@ class MihomoCore:
                 for value in providers.values()
             )
             check(f"provider node count > 0 ({count})", count > 0)
-            notes.append(f"Selected node: {self.proxy_selection().selected}")
+            outbound = self.outbound_selection().selected
+            proxy = self.node_selection()
+            exit_node = self.selected_exit(outbound) if proxy is None else None
+            if exit_node is not None:
+                notes.append(f"Outbound: {exit_node.name} · {exit_node.endpoint} (exit)")
+                reachable = self.exit_reachable(exit_node)
+                check(f"exit reachable ({exit_node.endpoint})", reachable)
+                if not reachable:
+                    notes.append(
+                        "Every proxied connection leaves through this exit node; "
+                        "bring it back online or select another outbound"
+                    )
+            elif proxy is not None:
+                notes.append(f"Outbound: {outbound} · node {proxy.selected}")
+                if self.current_mode() == "rule":
+                    notes.append(
+                        "rule keeps LAN/CN direct; `mihomo-ctl mode global` "
+                        "hands everything to the exit"
+                    )
         else:
             check("provider node count (controller unavailable)", False)
 
@@ -1126,9 +1473,13 @@ def create_cli(core: MihomoCore | None = None, console=None):
         help="Manage encrypted Mihomo subscriptions.", no_args_is_help=True
     )
     proxy_app = typer.Typer(help="Manage Mihomo proxies.", no_args_is_help=True)
+    exit_app = typer.Typer(
+        help="Manage the configured exit nodes.", no_args_is_help=True
+    )
     routing_app = typer.Typer(help="Manage transparent routing.", no_args_is_help=True)
     app.add_typer(subscription_app, name="subscription")
     app.add_typer(proxy_app, name="proxy")
+    app.add_typer(exit_app, name="exit")
     app.add_typer(routing_app, name="routing")
 
     injected_core = core
@@ -1171,6 +1522,13 @@ def create_cli(core: MihomoCore | None = None, console=None):
                 raise MihomoError("Root privileges are required, but the configured sudo was not found")
             args = configured_arguments(sys.argv[1:], settings_path)
             os.execv(sudo, [sudo, sys.executable, str(Path(sys.argv[0]).resolve()), *args])
+
+    def apply_exits() -> None:
+        # The state is already saved; a stopped Mihomo picks it up on start.
+        try:
+            core.reload_exits()
+        except MihomoError as error:
+            warning(f"Exit saved; it applies on the next Mihomo start ({error})")
 
     def format_bytes(value: object) -> str:
         if not isinstance(value, (int, float)):
@@ -1233,6 +1591,7 @@ def create_cli(core: MihomoCore | None = None, console=None):
         url = typer.prompt("Subscription URL", hide_input=True)
         core.add_subscription(name, url)
         success(f"Saved encrypted subscription '{name}'")
+        info(f"Select it with: sudo mihomo-ctl subscription switch {name}")
 
     @subscription_app.command("edit")
     def edit_command(name: Annotated[str, typer.Argument()]) -> None:
@@ -1258,37 +1617,55 @@ def create_cli(core: MihomoCore | None = None, console=None):
 
     @subscription_app.command("switch")
     def switch_command(name: Annotated[str, typer.Argument()]) -> None:
-        """Activate NAME and restart Mihomo with it."""
+        """Select NAME as the outbound (no restart)."""
         as_root()
         core.switch_subscription(name)
-        success(f"Switched to subscription '{name}'")
+        success(f"Outbound subscription: {SUBSCRIPTION_GROUP_PREFIX}{name}")
 
     @subscription_app.command("list")
     def list_subscriptions() -> None:
         """List saved subscription names without exposing URLs."""
         as_root()
-        active = core.active_subscription()
+        selected = core.selected_subscription()
         names = core.subscription_names()
         if not names:
             warning("No saved subscriptions; run: sudo mihomo-ctl subscription add <name>")
             return
         table = Table(title="Mihomo subscriptions", header_style="bold cyan")
         table.add_column("Name")
-        table.add_column("Active", justify="center")
+        table.add_column("Group", min_width=16)
+        table.add_column("Selected", justify="center")
         for name in names:
-            table.add_row(name, Text("●", style="bold green") if name == active else Text())
+            group = Text(f"{SUBSCRIPTION_GROUP_PREFIX}{name}", style="dim")
+            table.add_row(
+                name, group,
+                Text("●", style="bold green") if name == selected else Text(),
+            )
         console.print(table)
 
     @proxy_app.command("node")
-    def node_command(name: Annotated[str | None, typer.Argument()] = None) -> None:
+    def node_command(
+        name: Annotated[str | None, typer.Argument()] = None,
+        group: Annotated[str | None, typer.Option(
+            "--group", help="Subscription group to inspect (default: the selected one)."
+        )] = None,
+    ) -> None:
         """Show proxy nodes or select NAME."""
-        selection = core.proxy_selection()
+        target = group or core.outbound_selection().selected
+        selection = core.node_selection(target)
+        if selection is None:
+            if core.selected_exit(target) is not None:
+                raise MihomoError(
+                    f"Outbound {target} is an exit node; there are no nodes to choose.\n"
+                    "Select a subscription first: mihomo-ctl outbound sub-<name>"
+                )
+            raise MihomoError(f"Unknown proxy group: {target}")
         old = selection.selected
         nodes = selection.nodes
         if name is None:
             if not nodes:
-                raise MihomoError(f"No nodes are available in {core.settings.proxy_group}")
-            table = Table(title=f"{core.settings.proxy_group} nodes", header_style="bold cyan")
+                raise MihomoError(f"No nodes are available in {target}")
+            table = Table(title=f"{target} nodes", header_style="bold cyan")
             table.add_column("#", justify="right", style="cyan", no_wrap=True)
             table.add_column("Node", min_width=24)
             table.add_column("Selected", justify="center")
@@ -1306,7 +1683,7 @@ def create_cli(core: MihomoCore | None = None, console=None):
                 info("Node selection cancelled")
                 return
             name = str(nodes[int(answer) - 1])
-        core.select_node(name)
+        core.select_node(name, target)
         console.print(
             Text.assemble(
                 (old, "dim"),
@@ -1320,7 +1697,7 @@ def create_cli(core: MihomoCore | None = None, console=None):
         provider: Annotated[str | None, typer.Argument()] = None,
         update_all: Annotated[bool, typer.Option("--all")] = False,
     ) -> None:
-        """Rebuild from the active subscription and refresh proxy providers."""
+        """Refresh proxy providers (default: the selected subscription)."""
         as_root()
         for item in core.update_providers(provider, update_all):
             info(f"Updated provider: {item}")
@@ -1368,8 +1745,18 @@ def create_cli(core: MihomoCore | None = None, console=None):
             table.add_row("controller", Text("unreachable", style="red"))
         else:
             table.add_row("controller", Text("reachable", style="green"))
+            endpoints = dict(status.exits)
             table.add_row("mode", Text(status.mode, style="cyan"))
-            table.add_row("selected", Text(status.proxy.selected, style="bold green"))
+            if status.outbound is not None:
+                outbound = status.outbound.selected
+                endpoint = endpoints.get(outbound)
+                if endpoint:
+                    outbound += f"   {endpoint}"
+                    if status.exit_reachable is False:
+                        outbound += "   unreachable"
+                table.add_row("outbound", Text(outbound, style="bold green"))
+            if status.proxy is not None:
+                table.add_row("node", Text(status.proxy.selected, style="bold green"))
             table.add_row("providers", str(status.provider_count))
         console.print(Panel(table, title="Mihomo status", border_style="cyan"))
 
@@ -1426,14 +1813,126 @@ def create_cli(core: MihomoCore | None = None, console=None):
 
     @app.command("mode")
     def mode_command(value: Annotated[str | None, typer.Argument()] = None) -> None:
-        """Show or set the Mihomo mode (rule, global, direct, script)."""
+        """Show or set the Mihomo mode (rule, global, direct)."""
         if value is None:
             console.print(core.current_mode())
             return
         core.set_mode(value)
         success(f"Mihomo mode: {value}")
         if value == "global":
-            info(f"Proxy group {core.settings.proxy_group} selection: {core.proxy_selection().selected}")
+            info(f"Outbound: {core.outbound_selection().selected}")
+
+    @app.command("outbound")
+    def outbound_command(name: Annotated[str | None, typer.Argument()] = None) -> None:
+        """Show or select the outbound: a subscription or an exit node."""
+        selection = core.outbound_selection()
+        old = selection.selected
+        nodes = selection.nodes
+        endpoints = {item.name: item.endpoint for item in core.exits_or_empty()}
+        if name is None:
+            if not nodes:
+                raise MihomoError(
+                    f"No outbound entries are available in {core.settings.outbound_group}"
+                )
+            table = Table(
+                title=f"{core.settings.outbound_group} selection",
+                header_style="bold cyan",
+            )
+            table.add_column("#", justify="right", style="cyan", no_wrap=True)
+            table.add_column("Outbound", min_width=16)
+            table.add_column("Kind", no_wrap=True)
+            table.add_column("Detail", min_width=16)
+            table.add_column("Selected", justify="center")
+            for index, item in enumerate(nodes, 1):
+                if item in endpoints:
+                    kind, detail = "exit", endpoints[item]
+                else:
+                    kind = "sub"
+                    try:
+                        detail = core.proxy_selection(item).selected
+                    except MihomoError:
+                        detail = "(unavailable)"
+                selected = Text("●", style="bold green") if item == old else Text()
+                table.add_row(
+                    str(index), Text(str(item)), Text(kind, style="dim"),
+                    Text(detail, style="dim"), selected,
+                )
+            console.print(table)
+            answer = Prompt.ask(
+                "Select outbound ([dim]q to cancel[/])",
+                choices=[*(str(index) for index in range(1, len(nodes) + 1)), "q"],
+                default="q",
+                show_choices=False,
+            )
+            if answer == "q":
+                info("Outbound selection cancelled")
+                return
+            name = str(nodes[int(answer) - 1])
+        core.select_outbound(name)
+        endpoint = endpoints.get(name)
+        target = f"{name} ({endpoint})" if endpoint else name
+        console.print(Text.assemble((old, "dim"), (" → ", "cyan"), (target, "bold green")))
+        if endpoint and core.current_mode() == "rule":
+            info(
+                "rule keeps LAN/CN direct; `mihomo-ctl mode global` hands "
+                "everything to the remote"
+            )
+
+    @exit_app.command("list")
+    def exit_list_command() -> None:
+        """List the exit nodes."""
+        exits = core.exits()
+        if not exits:
+            warning("No exit nodes; add one with: mihomo-ctl exit add NAME --server HOST")
+            return
+        try:
+            selected = core.outbound_selection().selected
+        except MihomoError:
+            selected = None
+        table = Table(title="Exit nodes", header_style="bold cyan")
+        table.add_column("Exit", min_width=16)
+        table.add_column("Endpoint", min_width=20)
+        table.add_column("Type", no_wrap=True)
+        table.add_column("UDP", justify="center")
+        table.add_column("Selected", justify="center")
+        for item in exits:
+            table.add_row(
+                Text(item.name),
+                Text(item.endpoint, style="dim"),
+                Text(item.type),
+                "yes" if item.udp else "no",
+                Text("●", style="bold green") if item.name == selected else Text(),
+            )
+        console.print(table)
+
+    @exit_app.command("add")
+    def exit_add_command(
+        name: Annotated[str, typer.Argument()],
+        server: Annotated[str, typer.Option("--server", help="Remote host or IP.")],
+        port: Annotated[int, typer.Option("--port")] = 7890,
+        kind: Annotated[str, typer.Option("--type")] = "socks5",
+        no_udp: Annotated[bool, typer.Option("--no-udp")] = False,
+    ) -> None:
+        """Add an exit node and hot-reload the provider."""
+        as_root()
+        core.add_exit(Exit(name, server, port, kind, not no_udp))
+        apply_exits()
+        success(f"Exit added: {name} ({server}:{port})")
+
+    @exit_app.command("remove")
+    def exit_remove_command(name: Annotated[str, typer.Argument()]) -> None:
+        """Remove an exit node and hot-reload the provider."""
+        as_root()
+        core.remove_exit(name)
+        apply_exits()
+        success(f"Exit removed: {name}")
+
+    @exit_app.command("reload")
+    def exit_reload_command() -> None:
+        """Re-render the exit provider from state and hot-reload it."""
+        as_root()
+        core.reload_exits()
+        success("Exit provider reload complete")
 
     @app.command(
         "log", context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
@@ -1590,6 +2089,7 @@ def run_tray(core: MihomoCore, settings_path: Path | None = None) -> None:
     status_action.setEnabled(False)
     mode_menu = menu.addMenu("Mode")
     mode_group = QActionGroup(mode_menu)
+    outbound_menu = menu.addMenu("Outbound")
     node_menu = menu.addMenu("Proxy node")
     routing_action = menu.addAction("Transparent routing")
     routing_action.setCheckable(True)
@@ -1706,24 +2206,54 @@ def run_tray(core: MihomoCore, settings_path: Path | None = None) -> None:
     def update_menu(state: MihomoStatus) -> None:
         mode = state.mode
         proxy = state.proxy
-        status_action.setText(f"Mihomo: {mode}" if mode else "Mihomo: unavailable")
-        selected = proxy.selected if proxy is not None else "(none)"
-        indicator.setToolTip(state.error or f"Mihomo: {mode} · {selected}")
+        outbound_state = state.outbound
+        outbound = outbound_state.selected if outbound_state is not None else None
+        endpoints = dict(state.exits)
+        status_action.setText(
+            f"Mihomo: {mode} · {outbound}" if mode else "Mihomo: unavailable"
+        )
         routing_action.setChecked(state.routing_active)
         mode_menu.setEnabled(mode is not None)
         for action in mode_group.actions():
             action.setChecked(action.text() == mode)
+        outbound_menu.clear()
+        outbound_actions = QActionGroup(outbound_menu)
+        for name in outbound_state.nodes if outbound_state is not None else ():
+            label = f"{name} · {endpoints[name]}" if name in endpoints else name
+            action = outbound_menu.addAction(label.replace("&", "&&"))
+            action.setCheckable(True)
+            action.setChecked(name == outbound)
+            outbound_actions.addAction(action)
+            action.triggered.connect(
+                lambda _checked=False, name=name: run_operation(core.select_outbound, name)
+            )
+        outbound_menu.setEnabled(bool(outbound_actions.actions()))
+        for group in outbound_menu.findChildren(QActionGroup):
+            if group is not outbound_actions:
+                group.deleteLater()
+        tooltip = f"Mihomo: {mode} · {outbound}"
+        if outbound in endpoints:
+            tooltip += f" · {endpoints[outbound]}"
+            if state.exit_reachable is False:
+                tooltip += " · unreachable"
+        if proxy is not None:
+            tooltip += f" · {proxy.selected}"
+        indicator.setToolTip(state.error or tooltip)
         node_menu.clear()
         node_group = QActionGroup(node_menu)
         for name in proxy.nodes if proxy is not None else ():
             action = node_menu.addAction(name.replace("&", "&&"))
             action.setCheckable(True)
-            action.setChecked(name == selected)
+            action.setChecked(name == proxy.selected)
             node_group.addAction(action)
             action.triggered.connect(
-                lambda _checked=False, name=name: run_operation(core.select_node, name)
+                lambda _checked=False, name=name: run_operation(
+                    core.select_node, name, outbound
+                )
             )
         node_menu.setEnabled(bool(node_group.actions()))
+        # Nodes only exist for a subscription outbound; hide the menu for exits.
+        node_menu.menuAction().setVisible(proxy is not None)
         # Parent ownership keeps the group alive until the next menu update.
         for group in node_menu.findChildren(QActionGroup):
             if group is not node_group:

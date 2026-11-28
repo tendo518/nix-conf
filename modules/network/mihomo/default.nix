@@ -22,8 +22,7 @@ _: {
           state_dir = stateDir;
           template_path = toString configTemplate;
           controller_url = "http://127.0.0.1:9090";
-          proxy_group = "PROXY";
-          default_provider = "subscription";
+          outbound_group = "OUTBOUND";
           service_unit = "mihomo.service";
           routing_unit = "mihomo-routing.service";
           service_user = "mihomo";

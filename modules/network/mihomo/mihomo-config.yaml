@@ -1,5 +1,7 @@
-# Mihomo runtime config template. mihomo-ctl replaces $URL and $MODE at runtime.
-# Never put a real subscription URL in this file.
+# Mihomo runtime config template. mihomo-ctl replaces $MODE and the
+# subscription placeholders at runtime: one provider and two groups per saved
+# subscription, plus the exit file provider rendered by `mihomo-ctl exit`.
+# Never put a real subscription URL or exit node in this file.
 
 mixed-port: 7890
 
@@ -43,41 +45,35 @@ sniffer:
         - 8443
 
 proxy-providers:
-  subscription:
-    type: http
-    url: $URL
-    path: ./providers/subscription.yaml
-    interval: 21600
-    health-check:
-      enable: true
-      url: https://www.gstatic.com/generate_204
-      interval: 300
-      timeout: 5000
-      lazy: true
+  # Rendered from the runtime state; every entry is an exit node that sends
+  # traffic to a remote proxy instead of a subscription's nodes.
+  exit:
+    type: file
+    path: ./exits.yaml
+
+  # One provider per saved subscription, rendered from the encrypted state.
+$SUBSCRIPTION_PROVIDERS
 
 proxy-groups:
-  # Used when the Mihomo mode is global. It follows the PROXY selection so
-  # `mihomo-ctl proxy node` picks the exit node for both modes.
+  # Used when the Mihomo mode is global. It follows OUTBOUND so `mihomo-ctl
+  # outbound` picks the outbound for both modes.
   - name: GLOBAL
     type: select
     proxies:
-      - PROXY
+      - OUTBOUND
 
-  - name: PROXY
+  # The outbound switch: every subscription and every exit node is a sibling
+  # entry here (`mihomo-ctl outbound`).
+  - name: OUTBOUND
     type: select
     proxies:
-      - AUTO
-      - DIRECT
+$OUTBOUND_SUBSCRIPTIONS
     use:
-      - subscription
+      - exit
 
-  - name: AUTO
-    type: url-test
-    use:
-      - subscription
-    url: https://www.gstatic.com/generate_204
-    interval: 300
-    tolerance: 50
+  # One selector plus one url-test group per subscription, so each subscription
+  # keeps its own node choice (`mihomo-ctl proxy node`).
+$SUBSCRIPTION_GROUPS
 
 rules:
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
@@ -88,7 +84,7 @@ rules:
   - RULE-SET,private_ip,DIRECT,no-resolve
   - RULE-SET,cn_domain,DIRECT
   - RULE-SET,cn_ip,DIRECT,no-resolve
-  - MATCH,PROXY
+  - MATCH,OUTBOUND
 
 rule-providers:
   private_domain:

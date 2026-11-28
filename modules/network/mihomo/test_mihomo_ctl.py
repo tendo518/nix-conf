@@ -65,7 +65,7 @@ class SettingsTests(unittest.TestCase):
 
     def test_core_instances_use_independent_controller_and_commands(self):
         first = ctl.MihomoCore(self.write(
-            controller_url="http://localhost:9999/api/", proxy_group="A/B 节点",
+            controller_url="http://localhost:9999/api/",
             request_timeout=2, commands={"systemctl": "/custom/systemctl"},
             service_unit="custom.service", routing_unit="custom-routing.service",
         ))
@@ -73,19 +73,55 @@ class SettingsTests(unittest.TestCase):
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b"{}"
         with patch.object(ctl.urllib.request, "urlopen", return_value=response) as request:
-            first.select_node("node")
-            second.select_node("node")
+            first.select_node("node", "A/B 节点")
+            second.select_node("node", "SUB")
         self.assertEqual(request.call_args_list[0].args[0].full_url,
                          "http://localhost:9999/api/proxies/A%2FB%20%E8%8A%82%E7%82%B9")
         self.assertEqual(request.call_args_list[0].kwargs, {"timeout": 2})
         self.assertEqual(request.call_args_list[1].args[0].full_url,
-                         "http://127.0.0.1:9090/proxies/PROXY")
+                         "http://127.0.0.1:9090/proxies/SUB")
         with (
             patch.object(first, "service_active", return_value=False),
             patch.object(ctl.subprocess, "run") as run,
         ):
             first.restart_mihomo()
         self.assertEqual(run.call_args.args[0], ["/custom/systemctl", "restart", "custom.service"])
+
+    def test_exit_state_is_validated_and_rendered(self):
+        exits = ctl.parse_exits([
+            {"name": "lan-108", "server": "192.168.16.108"},
+            {"name": "http-1", "type": "http", "server": "2001:db8::1", "port": 8080, "udp": False},
+        ])
+        self.assertEqual(exits, (
+            ctl.Exit("lan-108", "192.168.16.108", 7890),
+            ctl.Exit("http-1", "2001:db8::1", 8080, "http", False),
+        ))
+        self.assertEqual(ctl.exit_document(exits).splitlines(), [
+            "proxies:",
+            '  - name: "lan-108"',
+            "    type: socks5",
+            '    server: "192.168.16.108"',
+            "    port: 7890",
+            "    udp: true",
+            '  - name: "http-1"',
+            "    type: http",
+            '    server: "2001:db8::1"',
+            "    port: 8080",
+            "    udp: false",
+        ])
+        self.assertEqual(ctl.exit_document(()), "proxies: []\n")
+        for value in (
+            "lan-108",
+            ["lan-108"],
+            [{"name": "lan 108", "server": "192.168.16.108"}],
+            [{"name": "lan-108", "server": "192.168.16.108", "port": 70000}],
+            [{"name": "lan-108", "server": "192.168.16.108", "type": "vmess"}],
+            [{"name": "lan-108", "server": "192.168.16.108", "udp": 1}],
+            [{"name": "lan-108", "server": "192.168.16.108", "password": "x"}],
+            [{"name": "lan-108", "server": "192.168.16.108", "port": True}],
+        ):
+            with self.subTest(value=value), self.assertRaises(ctl.MihomoError):
+                ctl.parse_exits(value)
 
     def test_legacy_cleanup_is_explicit(self):
         core = ctl.MihomoCore(ctl.Settings())
@@ -271,6 +307,300 @@ class CoreOperationTests(unittest.TestCase):
                 self.core.init_runtime("demo", "https://example.com/sub")
         save.assert_not_called()
 
+    def write_exit_state(self, *exits):
+        (self.root / "exits.json").write_text(json.dumps([
+            {
+                "name": item.name, "server": item.server, "port": item.port,
+                "type": item.type, "udp": item.udp,
+            }
+            for item in exits
+        ]))
+
+    def test_write_config_renders_subscriptions_and_exits(self):
+        core = ctl.MihomoCore(ctl.Settings(
+            state_dir=self.root,
+            config_path=self.root / "config.yaml",
+        ))
+        self.write_exit_state(ctl.Exit("lan-108", "192.168.16.108", 7890))
+        template = (
+            "mode: $MODE\n"
+            "proxy-providers:\n"
+            "  exit:\n"
+            "    type: file\n"
+            "    path: ./exits.yaml\n"
+            "$SUBSCRIPTION_PROVIDERS\n\n"
+            "proxy-groups:\n"
+            "  - name: OUTBOUND\n"
+            "    type: select\n"
+            "    proxies:\n"
+            "$OUTBOUND_SUBSCRIPTIONS\n"
+            "    use:\n"
+            "      - exit\n\n"
+            "$SUBSCRIPTION_GROUPS\n"
+        )
+        with (
+            patch.object(ctl.grp, "getgrnam", return_value=MagicMock(gr_gid=0)),
+            patch.object(ctl.os, "chown"),
+            patch.object(core, "subscription_providers", return_value=[
+                ("airport", "https://example.com/sub?token=1"),
+            ]),
+        ):
+            core.write_config(template, "rule")
+        rendered = (self.root / "config.yaml").read_text()
+        self.assertIn("mode: rule", rendered)
+        self.assertIn("  subscription-airport:", rendered)
+        self.assertIn('    url: "https://example.com/sub?token=1"', rendered)
+        self.assertIn("    path: ./providers/subscription-airport.yaml", rendered)
+        self.assertIn("      - sub-airport", rendered)
+        self.assertIn("  - name: sub-airport", rendered)
+        self.assertIn("      - auto-airport", rendered)
+        self.assertIn("  - name: auto-airport", rendered)
+        self.assertEqual(
+            (self.root / "exits.yaml").read_text(),
+            'proxies:\n  - name: "lan-108"\n    type: socks5\n'
+            '    server: "192.168.16.108"\n    port: 7890\n    udp: true\n',
+        )
+
+    def test_write_config_requires_a_saved_subscription(self):
+        core = ctl.MihomoCore(ctl.Settings(
+            state_dir=self.root,
+            config_path=self.root / "config.yaml",
+        ))
+        with self.assertRaisesRegex(ctl.MihomoError, "No saved subscriptions"):
+            core.write_config("mode: $MODE\n", "rule")
+
+    def test_exit_commands_round_trip(self):
+        core = ctl.MihomoCore(ctl.Settings(
+            state_dir=self.root,
+            config_path=self.root / "config.yaml",
+        ))
+        with (
+            patch.object(ctl.grp, "getgrnam", return_value=MagicMock(gr_gid=0)),
+            patch.object(ctl.os, "chown"),
+        ):
+            core.add_exit(ctl.Exit("lan-108", "192.168.16.108", 7890))
+            self.assertEqual(
+                core.exits(), (ctl.Exit("lan-108", "192.168.16.108", 7890),)
+            )
+            self.assertEqual(
+                (self.root / "exits.yaml").read_text(),
+                'proxies:\n  - name: "lan-108"\n    type: socks5\n'
+                '    server: "192.168.16.108"\n    port: 7890\n    udp: true\n',
+            )
+            self.assertEqual(
+                json.loads((self.root / "exits.json").read_text())[0]["name"],
+                "lan-108",
+            )
+            with self.assertRaisesRegex(ctl.MihomoError, "already exists"):
+                core.add_exit(ctl.Exit("lan-108", "192.168.16.108", 7890))
+            core.remove_exit("lan-108")
+            self.assertEqual(core.exits(), ())
+            self.assertEqual((self.root / "exits.yaml").read_text(), "proxies: []\n")
+            with self.assertRaisesRegex(ctl.MihomoError, "does not exist"):
+                core.remove_exit("lan-108")
+
+    def test_exit_names_are_unique_and_not_reserved(self):
+        core = ctl.MihomoCore(ctl.Settings(
+            state_dir=self.root,
+            config_path=self.root / "config.yaml",
+        ))
+        with (
+            patch.object(ctl.grp, "getgrnam", return_value=MagicMock(gr_gid=0)),
+            patch.object(ctl.os, "chown"),
+        ):
+            for name in ("DIRECT", "OUTBOUND"):
+                with self.subTest(name=name), self.assertRaisesRegex(ctl.MihomoError, "reserved"):
+                    core.save_exits((ctl.Exit(name, "192.0.2.1"),))
+            for name in ("sub-airport", "auto-airport", "subscription-airport"):
+                with self.subTest(name=name), self.assertRaisesRegex(
+                    ctl.MihomoError, "reserved for subscriptions"
+                ):
+                    ctl.Exit(name, "192.0.2.1")
+            with self.assertRaisesRegex(ctl.MihomoError, "unique"):
+                core.save_exits((
+                    ctl.Exit("lan-108", "192.0.2.1"),
+                    ctl.Exit("lan-108", "192.0.2.2"),
+                ))
+
+    def test_corrupt_exit_state_is_reported(self):
+        (self.root / "exits.json").write_text("not json")
+        with self.assertRaisesRegex(ctl.MihomoError, "Could not read exit state"):
+            self.core.exits()
+
+    def test_reload_exits_rewrites_and_reloads_the_provider(self):
+        core = ctl.MihomoCore(ctl.Settings(
+            state_dir=self.root,
+            config_path=self.root / "config.yaml",
+        ))
+        self.write_exit_state(ctl.Exit("lan-108", "192.168.16.108", 7890))
+        with (
+            patch.object(ctl.grp, "getgrnam", return_value=MagicMock(gr_gid=0)),
+            patch.object(ctl.os, "chown"),
+            patch.object(core, "controller_check") as check,
+            patch.object(core, "api") as api,
+        ):
+            core.reload_exits()
+        check.assert_called_once_with()
+        api.assert_called_once_with("/providers/proxies/exit", "PUT")
+        self.assertTrue((self.root / "exits.yaml").is_file())
+
+    def test_outbound_selection_uses_the_exit_group(self):
+        with patch.object(
+            self.core, "api",
+            return_value={"now": "lan-108", "all": ["sub-demo", "lan-108"]},
+        ) as api:
+            self.assertEqual(
+                self.core.outbound_selection(),
+                ctl.ProxySelection("lan-108", ("sub-demo", "lan-108")),
+            )
+            self.core.select_outbound("sub-demo")
+        self.assertEqual(api.call_args_list[0], call("/proxies/OUTBOUND"))
+        self.assertEqual(
+            api.call_args_list[1], call("/proxies/OUTBOUND", "PUT", {"name": "sub-demo"})
+        )
+
+    def test_status_reports_a_subscription_outbound(self):
+        responses = {
+            "/version": {},
+            "/configs": {"mode": "rule"},
+            "/proxies/OUTBOUND": {"now": "sub-demo", "all": ["sub-demo", "lan-108"]},
+            "/proxies": {"proxies": {
+                "sub-demo": {"now": "demo", "all": ["auto-demo", "DIRECT", "demo"]},
+            }},
+            "/providers/proxies": {"providers": {}},
+        }
+        with (
+            patch.object(self.core, "service_active", return_value=True),
+            patch.object(self.core, "api", side_effect=lambda path, *args, **kwargs: responses[path]),
+        ):
+            status = self.core.get_status()
+        self.assertEqual(
+            status.proxy, ctl.ProxySelection("demo", ("auto-demo", "DIRECT", "demo"))
+        )
+        self.assertEqual(
+            status.outbound, ctl.ProxySelection("sub-demo", ("sub-demo", "lan-108"))
+        )
+        self.assertIsNone(status.exit_reachable)
+
+    def test_status_reports_an_exit_outbound(self):
+        self.write_exit_state(ctl.Exit("lan-108", "192.168.16.108", 7890))
+        responses = {
+            "/version": {},
+            "/configs": {"mode": "rule"},
+            "/proxies/OUTBOUND": {"now": "lan-108", "all": ["sub-demo", "lan-108"]},
+            "/proxies": {"proxies": {}},
+            "/providers/proxies": {"providers": {}},
+        }
+        with (
+            patch.object(self.core, "service_active", return_value=True),
+            patch.object(self.core, "api", side_effect=lambda path, *args, **kwargs: responses[path]),
+            patch.object(ctl.socket, "create_connection", return_value=MagicMock()),
+        ):
+            status = self.core.get_status()
+        self.assertIsNone(status.proxy)
+        self.assertEqual(
+            status.outbound, ctl.ProxySelection("lan-108", ("sub-demo", "lan-108"))
+        )
+        self.assertEqual(status.exits, (("lan-108", "192.168.16.108:7890"),))
+        self.assertTrue(status.exit_reachable)
+
+    def test_node_selection_distinguishes_groups_from_leaf_proxies(self):
+        proxies = {"proxies": {"sub-demo": {"now": "demo", "all": ["auto-demo", "demo"]}}}
+        with (
+            patch.object(self.core, "api", return_value=proxies),
+            patch.object(
+                self.core, "outbound_selection",
+                return_value=ctl.ProxySelection("sub-demo", ("sub-demo",)),
+            ),
+        ):
+            self.assertEqual(
+                self.core.node_selection(),
+                ctl.ProxySelection("demo", ("auto-demo", "demo")),
+            )
+        with (
+            patch.object(self.core, "api", return_value={"proxies": {}}),
+            patch.object(
+                self.core, "outbound_selection",
+                return_value=ctl.ProxySelection("lan-108", ("lan-108",)),
+            ),
+        ):
+            self.assertIsNone(self.core.node_selection())
+
+    def test_switch_subscription_selects_without_rebuilding(self):
+        (self.core.settings.subscriptions_dir / "backup.cred").touch()
+        with (
+            patch.object(self.core, "controller_check") as check,
+            patch.object(
+                self.core, "outbound_selection",
+                return_value=ctl.ProxySelection("sub-demo", ("sub-demo", "sub-backup")),
+            ),
+            patch.object(self.core, "select_outbound") as select,
+            patch.object(self.core, "set_active_subscription") as record,
+            patch.object(self.core, "restart_mihomo") as restart,
+            patch.object(self.core, "write_config") as write,
+        ):
+            self.core.switch_subscription("backup")
+        check.assert_called_once_with()
+        select.assert_called_once_with("sub-backup")
+        record.assert_called_once_with("backup")
+        restart.assert_not_called()
+        write.assert_not_called()
+
+    def test_switch_subscription_renders_a_newly_added_subscription(self):
+        (self.core.settings.subscriptions_dir / "backup.cred").touch()
+        with (
+            patch.object(self.core, "controller_check"),
+            patch.object(
+                self.core, "outbound_selection",
+                return_value=ctl.ProxySelection("sub-demo", ("sub-demo",)),
+            ),
+            patch.object(self.core, "template", return_value="mode: $MODE\n"),
+            patch.object(self.core, "applied_mode", return_value="rule"),
+            patch.object(self.core, "write_config") as write,
+            patch.object(self.core, "cleanup_runtime") as cleanup,
+            patch.object(self.core, "restart_mihomo") as restart,
+            patch.object(self.core, "select_outbound") as select,
+            patch.object(self.core, "set_active_subscription"),
+        ):
+            self.core.switch_subscription("backup")
+        write.assert_called_once_with("mode: $MODE\n", "rule")
+        cleanup.assert_called_once_with("tun")
+        restart.assert_called_once_with()
+        select.assert_called_once_with("sub-backup")
+
+    def test_exit_reachability_reports_failures(self):
+        with patch.object(ctl.socket, "create_connection", side_effect=OSError("refused")):
+            self.assertFalse(
+                self.core.exit_reachable(ctl.Exit("lan-108", "192.0.2.1", 9))
+            )
+
+    def test_diagnosis_checks_the_selected_exit(self):
+        core = ctl.MihomoCore(ctl.Settings(
+            state_dir=self.root,
+            config_path=self.root / "config.yaml",
+        ))
+        self.write_exit_state(ctl.Exit("lan-108", "192.168.16.108", 7890))
+
+        def api(path, *args, **kwargs):
+            return {
+                "/configs": {"mode": "rule"},
+                "/proxies/OUTBOUND": {"now": "lan-108", "all": ["sub-demo", "lan-108"]},
+                "/proxies": {"proxies": {}},
+                "/providers/proxies": {"providers": {"subscription": {"proxies": [{}]}}},
+            }.get(path, {})
+
+        with (
+            patch.object(core, "service_active", return_value=True),
+            patch.object(core, "command_output", return_value=""),
+            patch.object(core, "command", return_value=subprocess.CompletedProcess([], 1, "", "")),
+            patch.object(core, "api", side_effect=api),
+            patch.object(core, "exit_reachable", return_value=False),
+        ):
+            report = core.diagnose()
+        self.assertIn(("exit reachable (192.168.16.108:7890)", False), report.checks)
+        self.assertTrue(any("lan-108" in note for note in report.notes))
+        self.assertTrue(any("leaves through this exit node" in note for note in report.notes))
+
     def test_remove_protects_active_subscription(self):
         path = self.core.settings.subscriptions_dir / "demo.cred"
         path.touch()
@@ -313,6 +643,21 @@ class CoreOperationTests(unittest.TestCase):
             call.api("/version"), call.api("/configs", "PATCH", {"mode": "global"}),
             call.save("global"),
         ])
+
+    def test_set_mode_rejects_unknown_values(self):
+        with (
+            patch.object(self.core, "api") as api,
+            self.assertRaisesRegex(ctl.MihomoError, "Mode must be one of"),
+        ):
+            self.core.set_mode("nonsense")
+        # Connectivity is still probed first; no mode is patched.
+        api.assert_called_once_with("/version")
+
+    def test_cli_mode_prints_the_current_mode(self):
+        with patch.object(self.core, "current_mode", return_value="global"):
+            result = CliRunner().invoke(ctl.create_cli(self.core), ["mode"])
+        self.assertEqual(result.exit_code, 0, result.exception)
+        self.assertIn("global", result.output)
 
     def test_mode_switch_needs_no_privileges_and_records_only_as_root(self):
         events = MagicMock()
@@ -391,7 +736,9 @@ class CoreOperationTests(unittest.TestCase):
 
     def test_proxy_selection_normalizes_null_nodes(self):
         with patch.object(self.core, "api", return_value={"now": "demo", "all": None}):
-            self.assertEqual(self.core.proxy_selection(), ctl.ProxySelection("demo", ()))
+            self.assertEqual(
+                self.core.proxy_selection("sub-demo"), ctl.ProxySelection("demo", ())
+            )
 
     def test_connection_snapshot_normalizes_controller_data(self):
         data = {
@@ -451,12 +798,13 @@ assert not {'rich', 'typer', 'PyQt6'} & sys.modules.keys()
     def test_cli_command_contract(self):
         root = get_command(ctl.create_cli())
         self.assertEqual(set(root.commands), {
-            "subscription", "proxy", "routing", "status", "doctor", "mode",
-            "log", "reload", "config", "tray",
+            "subscription", "proxy", "exit", "routing", "status", "doctor",
+            "mode", "outbound", "log", "reload", "config", "tray",
         })
         for group, names in {
             "subscription": {"init", "add", "edit", "remove", "switch", "list", "update"},
             "proxy": {"node", "update-rules", "test", "connections", "close-connections"},
+            "exit": {"list", "add", "remove", "reload"},
             "routing": {"routes", "enable", "disable", "start", "cleanup", "purge"},
         }.items():
             self.assertEqual(set(root.commands[group].commands), names)
@@ -481,12 +829,125 @@ assert not {'rich', 'typer', 'PyQt6'} & sys.modules.keys()
 
     def test_cli_node_cancel_does_not_mutate_controller(self):
         with (
-            patch.object(self.core, "proxy_selection", return_value=ctl.ProxySelection("demo", ("demo",))),
+            patch.object(
+                self.core, "outbound_selection",
+                return_value=ctl.ProxySelection("sub-demo", ("sub-demo",)),
+            ),
+            patch.object(
+                self.core, "node_selection",
+                return_value=ctl.ProxySelection("demo", ("demo",)),
+            ),
             patch.object(self.core, "select_node") as select,
         ):
             result = CliRunner().invoke(ctl.create_cli(self.core), ["proxy", "node"], input="q\n")
         self.assertEqual(result.exit_code, 0, result.exception)
         select.assert_not_called()
+
+    def test_cli_node_rejects_an_exit_outbound(self):
+        with (
+            patch.object(
+                self.core, "outbound_selection",
+                return_value=ctl.ProxySelection("lan-108", ("sub-demo", "lan-108")),
+            ),
+            patch.object(self.core, "node_selection", return_value=None),
+            patch.object(
+                self.core, "selected_exit",
+                return_value=ctl.Exit("lan-108", "192.168.16.108", 7890),
+            ),
+            patch.object(self.core, "select_node") as select,
+        ):
+            result = CliRunner().invoke(ctl.create_cli(self.core), ["proxy", "node"])
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIsInstance(result.exception, ctl.MihomoError)
+        self.assertIn("exit node", str(result.exception))
+        select.assert_not_called()
+
+    def test_cli_outbound_cancel_does_not_mutate_controller(self):
+        with (
+            patch.object(
+                self.core, "outbound_selection",
+                return_value=ctl.ProxySelection("sub-demo", ("sub-demo", "lan-108")),
+            ),
+            patch.object(self.core, "exits_or_empty", return_value=()),
+            patch.object(self.core, "proxy_selection", return_value=ctl.ProxySelection("demo", ("demo",))),
+            patch.object(self.core, "select_outbound") as select,
+        ):
+            result = CliRunner().invoke(
+                ctl.create_cli(self.core), ["outbound"], input="q\n"
+            )
+        self.assertEqual(result.exit_code, 0, result.exception)
+        select.assert_not_called()
+
+    def test_cli_outbound_selects_by_name(self):
+        exit_node = ctl.Exit("lan-108", "192.168.16.108", 7890)
+        with (
+            patch.object(
+                self.core, "outbound_selection",
+                return_value=ctl.ProxySelection("sub-demo", ("sub-demo", "lan-108")),
+            ),
+            patch.object(self.core, "exits_or_empty", return_value=(exit_node,)),
+            patch.object(self.core, "current_mode", return_value="rule"),
+            patch.object(self.core, "select_outbound") as select,
+        ):
+            result = CliRunner().invoke(
+                ctl.create_cli(self.core), ["outbound", "lan-108"]
+            )
+        self.assertEqual(result.exit_code, 0, result.exception)
+        select.assert_called_once_with("lan-108")
+        self.assertIn("192.168.16.108:7890", result.output)
+        self.assertIn("mode global", result.output)
+
+    def test_cli_exit_reload_escalates(self):
+        with (
+            patch.object(ctl.os, "geteuid", return_value=0),
+            patch.object(self.core, "reload_exits") as reload_exits,
+        ):
+            result = CliRunner().invoke(ctl.create_cli(self.core), ["exit", "reload"])
+        self.assertEqual(result.exit_code, 0, result.exception)
+        reload_exits.assert_called_once_with()
+
+    def test_cli_exit_add_records_the_exit(self):
+        with (
+            patch.object(ctl.os, "geteuid", return_value=0),
+            patch.object(self.core, "add_exit") as add,
+            patch.object(self.core, "reload_exits"),
+        ):
+            result = CliRunner().invoke(ctl.create_cli(self.core), [
+                "exit", "add", "lan-108",
+                "--server", "192.168.16.108", "--type", "http", "--no-udp",
+            ])
+        self.assertEqual(result.exit_code, 0, result.exception)
+        add.assert_called_once_with(ctl.Exit("lan-108", "192.168.16.108", 7890, "http", False))
+
+    def test_cli_exit_remove_warns_when_the_controller_is_offline(self):
+        with (
+            patch.object(ctl.os, "geteuid", return_value=0),
+            patch.object(self.core, "remove_exit") as remove,
+            patch.object(self.core, "reload_exits", side_effect=ctl.MihomoError("offline")),
+        ):
+            result = CliRunner().invoke(
+                ctl.create_cli(self.core), ["exit", "remove", "lan-108"]
+            )
+        self.assertEqual(result.exit_code, 0, result.exception)
+        remove.assert_called_once_with("lan-108")
+        self.assertIn("next Mihomo start", result.output)
+
+    def test_cli_exit_list_shows_the_selected_endpoint(self):
+        with (
+            patch.object(ctl.os, "geteuid", return_value=0),
+            patch.object(self.core, "exits", return_value=(
+                ctl.Exit("lan-108", "192.168.16.108", 7890),
+                ctl.Exit("lan-http", "192.168.16.108", 7891, "http", False),
+            )),
+            patch.object(
+                self.core, "outbound_selection",
+                return_value=ctl.ProxySelection("lan-108", ("SUB", "lan-108")),
+            ),
+        ):
+            result = CliRunner().invoke(ctl.create_cli(self.core), ["exit", "list"])
+        self.assertEqual(result.exit_code, 0, result.exception)
+        self.assertIn("192.168.16.108:7890", result.output)
+        self.assertIn("192.168.16.108:7891", result.output)
 
 
 @unittest.skipUnless(importlib.util.find_spec("PyQt6"), "requires optional PyQt6")
@@ -781,21 +1242,41 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
                 )
 
         selected = "other"
+        outbound = "sub-demo"
+        node_calls = []
         offline = False
         action_threads = []
         mode_calls = []
+        endpoints = {
+            "lan-108": "192.168.16.108:7890",
+            "lan-109": "192.168.16.109:7890",
+        }
 
         def status():
             if offline:
                 return ctl.MihomoStatus(True, True, error="request timed out")
+            is_exit = outbound in endpoints
             return ctl.MihomoStatus(
-                True, True, "rule", ctl.ProxySelection(selected, ("a&b", "other")), 1,
+                True, True, "rule",
+                None if is_exit else ctl.ProxySelection(selected, ("a&b", "other")),
+                1,
+                outbound=ctl.ProxySelection(
+                    outbound, ("sub-demo", "lan-108", "lan-109")
+                ),
+                exits=tuple(endpoints.items()),
+                exit_reachable=False if is_exit else None,
             )
 
-        def select(name):
+        def select(name, group):
             nonlocal selected
             action_threads.append(threading.get_ident())
+            node_calls.append(group)
             selected = name
+
+        def select_outbound(name):
+            nonlocal outbound
+            action_threads.append(threading.get_ident())
+            outbound = name
 
         def set_mode(value):
             mode_calls.append((value, threading.get_ident()))
@@ -823,12 +1304,20 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
                 menu = indicator.contextMenu()
                 actions = {action.text(): action for action in menu.actions()}
                 nodes = actions["Proxy node"].menu()
+                outs = actions["Outbound"].menu()
                 modes = actions["Mode"].menu()
                 wait_for(lambda: len(nodes.actions()) == 2)
+                wait_for(lambda: len(outs.actions()) == 3)
+                self.assertTrue(actions["Outbound"].isEnabled())
+                self.assertTrue(actions["Proxy node"].isVisible())
+                self.assertTrue(outs.actions()[0].isChecked())
+                # Exit entries carry their endpoint so there is no second menu.
+                self.assertIn("192.168.16.108:7890", outs.actions()[1].text())
                 nodes.actions()[0].trigger()
                 self.assertFalse(menu.isEnabled())
                 wait_for(lambda: menu.isEnabled() and "a&b" in indicator.toolTip())
                 self.assertEqual(selected, "a&b")
+                self.assertEqual(node_calls[0], "sub-demo")
                 self.assertNotEqual(action_threads[0], threading.get_ident())
                 self.assertEqual(processes, [])
 
@@ -837,6 +1326,9 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
                 self.assertIn("timed out", messages[0][1])
                 self.assertEqual(processes, [])
 
+                self.assertEqual(
+                    [a.text() for a in modes.actions()], ["rule", "global", "direct"]
+                )
                 global_mode = next(a for a in modes.actions() if a.text() == "global")
                 global_mode.trigger()
                 wait_for(lambda: menu.isEnabled() and bool(mode_calls))
@@ -844,6 +1336,21 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
                 self.assertEqual(mode_calls[0][0], "global")
                 self.assertNotEqual(mode_calls[0][1], threading.get_ident())
                 self.assertEqual(processes, [])
+
+                outs.actions()[1].trigger()
+                wait_for(lambda: menu.isEnabled() and outbound == "lan-108")
+                wait_for(
+                    lambda: not actions["Proxy node"].isVisible()
+                    and "192.168.16.108:7890" in indicator.toolTip()
+                )
+                self.assertIn("unreachable", indicator.toolTip())
+                self.assertNotIn("a&b", indicator.toolTip())
+                self.assertEqual(processes, [])
+
+                # Nothing to pick for an exit; the node menu is hidden.
+                outs.actions()[0].trigger()
+                wait_for(lambda: menu.isEnabled() and outbound == "sub-demo")
+                wait_for(lambda: actions["Proxy node"].isVisible())
 
                 actions["Transparent routing"].trigger()
                 wait_for(menu.isEnabled)
@@ -855,6 +1362,8 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
                 self.assertEqual(processes[-1][1][5:], ["reload"])
                 self.assertIn("timed out", indicator.toolTip())
                 self.assertEqual(nodes.actions(), [])
+                self.assertEqual(outs.actions(), [])
+                self.assertFalse(actions["Outbound"].isEnabled())
 
                 offline = False
                 actions["Reload configuration"].trigger()
@@ -866,6 +1375,7 @@ ctl.run_tray(core, child_pid_file.with_name('settings.json'))
                 patch.object(ctl.os, "geteuid", return_value=1000),
                 patch.object(self.core, "get_status", side_effect=status),
                 patch.object(self.core, "select_node", side_effect=select),
+                patch.object(self.core, "select_outbound", side_effect=select_outbound),
                 patch.object(self.core, "set_mode", side_effect=set_mode),
                 patch.object(self.core, "close_connections", side_effect=ctl.MihomoError("request timed out")),
                 patch.object(QtWidgets, "QApplication", return_value=application),
